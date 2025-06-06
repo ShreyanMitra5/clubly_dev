@@ -33,6 +33,7 @@ export default function GeneratePage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    console.log("Handling form submission...");
     setIsLoading(true);
     setDownloadUrl(null);
     setError(null);
