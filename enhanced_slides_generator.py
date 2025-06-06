@@ -127,21 +127,29 @@ def get_image_url(query, serpapi_key):
 
 def download_and_resize_image(image_url, width=800, height=600):
     """Download and resize an image for use in slides."""
+    if not image_url:
+        print("Warning: No image URL provided for download.")
+        return None
     try:
-        response = requests.get(image_url)
-        if response.status_code == 200:
-            img = Image.open(BytesIO(response.content))
-            # Convert to RGB if not already (fixes 'cannot write mode P as JPEG')
-            if img.mode != 'RGB':
-                img = img.convert('RGB')
-            img = img.resize((width, height), Image.Resampling.LANCZOS)
-            # Save to temporary file
-            temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
-            img.save(temp_file.name)
-            return temp_file.name
+        response = requests.get(image_url, timeout=10) # Added a timeout
+        response.raise_for_status() # Raise an HTTPError for bad responses (4xx or 5xx)
+        
+        img = Image.open(BytesIO(response.content))
+        # Convert to RGB if not already (fixes 'cannot write mode P as JPEG')
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        img = img.resize((width, height), Image.Resampling.LANCZOS)
+        # Save to temporary file
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.jpg')
+        img.save(temp_file.name)
+        print(f"Successfully downloaded and resized image from {image_url}")
+        return temp_file.name
+    except requests.exceptions.RequestException as e:
+        print(f"Error downloading image from {image_url}: {e}")
+        return None
     except Exception as e:
-        print(f"Error downloading/resizing image: {e}")
-    return None
+        print(f"An unexpected error occurred during image processing for {image_url}: {e}")
+        return None
 
 def create_title_slide(prs, title, subtitle, image_path, theme="modern"):
     """Create a title slide with background image."""
