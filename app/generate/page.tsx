@@ -48,8 +48,9 @@ export default function GeneratePage() {
 
     try {
       // Call the FastAPI backend endpoint
-      // Assuming backend is running on http://127.0.0.1:8000
-      const response = await fetch('http://127.0.0.1:8000/generate-slide', {
+      // Use the environment variable for the backend URL
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://127.0.0.1:8000'; // Fallback for local dev
+      const response = await fetch(`${backendUrl}/generate-slide`, {
         method: 'POST',
         body: data,
       });
