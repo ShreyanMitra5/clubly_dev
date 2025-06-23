@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ClerkProvider } from '@clerk/nextjs';
 import { Inter } from 'next/font/google';
-import '../globals.css';
+import '../styles/globals.css';
 import LoadingScreen from './loading'; // We will create this component
 
 const inter = Inter({
