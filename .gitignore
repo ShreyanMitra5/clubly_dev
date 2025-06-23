@@ -12,3 +12,6 @@ node_modules
 *.temp
 temp/
 tmp/
+
+# clerk configuration (can include secrets)
+/.clerk/

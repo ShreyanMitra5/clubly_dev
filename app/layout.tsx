@@ -1,50 +1,40 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { ClerkProvider } from '@clerk/nextjs';
+import { Inter } from 'next/font/google';
+import '../globals.css';
+import LoadingScreen from './loading'; // We will create this component
 
-import { type Metadata } from 'next'
-import {
-  ClerkProvider,
-  SignInButton,
-  SignUpButton,
-  SignedIn,
-  SignedOut,
-  UserButton,
-} from '@clerk/nextjs'
-import { Geist, Geist_Mono } from 'next/font/google'
-import '../globals.css'
-
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const inter = Inter({
   subsets: ['latin'],
-})
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
-  subsets: ['latin'],
-})
+  variable: '--font-inter',
+});
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate a loading delay
+    const timer = setTimeout(() => setLoading(false), 2500); // Adjust time as needed
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
-    <ClerkProvider publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY as string}>
+    <ClerkProvider
+      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY as string}
+    >
       <html lang="en">
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-          <header className="flex justify-end items-center p-4 gap-4 h-16">
-            <SignedOut>
-              <SignInButton />
-              <SignUpButton />
-            </SignedOut>
-            <SignedIn>
-              <UserButton />
-            </SignedIn>
-          </header>
-          {children}
+        <body
+          className={`${inter.variable} font-sans antialiased grid-bg`}
+        >
+          {loading ? <LoadingScreen /> : children}
         </body>
       </html>
     </ClerkProvider>
-  )
+  );
 }
