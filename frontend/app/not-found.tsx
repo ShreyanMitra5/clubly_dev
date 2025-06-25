@@ -7,16 +7,6 @@ import Image from 'next/image';
 export default function NotFound() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Navigation */}
-      <header className="border-b border-gray-200">
-        <nav className="container-width py-4">
-          <Link href="/" className="flex items-center space-x-3">
-            <Image src="/logo.png" alt="Clubly" width={32} height={32} className="rounded-lg" />
-            <span className="text-xl font-bold text-black">Clubly</span>
-          </Link>
-        </nav>
-      </header>
-
       {/* Main Content */}
       <main className="flex-grow flex items-center justify-center section-padding">
         <div className="text-center max-w-md mx-auto">
@@ -37,11 +27,6 @@ export default function NotFound() {
             <Link href="/">
               <button className="btn-primary w-full">
                 Go back home
-              </button>
-            </Link>
-            <Link href="/generate">
-              <button className="btn-secondary w-full">
-                Create presentation
               </button>
             </Link>
           </div>
