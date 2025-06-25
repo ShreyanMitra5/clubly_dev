@@ -45,6 +45,9 @@ export default function RootLayout({
       publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY as string}
     >
       <html lang="en">
+        <head>
+          <link rel="icon" href="/logo-rounded.png" type="image/png" />
+        </head>
         <body
           className={`${inter.variable} font-sans antialiased m-0 p-0`}
         >

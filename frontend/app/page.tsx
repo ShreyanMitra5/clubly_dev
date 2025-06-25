@@ -53,7 +53,7 @@ export default function HomePage() {
         <div className="w-full max-w-xl mx-auto flex flex-col items-center justify-center py-12 md:py-20">
           <div className="inline-flex items-center px-4 py-2 bg-gray-100 rounded-full text-sm font-medium text-gray-700 mb-4">
             <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-            AI-powered presentation generation
+            Made by Those Who Know the Struggle 🧠
           </div>
           <h1 className="heading-xl mb-6">
             Plan Better Club Meetings.<br />

@@ -22,7 +22,7 @@ const LoadingScreen = () => {
       
       <div className="mt-8 text-center">
         <h2 className="text-xl font-semibold text-black mb-2">Loading Clubly</h2>
-        <p className="text-gray-600">Preparing your presentation workspace...</p>
+        <p className="text-gray-600">Preparing your space..</p>
       </div>
       
       <div className="mt-8 flex space-x-1">
