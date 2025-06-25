@@ -2,13 +2,8 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
-
-interface ClubData {
-  name: string;
-  description: string;
-  mission: string;
-  goals: string;
-}
+import { ClubDataManager, ClubData } from '../utils/clubDataManager';
+import { ProductionClubManager } from '../utils/productionClubManager';
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -29,7 +24,7 @@ export default function OnboardingPage() {
       setClubInput('');
       
       // Initialize club data for the new club
-      const newClubData = {
+      const newClubData: ClubData = {
         name: clubInput,
         description: '',
         mission: '',
@@ -95,13 +90,23 @@ export default function OnboardingPage() {
 
   const handleSubmit = () => {
     if (user) {
-      localStorage.setItem(`onboardingComplete_${user.id}`, 'true');
-      localStorage.setItem(`userName_${user.id}`, name);
-      localStorage.setItem(`userClubs_${user.id}`, JSON.stringify(clubs));
-      localStorage.setItem(`userRole_${user.id}`, role);
-      localStorage.setItem(`clubData_${user.id}`, JSON.stringify(clubData));
+      // Save using the production system
+      ProductionClubManager.saveClubData(user.id, name, role, clubData)
+        .then(() => {
+          // Also save legacy data for backward compatibility
+          localStorage.setItem(`onboardingComplete_${user.id}`, 'true');
+          localStorage.setItem(`userName_${user.id}`, name);
+          localStorage.setItem(`userClubs_${user.id}`, JSON.stringify(clubs));
+          localStorage.setItem(`userRole_${user.id}`, role);
+          localStorage.setItem(`clubData_${user.id}`, JSON.stringify(clubData));
+          
+          router.push('/dashboard');
+        })
+        .catch((error) => {
+          console.error('Error saving club data:', error);
+          setError('Failed to save club data. Please try again.');
+        });
     }
-    router.push('/dashboard');
   };
 
   const renderStep1 = () => (
