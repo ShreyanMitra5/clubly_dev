@@ -1,41 +1,37 @@
 "use client";
+
 import React from 'react';
 import Image from 'next/image';
 
 const LoadingScreen = () => {
   return (
-    <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50 overflow-hidden">
-      <style>
-        {`
-          @keyframes rock {
-            0%, 100% {
-              transform: rotate(0deg) translateY(0px);
-            }
-            50% {
-              transform: rotate(5deg) translateY(-5px);
-            }
-          }
-
-          .rocking-logo {
-            animation: rock 2s ease-in-out infinite;
-          }
-        `}
-      </style>
-      <div className="relative w-24 h-24 rocking-logo">
-        <Image 
-          src="/logo.png" 
-          alt="Clubly Logo Loading" 
-          width={96} 
-          height={96} 
-          className="rounded-full"
-          priority
-        />
+    <div className="fixed inset-0 bg-white flex flex-col items-center justify-center z-50">
+      <div className="relative">
+        <div className="w-16 h-16 border-4 border-gray-200 border-t-black rounded-full animate-spin"></div>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Image 
+            src="/logo.png" 
+            alt="Clubly" 
+            width={32} 
+            height={32} 
+            className="rounded-lg"
+            priority
+          />
+        </div>
       </div>
-      <p className="mt-8 text-lg font-medium text-gray-700">
-        Loading...
-      </p>
+      
+      <div className="mt-8 text-center">
+        <h2 className="text-xl font-semibold text-black mb-2">Loading Clubly</h2>
+        <p className="text-gray-600">Preparing your presentation workspace...</p>
+      </div>
+      
+      <div className="mt-8 flex space-x-1">
+        <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse"></div>
+        <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.1s' }}></div>
+        <div className="w-2 h-2 bg-gray-400 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+      </div>
     </div>
   );
 };
 
-export default LoadingScreen; 
+export default LoadingScreen;
