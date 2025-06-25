@@ -30,14 +30,6 @@ export default function ClubDetailsPage() {
             <p className="text-gray-600">Track attendance and keep meeting notes.</p>
           </div>
           <div className="card p-6 hover:shadow-xl transition cursor-pointer">
-            <h2 className="text-xl font-semibold mb-2">Event Ideas</h2>
-            <p className="text-gray-600">Get AI-powered ideas for impactful events.</p>
-          </div>
-          <div className="card p-6 hover:shadow-xl transition cursor-pointer">
-            <h2 className="text-xl font-semibold mb-2">Templates</h2>
-            <p className="text-gray-600">Browse and use club-specific templates.</p>
-          </div>
-          <div className="card p-6 hover:shadow-xl transition cursor-pointer">
             <h2 className="text-xl font-semibold mb-2">Settings</h2>
             <p className="text-gray-600">Manage club settings and preferences.</p>
           </div>
