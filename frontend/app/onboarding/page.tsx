@@ -7,7 +7,7 @@ interface ClubData {
   name: string;
   description: string;
   mission: string;
-  members: string;
+  goals: string;
 }
 
 export default function OnboardingPage() {
@@ -33,7 +33,7 @@ export default function OnboardingPage() {
         name: clubInput,
         description: '',
         mission: '',
-        members: ''
+        goals: ''
       };
       setClubData([...clubData, newClubData]);
     }
@@ -191,10 +191,10 @@ export default function OnboardingPage() {
               value={currentClub?.description || ''} 
               onChange={e => handleClubDataChange('description', e.target.value)} 
               placeholder="Describe what your club does, its main activities, and its purpose (4 sentences max)"
-              maxLength={500}
+              maxLength={1000}
             />
             <div className="text-xs text-gray-500 mt-1">
-              {currentClub?.description?.length || 0}/500 characters
+              {currentClub?.description?.length || 0}/1000 characters
             </div>
           </div>
 
@@ -207,26 +207,26 @@ export default function OnboardingPage() {
               value={currentClub?.mission || ''} 
               onChange={e => handleClubDataChange('mission', e.target.value)} 
               placeholder="What is your club's vision and mission? (1-2 sentences)"
-              maxLength={200}
+              maxLength={1000}
             />
             <div className="text-xs text-gray-500 mt-1">
-              {currentClub?.mission?.length || 0}/200 characters
+              {currentClub?.mission?.length || 0}/1000 characters
             </div>
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Member Count & Demographics
+              What are your club's objectives and goals
             </label>
             <textarea 
               className="input-field w-full h-20 resize-none" 
-              value={currentClub?.members || ''} 
-              onChange={e => handleClubDataChange('members', e.target.value)} 
-              placeholder="How many members do you have? What are their backgrounds/interests?"
-              maxLength={200}
+              value={currentClub?.goals || ''} 
+              onChange={e => handleClubDataChange('goals', e.target.value)} 
+              placeholder="What are your club's objectives and goals?"
+              maxLength={1000}
             />
             <div className="text-xs text-gray-500 mt-1">
-              {currentClub?.members?.length || 0}/200 characters
+              {currentClub?.goals?.length || 0}/1000 characters
             </div>
           </div>
         </div>
