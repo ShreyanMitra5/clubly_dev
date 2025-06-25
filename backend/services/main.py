@@ -6,7 +6,7 @@ import tempfile
 import shutil
 
 # Assuming your presentation generation logic is in enhanced_slides_generator.py
-from enhanced_slides_generator import generate_presentation, THEMES
+from .enhanced_slides_generator import generate_presentation, THEMES
 
 app = FastAPI()
 
