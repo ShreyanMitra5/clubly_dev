@@ -298,9 +298,32 @@ export default function GeneratePage() {
                   <div className="flex-1">
                     <h3 className="font-medium">Presentation generated successfully!</h3>
                     <p className="mt-1 mb-4">Your presentation has been created using your club's data.</p>
-                    <pre className="bg-white p-4 rounded border text-sm overflow-auto">
-                      {JSON.stringify(generationResult, null, 2)}
-                    </pre>
+                    {/* View Online Button (embed) */}
+                    {generationResult.slidesGPTResponse && generationResult.slidesGPTResponse.embed && (
+                      <div className="mb-4">
+                        <a
+                          href={generationResult.slidesGPTResponse.embed.startsWith('http') ? generationResult.slidesGPTResponse.embed : `https://${generationResult.slidesGPTResponse.embed}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block w-full text-center px-4 py-3 mb-2 bg-black text-white font-semibold rounded-lg shadow hover:bg-gray-900 transition"
+                        >
+                          View Presentation Online
+                        </a>
+                      </div>
+                    )}
+                    {/* Download Button (restyled) */}
+                    {generationResult.slidesGPTResponse && generationResult.slidesGPTResponse.download && (
+                      <div className="mb-2">
+                        <a
+                          href={generationResult.slidesGPTResponse.download.startsWith('http') ? generationResult.slidesGPTResponse.download : `https://${generationResult.slidesGPTResponse.download}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-block w-full text-center px-4 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition"
+                        >
+                          Download Presentation (.pptx)
+                        </a>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

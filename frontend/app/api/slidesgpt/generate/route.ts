@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Call SlidesGPT API
-    const slidesGPTResponse = await callSlidesGPTAPI(prompt, theme);
+    const slidesGPTResponse = await callSlidesGPTAPI(prompt);
 
     return NextResponse.json({
       success: true,
@@ -53,28 +53,27 @@ async function getClubData(clubId: string): Promise<any> {
   return null;
 }
 
-async function callSlidesGPTAPI(prompt: string, theme: string = 'modern'): Promise<any> {
+async function callSlidesGPTAPI(prompt: string): Promise<any> {
   const SLIDESGPT_API_KEY = process.env.SLIDESGPT_API_KEY;
   
   if (!SLIDESGPT_API_KEY) {
     throw new Error('SlidesGPT API key not configured');
   }
 
-  const response = await fetch('https://api.slidesgpt.com/generate', {
+  const response = await fetch('https://api.slidesgpt.com/v1/presentations/generate', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${SLIDESGPT_API_KEY}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      prompt,
-      theme,
-      slides_count: 10
+      prompt
     })
   });
 
   if (!response.ok) {
-    throw new Error(`SlidesGPT API error: ${response.status} - ${response.statusText}`);
+    const errorText = await response.text();
+    throw new Error(`SlidesGPT API error: ${response.status} - ${response.statusText} - ${errorText}`);
   }
 
   return await response.json();
