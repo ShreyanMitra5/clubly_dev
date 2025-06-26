@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
 
     for (const club of clubs) {
       // Generate unique club ID
-      const clubId = uuidv4();
+      const clubId = club.clubId || uuidv4();
       
       // Create club data structure
       const clubData = {
@@ -24,11 +24,11 @@ export async function POST(request: NextRequest) {
         userId,
         userName,
         userRole,
-        clubName: club.name,
+        clubName: club.clubName || club.name,
         description: club.description,
         mission: club.mission,
         goals: club.goals,
-        createdAt: new Date().toISOString(),
+        createdAt: club.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
 
@@ -36,15 +36,16 @@ export async function POST(request: NextRequest) {
       const userDir = join(process.cwd(), 'data', 'clubs', userId);
       await mkdir(userDir, { recursive: true });
 
-      // Save club data as JSON file
-      const fileName = `${club.name.replace(/[^a-zA-Z0-9]/g, '_')}_${clubId}.json`;
+      // Use either club.name or club.clubName for the file name
+      const clubFileName = club.name || club.clubName;
+      const fileName = `${clubFileName.replace(/[^a-zA-Z0-9]/g, '_')}_${clubId}.json`;
       const filePath = join(userDir, fileName);
       
       await writeFile(filePath, JSON.stringify(clubData, null, 2));
 
       results.push({
         clubId,
-        clubName: club.name,
+        clubName: club.clubName || club.name,
         fileName
       });
     }

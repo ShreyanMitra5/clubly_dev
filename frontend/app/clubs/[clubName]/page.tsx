@@ -41,31 +41,6 @@ export default function ClubDetailsPage() {
     <div className="min-h-screen bg-white">
       <div className="mb-8" />
       <div className="container-width max-w-4xl mx-auto px-6">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-black mb-4">{clubName}</h1>
-          {clubInfo && (
-            <div className="bg-gray-50 rounded-xl p-6 mb-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-black mb-2">Club Description</h3>
-                  <p className="text-gray-700 leading-relaxed">{clubInfo.description || 'No description available.'}</p>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-black mb-2">Mission Statement</h3>
-                  <p className="text-gray-700 leading-relaxed">{clubInfo.mission || 'No mission statement available.'}</p>
-                </div>
-              </div>
-              <div className="mt-6">
-                <h3 className="text-lg font-semibold text-black mb-2">Goals & Objectives</h3>
-                <p className="text-gray-700 leading-relaxed">{clubInfo.goals || 'No goals specified.'}</p>
-              </div>
-              <div className="mt-4 text-sm text-gray-500">
-                Your Role: {clubInfo.userRole}
-              </div>
-            </div>
-          )}
-        </div>
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
           <Link href={`/generate?clubId=${clubInfo?.clubId}`}>
             <div className="card p-6 hover:shadow-xl transition cursor-pointer">
@@ -86,7 +61,10 @@ export default function ClubDetailsPage() {
             <p className="text-gray-600">Manage club settings and preferences.</p>
           </div>
         </div>
-        <button className="btn-secondary" onClick={() => router.push('/dashboard')}>← Back to Dashboard</button>
+        <div className="mt-4 flex gap-4">
+          <button className="btn-secondary" onClick={() => router.push('/dashboard')}>← Back to Dashboard</button>
+          <button className="btn-primary" onClick={() => router.push(`/clubs/${encodeURIComponent(clubName)}/settings`)}>Settings</button>
+        </div>
       </div>
     </div>
   );

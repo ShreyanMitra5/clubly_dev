@@ -21,6 +21,37 @@ export class ProductionClubManager {
    */
   static async saveClubData(userId: string, userName: string, userRole: string, clubs: ClubData[]): Promise<void> {
     try {
+      // Fetch existing clubs
+      const existingClubs = await this.getUserClubs(userId).catch(() => []);
+      const updatedClubs = clubs.map(newClub => {
+        const match = existingClubs.find(c => c.clubName === newClub.name || c.clubId === newClub.clubId);
+        if (match) {
+          // Overwrite existing
+          return {
+            ...match,
+            description: newClub.description,
+            mission: newClub.mission,
+            goals: newClub.goals,
+            updatedAt: new Date().toISOString()
+          };
+        } else {
+          // New club
+          return {
+            clubId: crypto.randomUUID(),
+            userId,
+            userName,
+            userRole,
+            clubName: newClub.name,
+            description: newClub.description,
+            mission: newClub.mission,
+            goals: newClub.goals,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+        }
+      });
+      // Save only the updated clubs
+      // (API route should be updated to overwrite files for existing clubs)
       const response = await fetch(`${this.API_BASE_URL}/clubs/save`, {
         method: 'POST',
         headers: {
@@ -30,7 +61,7 @@ export class ProductionClubManager {
           userId,
           userName,
           userRole,
-          clubs
+          clubs: updatedClubs
         })
       });
 

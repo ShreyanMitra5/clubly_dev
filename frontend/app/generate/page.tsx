@@ -173,25 +173,6 @@ export default function GeneratePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
-      <header className="bg-white border-b border-gray-200">
-        <nav className="container-width py-4">
-          <div className="flex justify-between items-center">
-            <Link href="/" className="flex items-center space-x-3">
-              <Image src="/logo.png" alt="Clubly" width={32} height={32} className="rounded-lg" />
-              <span className="text-xl font-bold text-black">Clubly</span>
-            </Link>
-            
-            <div className="flex items-center space-x-4">
-              <Link href="/" className="nav-link">
-                ← Back to home
-              </Link>
-              <UserButton />
-            </div>
-          </div>
-        </nav>
-      </header>
-
       {/* Main Content */}
       <main className="section-padding">
         <div className="max-w-4xl mx-auto">
@@ -225,10 +206,11 @@ export default function GeneratePage() {
 
               {/* Club Info Display */}
               {selectedClub && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-blue-900 mb-2">Selected Club: {selectedClub.clubName}</h3>
-                  <p className="text-blue-800 text-sm mb-1"><strong>Mission:</strong> {selectedClub.mission}</p>
-                  <p className="text-blue-800 text-sm"><strong>Goals:</strong> {selectedClub.goals.substring(0, 100)}...</p>
+                <div className="bg-yellow-50 border border-yellow-400 text-yellow-900 rounded-lg p-4 flex items-center mb-8">
+                  <span className="text-2xl mr-3">⚠️</span>
+                  <div>
+                    <strong>Heads up:</strong> The details you provided during onboarding will <b>also</b> be used to generate your {selectedClub.clubName} presentation. You can update this information anytime in the club's <b>Settings</b> page.
+                  </div>
                 </div>
               )}
 

@@ -7,7 +7,7 @@ export async function GET(
   { params }: { params: { clubId: string } }
 ) {
   try {
-    const { clubId } = params;
+    const { clubId } = await params;
 
     if (!clubId) {
       return NextResponse.json({ error: 'Club ID is required' }, { status: 400 });
