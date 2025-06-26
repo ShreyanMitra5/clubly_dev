@@ -91,9 +91,8 @@ export default function GeneratePage() {
   const [selectedClub, setSelectedClub] = useState<ProductionClubData | null>(null);
   const [formData, setFormData] = useState({
     clubId: '',
-    topic: '',
+    description: '',
     week: '',
-    theme: 'modern',
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -128,7 +127,7 @@ export default function GeneratePage() {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prevState => ({ ...prevState, [name]: value }));
     setGenerationResult(null);
@@ -149,9 +148,8 @@ export default function GeneratePage() {
     try {
       const result = await ProductionClubManager.generatePresentation(
         formData.clubId,
-        formData.topic,
-        formData.week ? parseInt(formData.week) : undefined,
-        formData.theme
+        formData.description,
+        formData.week ? parseInt(formData.week) : undefined
       );
 
       setGenerationResult(result);
@@ -161,15 +159,6 @@ export default function GeneratePage() {
       setIsLoading(false);
     }
   };
-
-  const themeOptions = [
-    { value: 'modern', label: 'Modern', description: 'Clean and professional' },
-    { value: 'dark', label: 'Dark', description: 'Sleek dark theme' },
-    { value: 'nature', label: 'Nature', description: 'Fresh and organic' },
-    { value: 'coding', label: 'Coding', description: 'Perfect for tech topics' },
-    { value: 'academic', label: 'Academic', description: 'Traditional and formal' },
-    { value: 'creative', label: 'Creative', description: 'Artistic and vibrant' },
-  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -185,25 +174,18 @@ export default function GeneratePage() {
             </p>
           </div>
 
+          {/* Display current club name */}
+          {selectedClub && (
+            <div className="mb-8 text-center">
+              <span className="inline-block text-2xl font-bold text-blue-700 bg-blue-50 rounded-lg px-6 py-2 shadow">
+                Generating Presentation for: {selectedClub.clubName}
+              </span>
+            </div>
+          )}
+
           {/* Form */}
           <div className="card p-8">
             <form onSubmit={handleSubmit} className="space-y-8">
-              {/* Club Selection */}
-              <div>
-                <h2 className="text-xl font-semibold text-black mb-6">Select Your Club</h2>
-                <SelectField
-                  label="Club"
-                  name="clubId"
-                  value={formData.clubId}
-                  onChange={handleInputChange}
-                  options={userClubs.map(club => ({
-                    value: club.clubId,
-                    label: club.clubName
-                  }))}
-                  description="Choose the club for which you want to generate a presentation"
-                />
-              </div>
-
               {/* Club Info Display */}
               {selectedClub && (
                 <div className="bg-yellow-50 border border-yellow-400 text-yellow-900 rounded-lg p-4 flex items-center mb-8">
@@ -218,14 +200,24 @@ export default function GeneratePage() {
               <div>
                 <h2 className="text-xl font-semibold text-black mb-6">Presentation Details</h2>
                 <div className="grid-2">
-                  <InputField 
-                    label="Topic" 
-                    name="topic" 
-                    value={formData.topic} 
-                    onChange={handleInputChange} 
-                    placeholder="e.g., Introduction to Neural Networks"
-                    description="The main topic for this presentation"
-                  />
+                  <div className="form-group col-span-2">
+                    <label htmlFor="description" className="form-label text-lg font-semibold mb-2 block">
+                      Description
+                    </label>
+                    <p className="form-description mb-2 text-gray-500">
+                      Describe what you want your presentation to be about.
+                    </p>
+                    <textarea
+                      id="description"
+                      name="description"
+                      value={formData.description || ''}
+                      onChange={handleInputChange}
+                      placeholder="e.g., A beginner-friendly overview of neural networks, their history, and real-world applications."
+                      required
+                      rows={6}
+                      className="input-field w-full min-h-[120px] rounded-lg border border-gray-300 p-4 text-base focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition resize-vertical shadow-sm bg-white"
+                    />
+                  </div>
                   <InputField 
                     label="Week Number" 
                     name="week" 
@@ -236,24 +228,13 @@ export default function GeneratePage() {
                     description="Which week of your program is this? (optional)"
                   />
                 </div>
-                
-                <div className="mt-6">
-                  <SelectField
-                    label="Theme"
-                    name="theme"
-                    value={formData.theme}
-                    onChange={handleInputChange}
-                    options={themeOptions}
-                    description="Choose a visual theme for your presentation"
-                  />
-                </div>
               </div>
 
               {/* Submit Button */}
               <div className="pt-8 border-t border-gray-200">
                 <button
                   type="submit"
-                  disabled={isLoading || !formData.clubId || !formData.topic}
+                  disabled={isLoading || !formData.clubId || !formData.description}
                   className="btn-primary w-full text-lg py-4 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center"
                 >
                   {isLoading ? (
