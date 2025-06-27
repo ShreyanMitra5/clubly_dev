@@ -52,10 +52,12 @@ export default function ClubDetailsPage() {
             <h2 className="text-xl font-semibold mb-2">Semester Roadmap</h2>
             <p className="text-gray-600">Plan your club's semester with AI assistance.</p>
           </div>
-          <div className="card p-6 hover:shadow-xl transition cursor-pointer">
-            <h2 className="text-xl font-semibold mb-2">Attendance & Notes</h2>
-            <p className="text-gray-600">Track attendance and keep meeting notes.</p>
-          </div>
+          <Link href={`/clubs/${encodeURIComponent(clubName)}/attendance-notes`}>
+            <div className="card p-6 hover:shadow-xl transition cursor-pointer">
+              <h2 className="text-xl font-semibold mb-2">Attendance & Notes</h2>
+              <p className="text-gray-600">Track attendance and keep meeting notes.</p>
+            </div>
+          </Link>
           <div className="card p-6 hover:shadow-xl transition cursor-pointer">
             <h2 className="text-xl font-semibold mb-2">Settings</h2>
             <p className="text-gray-600">Manage club settings and preferences.</p>
