@@ -79,17 +79,19 @@ export default function ClubAttendanceNotesPage() {
       mediaRecorder.start();
 
       const animate = () => {
-        if (!isPaused && analyserRef.current) {
+        if (analyserRef.current) {
           analyserRef.current.getByteTimeDomainData(dataArray);
           // Calculate RMS (root mean square) for more accurate volume
           const rms = Math.sqrt(dataArray.reduce((acc, v) => acc + Math.pow(v - 128, 2), 0) / dataArray.length);
           const newVolume = rms * 2.5;
-          volumeRef.current = newVolume;
-          const now = Date.now();
-          // Only update React state every 40ms and if volume changes significantly
-          if (now - lastUpdateRef.current > 40 && Math.abs(newVolume - volume) > 1) {
-            setVolume(newVolume);
-            lastUpdateRef.current = now;
+          if (!isPaused) {
+            volumeRef.current = newVolume;
+            const now = Date.now();
+            // Only update React state every 40ms and if volume changes significantly
+            if (now - lastUpdateRef.current > 40 && Math.abs(newVolume - volume) > 1) {
+              setVolume(newVolume);
+              lastUpdateRef.current = now;
+            }
           }
         }
         animationRef.current = requestAnimationFrame(animate);

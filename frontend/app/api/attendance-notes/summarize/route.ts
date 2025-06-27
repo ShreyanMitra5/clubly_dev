@@ -4,8 +4,10 @@ export const runtime = 'nodejs';
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const MODEL = 'mistralai/mistral-small-3.2-24b-instruct:free';
+const MODEL = 'deepseek/deepseek-r1-0528:free';
 const PROMPT = `Here is a transcript of a club meeting. Extract only the key features, decisions, and important points discussed. Do NOT generate a 1-minute recap. Instead, provide a focused, detailed summary relevant to the club, removing filler words or jargon.`;
+
+console.log('OPENROUTER_API_KEY:', process.env.OPENROUTER_API_KEY?.slice(0, 8));
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,7 +32,7 @@ export async function POST(request: NextRequest) {
     const res = await fetch(OPENROUTER_API_URL, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'authorization': `Bearer ${OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
