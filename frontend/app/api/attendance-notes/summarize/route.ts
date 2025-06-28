@@ -2,54 +2,45 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export const runtime = 'nodejs';
 
-const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const MODEL = 'deepseek/deepseek-r1-0528:free';
-const PROMPT = `Here is a transcript of a club meeting. Extract only the key features, decisions, and important points discussed. Do NOT generate a 1-minute recap. Instead, provide a focused, detailed summary relevant to the club, removing filler words or jargon.`;
+const HUGGINGFACE_API_KEY = process.env.HUGGINGFACE_API_KEY;
+const HF_MODEL = 'facebook/bart-large-cnn';
+const HF_API_URL = `https://api-inference.huggingface.co/models/${HF_MODEL}`;
 
-console.log('OPENROUTER_API_KEY:', process.env.OPENROUTER_API_KEY?.slice(0, 8));
+console.log('HUGGINGFACE_API_KEY:', process.env.HUGGINGFACE_API_KEY?.slice(0, 8));
 
 export async function POST(request: NextRequest) {
   try {
-    if (!OPENROUTER_API_KEY) {
-      return NextResponse.json({ error: 'OpenRouter API key not set in environment variables.' }, { status: 500 });
+    if (!HUGGINGFACE_API_KEY) {
+      return NextResponse.json({ error: 'Hugging Face API key not set in environment variables.' }, { status: 500 });
     }
-
     const { transcript } = await request.json();
-    if (!transcript) {
-      return NextResponse.json({ error: 'No transcript provided' }, { status: 400 });
+    if (!transcript || !transcript.trim()) {
+      return NextResponse.json({ error: 'Transcript is empty. Please record some audio.' }, { status: 400 });
     }
-
-    const messages = [
-      {
-        role: 'user',
-        content: [
-          { type: 'text', text: PROMPT + '\n\n' + transcript }
-        ]
-      }
-    ];
-
-    const res = await fetch(OPENROUTER_API_URL, {
+    const prompt = 'Summarize the following club meeting transcript in very much depth, filter out all jargon or any unecessary things that are not related to the club meeting. Have bullet points and paragraphs. Be concise and clear.\nTranscript:';
+    const inputText = `${prompt}\n${transcript}`;
+    const res = await fetch(HF_API_URL, {
       method: 'POST',
       headers: {
-        'authorization': `Bearer ${OPENROUTER_API_KEY}`,
+        'Authorization': `Bearer ${HUGGINGFACE_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: MODEL,
-        messages,
-      })
+      body: JSON.stringify({ inputs: inputText, parameters: { max_length: 130, min_length: 30, do_sample: false } }),
     });
-
     if (!res.ok) {
       const err = await res.text();
       throw new Error(err);
     }
     const data = await res.json();
-    const summary = data.choices?.[0]?.message?.content || '';
+    const summary = data[0]?.summary_text || '';
+    console.log('TRANSCRIPT:', transcript);
+    console.log('SUMMARY:', summary);
+    if (!summary || summary.trim() === '' || summary.trim() === prompt.trim() || summary.toLowerCase().includes('summarize the following club meeting transcript')) {
+      return NextResponse.json({ error: 'Summarization failed. Please try again with a longer or clearer recording.' }, { status: 500 });
+    }
     return NextResponse.json({ summary });
   } catch (error) {
-    console.error('Summarization error:', error);
+    console.error('Hugging Face summarization error:', error);
     return NextResponse.json({ error: 'Summarization failed', details: error?.message || error }, { status: 500 });
   }
 } 

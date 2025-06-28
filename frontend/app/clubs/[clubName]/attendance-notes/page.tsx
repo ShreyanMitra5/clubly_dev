@@ -65,15 +65,25 @@ export default function ClubAttendanceNotesPage() {
       analyser.fftSize = 256;
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
 
+      // Choose a compatible MIME type
+      let mimeType = 'audio/webm';
+      if (typeof MediaRecorder.isTypeSupported === 'function') {
+        if (MediaRecorder.isTypeSupported('audio/mp4')) {
+          mimeType = 'audio/mp4';
+        } else if (MediaRecorder.isTypeSupported('audio/aac')) {
+          mimeType = 'audio/aac';
+        }
+      }
+
       // MediaRecorder for audio capture
-      const mediaRecorder = new MediaRecorder(stream);
+      const mediaRecorder = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
       mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) audioChunksRef.current.push(e.data);
       };
       mediaRecorder.onstop = () => {
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const blob = new Blob(audioChunksRef.current, { type: mimeType });
         setAudioBlob(blob);
       };
       mediaRecorder.start();
@@ -173,7 +183,7 @@ export default function ClubAttendanceNotesPage() {
     }
   }, [audioBlob]);
 
-  // Auto-summarize after transcript
+  // After transcription, call /api/attendance-notes/summarize with the transcript to get the summary
   useEffect(() => {
     if (transcript && !summary && !isSummarizing) {
       (async () => {
@@ -183,7 +193,7 @@ export default function ClubAttendanceNotesPage() {
           const res = await fetch('/api/attendance-notes/summarize', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ transcript, strict: true }),
+            body: JSON.stringify({ transcript }),
           });
           if (!res.ok) {
             const err = await res.json();
@@ -229,11 +239,36 @@ export default function ClubAttendanceNotesPage() {
     saveAs(blob, 'meeting_notes.docx');
   };
 
+  // Helper for summary preview
+  const summaryPreview = summary ? (summary.length > 200 ? summary.slice(0, 200) + "..." : summary) : "";
+
+  // Clubly-style loading screen
+  const LoadingScreen = ({ text, subtext }: { text: string, subtext?: string }) => (
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-white via-gray-100 to-gray-200">
+      <div className="bg-white/80 rounded-3xl shadow-2xl border border-gray-100 px-12 py-16 flex flex-col items-center backdrop-blur-xl">
+        <svg className="animate-spin mb-8" width="80" height="80" viewBox="0 0 48 48" fill="none">
+          <circle cx="24" cy="24" r="20" stroke="#111" strokeWidth="6" opacity="0.12"/>
+          <path d="M24 4a20 20 0 0 1 20 20" stroke="#111" strokeWidth="6" strokeLinecap="round"/>
+        </svg>
+        <div className="text-3xl font-extrabold tracking-tight text-center mb-2 drop-shadow-lg">{text}</div>
+        {subtext && <div className="text-lg text-gray-700 text-center font-medium mt-2">{subtext}</div>}
+      </div>
+    </div>
+  );
+
   // Add gradient background style
   const gradientBg = {
     background: 'radial-gradient(circle at 60% 40%, #f5f5f7 60%, #e0e0e7 100%)',
     minHeight: '100vh',
   };
+
+  useEffect(() => {
+    if (!isTranscribing && !isSummarizing && summary) {
+      // Navigate to result page with summary as query param
+      const summaryParam = encodeURIComponent(summary);
+      router.replace(`/clubs/AI_Club/attendance-notes/result?summary=${summaryParam}`); // TODO: use real clubName
+    }
+  }, [isTranscribing, isSummarizing, summary, router]);
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center" style={gradientBg}>
@@ -245,6 +280,9 @@ export default function ClubAttendanceNotesPage() {
           </div>
         </div>
       )}
+      {/* Loading screens */}
+      {isTranscribing && <LoadingScreen text="Transcribing audio..." subtext="Hang tight! We're turning your words into text." />}
+      {!isTranscribing && isSummarizing && <LoadingScreen text="Summarizing transcript..." subtext="Almost there! Creating a concise summary for you." />}
       {/* Centered bars */}
       <div className={`flex flex-col items-center justify-center flex-1 w-full transition-all ${isCountingDown ? 'blur-sm pointer-events-none' : ''}`}
            style={{ minHeight: '60vh' }}>
@@ -271,23 +309,25 @@ export default function ClubAttendanceNotesPage() {
         </div>
       </div>
       {/* Floating controls */}
-      <div className="fixed flex flex-col items-center z-50" style={{ left: '4vw', bottom: '4vh' }}>
-        {!isRecording && !isCountingDown && (
-          <div className="relative w-32 h-32 mb-2">
-            {/* Single animated arrow pointing to mic, to the right */}
-            <img src="/curved-arrow.png" alt="arrow" className="absolute" style={{ left: '110px', top: '-4px', width: '96px', height: '96px', transform: 'scaleX(-1) rotate(-8deg)' }} />
-            <button
-              className="w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center border border-gray-200 hover:shadow-xl transition focus:outline-none relative z-10 p-0"
-              onClick={handleRecordClick}
-              disabled={isTranscribing || isSummarizing}
-              aria-label="Start Recording"
-              style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
-            >
-              <img src="/microphone.png" alt="Mic" className="w-8 h-8 m-0 p-0 block" style={{ display: 'block', margin: 0, padding: 0 }} />
-            </button>
-          </div>
-        )}
-      </div>
+      {!(isTranscribing || isSummarizing) && (
+        <div className="fixed flex flex-col items-center z-50" style={{ left: '4vw', bottom: '4vh' }}>
+          {!isRecording && !isCountingDown && (
+            <div className="relative w-32 h-32 mb-2">
+              {/* Single animated arrow pointing to mic, to the right */}
+              <img src="/curved-arrow.png" alt="arrow" className="absolute" style={{ left: '110px', top: '-4px', width: '96px', height: '96px', transform: 'scaleX(-1) rotate(-8deg)' }} />
+              <button
+                className="w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center border border-gray-200 hover:shadow-xl transition focus:outline-none relative z-10 p-0"
+                onClick={handleRecordClick}
+                disabled={isTranscribing || isSummarizing}
+                aria-label="Start Recording"
+                style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
+              >
+                <img src="/microphone.png" alt="Mic" className="w-8 h-8 m-0 p-0 block" style={{ display: 'block', margin: 0, padding: 0 }} />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
       <div className="fixed bottom-10 right-10 flex items-center gap-4 z-50">
         {isRecording && (
           <>
@@ -310,40 +350,6 @@ export default function ClubAttendanceNotesPage() {
       </div>
       {/* Error */}
       {error && <div className="text-red-600 mb-4 absolute top-6 left-1/2 -translate-x-1/2 z-50">{error}</div>}
-      {/* Transcript and Summary */}
-      <div className="w-full max-w-2xl mx-auto px-4 mt-2">
-        {isTranscribing && (
-          <div className="flex items-center gap-3 bg-gradient-to-r from-blue-100 to-blue-50 rounded-xl px-6 py-4 mb-4 shadow animate-pulse">
-            <svg className="animate-spin" width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#2563eb" strokeWidth="4" opacity="0.2"/><path d="M12 2a10 10 0 0 1 10 10" stroke="#2563eb" strokeWidth="4" strokeLinecap="round"/></svg>
-            <span className="text-lg font-semibold text-blue-900 tracking-tight">Transcribing audio...</span>
-          </div>
-        )}
-        {isSummarizing && (
-          <div className="flex items-center gap-3 bg-gradient-to-r from-purple-100 to-purple-50 rounded-xl px-6 py-4 mb-4 shadow animate-pulse">
-            <svg className="animate-spin" width="28" height="28" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#9333ea" strokeWidth="4" opacity="0.2"/><path d="M12 2a10 10 0 0 1 10 10" stroke="#9333ea" strokeWidth="4" strokeLinecap="round"/></svg>
-            <span className="text-lg font-semibold text-purple-900 tracking-tight">Summarizing notes...</span>
-          </div>
-        )}
-        {transcript && (
-          <div className="w-full bg-gray-50 rounded-xl p-5 text-gray-800 max-h-48 overflow-y-auto mb-4 shadow-inner border border-gray-200">
-            <div className="font-semibold mb-2 text-gray-700 text-base">Transcript</div>
-            <div className="whitespace-pre-line text-sm leading-relaxed">{transcript}</div>
-          </div>
-        )}
-        {summary && (
-          <div className="w-full bg-white rounded-2xl p-6 text-black mt-2 shadow-xl border border-gray-200">
-            <div className="font-bold mb-3 text-lg text-gray-900">Summary of Meeting</div>
-            <div className="whitespace-pre-line text-base mb-4 leading-relaxed" style={{wordBreak: 'break-word'}}>{summary.replace(/[\*#]/g, '')}</div>
-            <button
-              className="px-5 py-2 bg-black text-white rounded-full hover:bg-gray-800 transition font-semibold text-base flex items-center gap-2 mt-2 shadow"
-              onClick={handleDownload}
-            >
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v12m0 0l-4-4m4 4l4-4m-8 8h12" /><rect x="4" y="18" width="16" height="2" rx="1" fill="white" /></svg>
-              Download Meeting Summary (DOCX)
-            </button>
-          </div>
-        )}
-      </div>
     </div>
   );
 } 

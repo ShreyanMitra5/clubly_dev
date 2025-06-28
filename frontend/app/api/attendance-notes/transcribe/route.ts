@@ -34,6 +34,9 @@ async function startTranscription(audioUrl: string) {
       language_code: 'en',
       punctuate: true,
       format_text: true,
+      summarization: true,
+      summary_model: 'informative',
+      summary_type: 'bullets',
       // Add more config as needed
     }),
   });
@@ -51,7 +54,7 @@ async function pollTranscription(transcriptId: string, timeoutMs = 60000) {
     });
     if (!res.ok) throw new Error('Failed to poll transcription job');
     const data = await res.json();
-    if (data.status === 'completed') return data.text;
+    if (data.status === 'completed') return { transcript: data.text, summary: data.summary };
     if (data.status === 'error') throw new Error(data.error || 'Transcription failed');
     await new Promise(r => setTimeout(r, 2000));
   }
@@ -71,13 +74,32 @@ export async function POST(req: NextRequest) {
     // Read file buffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
+    // Debug: log file type and size
+    console.log('Audio file type:', file.type, 'size:', buffer.length);
+    // Check for empty file
+    if (buffer.length === 0) {
+      return NextResponse.json({ error: 'Recorded audio is empty. Please try again.' }, { status: 400 });
+    }
     // Upload to AssemblyAI
-    const uploadUrl = await uploadToAssemblyAI(buffer);
-    // Start transcription
+    const res = await fetch(ASSEMBLYAI_UPLOAD_URL, {
+      method: 'POST',
+      headers: {
+        'authorization': ASSEMBLYAI_API_KEY || '',
+      },
+      body: buffer,
+    });
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('AssemblyAI upload error:', errorText);
+      throw new Error('Failed to upload audio to AssemblyAI');
+    }
+    const data = await res.json();
+    const uploadUrl = data.upload_url;
+    // Start transcription (with summarization)
     const transcriptId = await startTranscription(uploadUrl);
-    // Poll for result
-    const transcript = await pollTranscription(transcriptId);
-    return NextResponse.json({ transcript });
+    // Poll for result (get both transcript and summary)
+    const { transcript, summary } = await pollTranscription(transcriptId);
+    return NextResponse.json({ transcript, summary });
   } catch (error: any) {
     console.error('Transcription error:', error);
     return NextResponse.json({ error: error?.message || 'Transcription failed' }, { status: 500 });
