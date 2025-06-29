@@ -167,8 +167,10 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="section-padding bg-black text-white">
-        <div className="container-width text-center">
+      <section className="section-padding bg-black text-white relative overflow-hidden">
+        {/* White grid background */}
+        <div aria-hidden="true" className="absolute inset-0 w-full h-full pointer-events-none z-0" style={{backgroundImage: 'linear-gradient(to right, rgba(255,255,255,0.22) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.22) 1px, transparent 1px)', backgroundSize: '32px 32px'}} />
+        <div className="container-width text-center relative z-10">
           <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">Ready to transform your presentations?</h2>
           <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
             Join thousands of educators and club leaders who are already creating amazing presentations with Clubly.

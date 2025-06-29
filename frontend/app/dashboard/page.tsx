@@ -30,9 +30,14 @@ export default function DashboardPage() {
         <h2 className="text-xl font-semibold mb-6">Your Clubs</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
           {clubs.map(club => (
-            <div key={club} className="card p-6 cursor-pointer hover:shadow-xl transition" onClick={() => handleClubClick(club)}>
-              <h3 className="text-lg font-bold text-black mb-2">{club}</h3>
-              <p className="text-gray-600">Click to manage this club</p>
+            <div
+              key={club}
+              className="bg-white border-2 border-black shadow-[6px_6px_0_0_rgba(0,0,0,1)] rounded-none p-8 flex flex-col items-center justify-center cursor-pointer transition-all duration-150 hover:-translate-y-1 hover:shadow-[10px_10px_0_0_rgba(0,0,0,1)] active:scale-95"
+              onClick={() => handleClubClick(club)}
+              style={{ minHeight: 100 }}
+            >
+              <h3 className="text-xl font-bold text-black mb-2 text-center">{club}</h3>
+              <p className="text-gray-700 text-center font-medium">Click to manage this club</p>
             </div>
           ))}
         </div>

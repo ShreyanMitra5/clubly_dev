@@ -49,7 +49,7 @@ export default function RootLayout({
           <link rel="icon" href="/logo-rounded.png" type="image/png" />
         </head>
         <body
-          className={`${inter.variable} font-sans antialiased m-0 p-0`}
+          className={`${inter.variable} font-sans antialiased m-0 p-0 bg-white min-h-screen relative`}
         >
           <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200">
             <nav className="container-width py-2 md:py-3">
@@ -64,7 +64,7 @@ export default function RootLayout({
                 {/* Desktop Nav */}
                 <div className="hidden md:flex items-center space-x-8">
                   <SignedIn>
-                    <a href="/dashboard" className="nav-link nav-link-squiggle font-semibold text-black hover:text-green-600 transition-colors">Dashboard</a>
+                    <a href="/dashboard" className="font-semibold text-black hover:bg-gray-100 hover:text-black transition-colors rounded-lg px-3 py-2">Dashboard</a>
                     <SignOutButton>
                       <button className="btn-ghost rounded-lg shadow-sm hover:bg-gray-100 transition px-4 py-2">Logout</button>
                     </SignOutButton>
