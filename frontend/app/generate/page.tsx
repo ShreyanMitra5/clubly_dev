@@ -153,6 +153,43 @@ export default function GeneratePage() {
       );
 
       setGenerationResult(result);
+      // Save to backend history
+      if (result && user) {
+        // Generate thumbnail
+        let thumbnailUrl = null;
+        try {
+          const presentationId = result.s3Url.split('/').pop().replace('.pptx', '');
+          const thumbRes = await fetch('/api/presentations/thumbnail', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              s3Url: result.s3Url,
+              userId: user.id,
+              presentationId,
+            }),
+          });
+          const thumbData = await thumbRes.json();
+          thumbnailUrl = thumbData.thumbnailUrl;
+        } catch (e) {
+          // fallback: no thumbnail
+        }
+        await fetch('/api/presentations/history', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: user.id,
+            presentation: {
+              clubId: formData.clubId,
+              description: formData.description,
+              week: formData.week,
+              generatedAt: result.generatedAt,
+              s3Url: result.s3Url,
+              viewerUrl: result.viewerUrl,
+              thumbnailUrl,
+            }
+          })
+        });
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -283,7 +320,7 @@ export default function GeneratePage() {
                     {generationResult.slidesGPTResponse && generationResult.slidesGPTResponse.embed && (
                       <div className="mb-4">
                         <a
-                          href={generationResult.slidesGPTResponse.embed.startsWith('http') ? generationResult.slidesGPTResponse.embed : `https://${generationResult.slidesGPTResponse.embed}`}
+                          href={generationResult.viewerUrl}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="inline-block w-full text-center px-4 py-3 mb-2 bg-black text-white font-semibold rounded-lg shadow hover:bg-gray-900 transition"

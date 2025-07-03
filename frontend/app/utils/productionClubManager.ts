@@ -52,7 +52,7 @@ export class ProductionClubManager {
       });
       // Save only the updated clubs
       // (API route should be updated to overwrite files for existing clubs)
-      const response = await fetch(`${this.API_BASE_URL}/clubs/save`, {
+      const response = await fetch('/api/clubs/save', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -79,7 +79,7 @@ export class ProductionClubManager {
    */
   static async getUserClubs(userId: string): Promise<ProductionClubData[]> {
     try {
-      const response = await fetch(`${this.API_BASE_URL}/clubs/user/${userId}`);
+      const response = await fetch('/api/clubs/user/' + userId);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch user clubs: ${response.statusText}`);
@@ -97,7 +97,7 @@ export class ProductionClubManager {
    */
   static async getClubData(clubId: string): Promise<ProductionClubData | null> {
     try {
-      const response = await fetch(`${this.API_BASE_URL}/clubs/${clubId}`);
+      const response = await fetch('/api/clubs/' + clubId);
       
       if (!response.ok) {
         if (response.status === 404) {
@@ -188,8 +188,7 @@ Make sure the content is tailored specifically for ${clubData.clubName} and its 
   static async generatePresentation(clubId: string, topic: string, week?: number, theme: string = 'modern'): Promise<any> {
     try {
       const prompt = await this.createSlidesGPTPrompt(clubId, topic, week);
-      
-      const response = await fetch(`${this.API_BASE_URL}/slidesgpt/generate`, {
+      const response = await fetch('/api/slidesgpt/generate', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -202,11 +201,9 @@ Make sure the content is tailored specifically for ${clubData.clubName} and its 
           prompt
         })
       });
-
       if (!response.ok) {
         throw new Error(`Failed to generate presentation: ${response.statusText}`);
       }
-
       return await response.json();
     } catch (error) {
       console.error('Error generating presentation:', error);

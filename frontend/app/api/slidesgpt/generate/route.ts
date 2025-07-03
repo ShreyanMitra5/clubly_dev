@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { readFile, readdir } from 'fs/promises';
+import { readFile, readdir, writeFile } from 'fs/promises';
 import { join } from 'path';
+import { uploadFileToS3 } from '../../../utils/s3uploader';
+import fetch from 'node-fetch';
+import os from 'os';
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,11 +23,40 @@ export async function POST(request: NextRequest) {
     // Call SlidesGPT API
     const slidesGPTResponse = await callSlidesGPTAPI(prompt);
 
+    // Use the download field from the API response
+    let downloadUrl = slidesGPTResponse.download;
+    if (downloadUrl && !downloadUrl.startsWith('http')) {
+      downloadUrl = `https://${downloadUrl}`;
+    }
+    if (!downloadUrl) {
+      return NextResponse.json({ error: 'No download URL in SlidesGPT response' }, { status: 500 });
+    }
+    const pptxRes = await fetch(downloadUrl, {
+      headers: {
+        'Authorization': `Bearer ${process.env.SLIDESGPT_API_KEY}`,
+      },
+    });
+    if (!pptxRes.ok) {
+      return NextResponse.json({ error: 'Failed to download .pptx from SlidesGPT' }, { status: 500 });
+    }
+    const arrayBuffer = await pptxRes.arrayBuffer();
+    // Save to a temp file
+    const tempDir = os.tmpdir();
+    const fileName = `presentation_${Date.now()}.pptx`;
+    const filePath = join(tempDir, fileName);
+    await writeFile(filePath, Buffer.from(arrayBuffer));
+
+    // Upload to S3
+    const bucket = process.env.S3_BUCKET_NAME!;
+    const { publicUrl, viewerUrl } = await uploadFileToS3(filePath, bucket, fileName);
+
     return NextResponse.json({
       success: true,
       clubData,
       slidesGPTResponse,
-      generatedAt: new Date().toISOString()
+      s3Url: publicUrl,
+      viewerUrl,
+      generatedAt: new Date().toISOString(),
     });
 
   } catch (error) {

@@ -1,4 +1,5 @@
 export interface ClubData {
+  clubId?: string; // Add this line
   name: string;
   description: string;
   mission: string;
