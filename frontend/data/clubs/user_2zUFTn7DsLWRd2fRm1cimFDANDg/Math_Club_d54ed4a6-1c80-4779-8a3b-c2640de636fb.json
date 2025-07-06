@@ -1,0 +1,43 @@
+{
+  "clubId": "d54ed4a6-1c80-4779-8a3b-c2640de636fb",
+  "userId": "user_2zUFTn7DsLWRd2fRm1cimFDANDg",
+  "userName": "Shrey",
+  "userRole": "President",
+  "clubName": "Math Club",
+  "description": "skdjflksjd;fkj;",
+  "mission": "sdkj;skldjf;j",
+  "goals": "slkdjfskd;fdfs",
+  "createdAt": "2025-07-06T04:57:44.335Z",
+  "updatedAt": "2025-07-06T06:46:39.518Z",
+  "roadmap": {
+    "events": [
+      {
+        "id": "special-0",
+        "title": "Hackathon",
+        "start": "2025-10-22T19:00:00.000Z",
+        "end": "2025-10-22T21:00:00.000Z",
+        "backgroundColor": "#10B981",
+        "borderColor": "#059669",
+        "textColor": "#FFFFFF",
+        "extendedProps": {
+          "type": "special"
+        }
+      }
+    ],
+    "settings": {
+      "clubTopic": "Calculus",
+      "semesterStart": "2025-07-24",
+      "semesterEnd": "2025-11-18",
+      "meetingFrequency": "weekly",
+      "meetingDays": [],
+      "meetingTime": "18:00",
+      "specialEvents": [
+        {
+          "name": "Hackathon",
+          "date": "2025-10-23"
+        }
+      ],
+      "aiTopics": []
+    }
+  }
+}

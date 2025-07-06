@@ -2,6 +2,12 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.839.0",
     "@clerk/nextjs": "^6.21.0",
+    "@fullcalendar/core": "^6.1.18",
+    "@fullcalendar/daygrid": "^6.1.18",
+    "@fullcalendar/interaction": "^6.1.18",
+    "@fullcalendar/list": "^6.1.18",
+    "@fullcalendar/react": "^6.1.18",
+    "@fullcalendar/timegrid": "^6.1.18",
     "@types/uuid": "^10.0.0",
     "docx": "^9.5.1",
     "file-saver": "^2.0.5",

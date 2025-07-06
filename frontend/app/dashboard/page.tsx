@@ -27,6 +27,7 @@ export default function DashboardPage() {
       <div className="container-width">
         <h1 className="text-4xl font-extrabold text-black mb-2">Dashboard</h1>
         <h2 className="text-lg text-gray-600 mb-8">Welcome {name}!</h2>
+        
         <h2 className="text-xl font-semibold mb-6">Your Clubs</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
           {clubs.map(club => (

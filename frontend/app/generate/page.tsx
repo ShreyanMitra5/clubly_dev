@@ -262,7 +262,7 @@ export default function GeneratePage() {
                     value={formData.week} 
                     onChange={handleInputChange} 
                     placeholder="1"
-                    description="Which week of your program is this? (optional)"
+                    description="Which week of your program is this?"
                   />
                 </div>
               </div>

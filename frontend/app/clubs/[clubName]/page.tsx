@@ -48,20 +48,24 @@ export default function ClubDetailsPage() {
               <p className="text-gray-600">Create AI-powered slides for your next meeting.</p>
             </div>
           </Link>
-          <div className="card p-6 hover:shadow-xl transition cursor-pointer">
-            <h2 className="text-xl font-semibold mb-2">Semester Roadmap</h2>
-            <p className="text-gray-600">Plan your club's semester with AI assistance.</p>
-          </div>
+          <Link href={`/clubs/${encodeURIComponent(clubName)}/semester-roadmap`}>
+            <div className="card p-6 hover:shadow-xl transition cursor-pointer">
+              <h2 className="text-xl font-semibold mb-2">Semester Roadmap</h2>
+              <p className="text-gray-600">Plan your club's semester with AI assistance.</p>
+            </div>
+          </Link>
           <Link href={`/clubs/${encodeURIComponent(clubName)}/attendance-notes`}>
             <div className="card p-6 hover:shadow-xl transition cursor-pointer">
               <h2 className="text-xl font-semibold mb-2">Attendance & Notes</h2>
               <p className="text-gray-600">Track attendance and keep meeting notes.</p>
             </div>
           </Link>
-          <div className="card p-6 hover:shadow-xl transition cursor-pointer">
-            <h2 className="text-xl font-semibold mb-2">Settings</h2>
-            <p className="text-gray-600">Manage club settings and preferences.</p>
-          </div>
+          <Link href={`/clubs/${encodeURIComponent(clubName)}/advisor`}>
+            <div className="card p-6 hover:shadow-xl transition cursor-pointer">
+              <h2 className="text-xl font-semibold mb-2">AI Club Advisor</h2>
+              <p className="text-gray-600">Plan exciting events for your club with your AI Club Advisor.</p>
+            </div>
+          </Link>
         </div>
         <div className="mt-4 flex gap-4">
           <button className="btn-secondary" onClick={() => router.push('/dashboard')}>← Back to Dashboard</button>

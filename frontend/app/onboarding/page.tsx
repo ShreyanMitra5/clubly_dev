@@ -12,7 +12,8 @@ export default function OnboardingPage() {
   const [name, setName] = useState('');
   const [clubs, setClubs] = useState<string[]>([]);
   const [clubInput, setClubInput] = useState('');
-  const [role, setRole] = useState('');
+  const [clubRoles, setClubRoles] = useState<string[]>([]);
+  const [clubAudiences, setClubAudiences] = useState<string[]>([]);
   const [clubData, setClubData] = useState<ClubData[]>([]);
   const [currentClubIndex, setCurrentClubIndex] = useState(0);
   const [error, setError] = useState('');
@@ -52,9 +53,21 @@ export default function OnboardingPage() {
     setClubData(updatedClubData);
   };
 
+  const handleClubRoleChange = (value: string) => {
+    const updatedRoles = [...clubRoles];
+    updatedRoles[currentClubIndex] = value;
+    setClubRoles(updatedRoles);
+  };
+
+  const handleClubAudienceChange = (value: string) => {
+    const updatedAudiences = [...clubAudiences];
+    updatedAudiences[currentClubIndex] = value;
+    setClubAudiences(updatedAudiences);
+  };
+
   const handleNextStep = () => {
     if (currentStep === 1) {
-      if (!name || clubs.length === 0 || !role) {
+      if (!name || clubs.length === 0) {
         setError('Please fill out all fields.');
         return;
       }
@@ -91,13 +104,14 @@ export default function OnboardingPage() {
   const handleSubmit = () => {
     if (user) {
       // Save using the production system
-      ProductionClubManager.saveClubData(user.id, name, role, clubData)
+      ProductionClubManager.saveClubData(user.id, name, clubRoles[currentClubIndex], clubData)
         .then(() => {
           // Also save legacy data for backward compatibility
           localStorage.setItem(`onboardingComplete_${user.id}`, 'true');
           localStorage.setItem(`userName_${user.id}`, name);
           localStorage.setItem(`userClubs_${user.id}`, JSON.stringify(clubs));
-          localStorage.setItem(`userRole_${user.id}`, role);
+          localStorage.setItem(`userRoles_${user.id}`, JSON.stringify(clubRoles));
+          localStorage.setItem(`userAudiences_${user.id}`, JSON.stringify(clubAudiences));
           localStorage.setItem(`clubData_${user.id}`, JSON.stringify(clubData));
           
           router.push('/dashboard');
@@ -149,17 +163,6 @@ export default function OnboardingPage() {
           ))}
         </div>
       </div>
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Your Club Role</label>
-        <input 
-          type="text" 
-          className="input-field w-full" 
-          value={role} 
-          onChange={e => setRole(e.target.value)} 
-          placeholder="e.g., President, Secretary, Member" 
-          required 
-        />
-      </div>
       {error && <div className="text-red-500 text-sm">{error}</div>}
       <button type="button" className="btn-primary w-full text-lg py-3" onClick={handleNextStep}>
         Continue to Club Details
@@ -187,6 +190,28 @@ export default function OnboardingPage() {
         </div>
 
         <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Your Role in {currentClub?.name} <span className="text-red-500">*</span></label>
+            <input
+              type="text"
+              className="input-field w-full"
+              value={clubRoles[currentClubIndex] || ''}
+              onChange={e => handleClubRoleChange(e.target.value)}
+              placeholder="e.g., President, Secretary, Treasurer"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Target Audience for {currentClub?.name} <span className="text-red-500">*</span></label>
+            <textarea
+              className="input-field w-full h-20 resize-none"
+              value={clubAudiences[currentClubIndex] || ''}
+              onChange={e => handleClubAudienceChange(e.target.value)}
+              placeholder="Describe the target audience for this club in detail."
+              maxLength={1000}
+              required
+            />
+          </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Club Description/Purpose <span className="text-red-500">*</span>

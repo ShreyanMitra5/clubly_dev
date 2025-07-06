@@ -74,7 +74,8 @@ export default function ClubSettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-6">Settings for {clubInfo.clubName}</h1>
+      <h1 className="text-3xl font-bold mb-6">Settings</h1>
+      <p className="mb-6 text-gray-600">Manage club settings and preferences.</p>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label className="block font-semibold mb-1">Club Description</label>
