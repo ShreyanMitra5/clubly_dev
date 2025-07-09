@@ -1,14 +1,16 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import { useUser } from "@clerk/nextjs";
-import FullCalendar from "@fullcalendar/react";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import timeGridPlugin from "@fullcalendar/timegrid";
-import interactionPlugin from "@fullcalendar/interaction";
-import listPlugin from "@fullcalendar/list";
-import { EventClickArg, DateSelectArg, EventInput } from "@fullcalendar/core";
 import { useParams, useRouter } from "next/navigation";
 import { ProductionClubManager, ProductionClubData } from '../../../utils/productionClubManager';
+import { Calendar as ReactBigCalendar, dateFnsLocalizer } from "react-big-calendar";
+import format from 'date-fns/format';
+import parse from 'date-fns/parse';
+import startOfWeek from 'date-fns/startOfWeek';
+import getDay from 'date-fns/getDay';
+import enUS from 'date-fns/locale/en-US';
+import "react-big-calendar/lib/css/react-big-calendar.css";
+import { EventClickArg, DateSelectArg, EventInput } from "@fullcalendar/core";
 
 // --- Types ---
 interface SpecialEvent {
@@ -56,6 +58,11 @@ export default function SemesterRoadmapPage() {
   const [specialEventError, setSpecialEventError] = useState("");
   const [clubInfo, setClubInfo] = useState<ProductionClubData | null>(null);
   const [topicsGenerated, setTopicsGenerated] = useState(false);
+  const [calendarDate, setCalendarDate] = useState(new Date());
+  const [calendarView, setCalendarView] = useState('month');
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [showEventModal, setShowEventModal] = useState(false);
+
   // Helper function to get the correct API URL for topic generation
   const getGenerateTopicsUrl = () => clubInfo ? `/api/clubs/${clubInfo.clubId}/generate-topics` : '';
 
@@ -74,9 +81,9 @@ export default function SemesterRoadmapPage() {
             else setShowOnboarding(true);
           })
           .catch(() => setShowOnboarding(true));
-      } else {
-        setShowOnboarding(true);
-      }
+    } else {
+      setShowOnboarding(true);
+    }
     });
   }, [user, clubName]);
 
@@ -137,11 +144,6 @@ export default function SemesterRoadmapPage() {
         { name: "specialEvents", label: "Special Events", type: "special-events-list" },
       ],
     },
-    {
-      title: "AI is generating topics for your meetings...",
-      description: "Review and confirm the topics for each meeting. You can regenerate if you want.",
-      fields: [],
-    },
   ];
 
   // --- Onboarding Handlers ---
@@ -150,34 +152,6 @@ export default function SemesterRoadmapPage() {
     if (onboardingStep === onboardingSteps.length - 1) {
       handleOnboardingSubmit();
       setShowOnboarding(false);
-      return;
-    }
-    // AI step logic (if present)
-    if (onboardingStep === onboardingSteps.length - 2) {
-      setAiLoading(true);
-      setAiError("");
-      try {
-        const res = await fetch(`/api/clubs/${encodeURIComponent(clubName)}/generate-topics`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            clubTopic: formData.clubTopic,
-            semesterStart: formData.semesterStart,
-            semesterEnd: formData.semesterEnd,
-            frequency: formData.meetingFrequency,
-            specialEvents: formData.specialEvents.filter(e => e.name && e.date),
-          }),
-        });
-        const data = await res.json();
-        if (!data.topics) throw new Error(data.error || "Failed to generate topics");
-        setAiTopics(data.topics);
-        setTopicsGenerated(true);
-        setOnboardingStep(onboardingStep + 1);
-      } catch (e: any) {
-        setAiError(e.message || "Failed to generate topics");
-      } finally {
-        setAiLoading(false);
-      }
       return;
     }
     setOnboardingStep(onboardingStep + 1);
@@ -241,27 +215,47 @@ export default function SemesterRoadmapPage() {
   };
 
   // --- Calendar Event Handlers ---
-  const handleEventClick = (clickInfo: EventClickArg) => {
-    setEventModal({ event: clickInfo.event.toPlainObject(), type: clickInfo.event.extendedProps?.type || "custom" });
+  const handleSelectEvent = (event) => {
+    setSelectedEvent(event);
+    setShowEventModal(true);
   };
-  const handleDateSelect = (selectInfo: DateSelectArg) => {
-    setEventModal({ event: { start: selectInfo.startStr, end: selectInfo.endStr, title: "", id: `custom-${Date.now()}` }, type: "custom" });
+
+  const handleNavigate = (date) => {
+    setCalendarDate(date);
   };
-  const handleEventDelete = (eventId: string) => {
-    if (!roadmapData) return;
-    const updatedEvents = roadmapData.events.filter((e) => e.id !== eventId);
-    const updatedData = { ...roadmapData, events: updatedEvents };
-    saveRoadmap(updatedData);
-    setEventModal(null);
+
+  const handleView = (view) => {
+    setCalendarView(view);
   };
-  const handleEventSave = (event: EventInput) => {
-    if (!roadmapData) return;
-    let updatedEvents = roadmapData.events.filter((e) => e.id !== event.id);
-    updatedEvents.push(event);
-    updatedEvents = updatedEvents.sort((a, b) => new Date(a.start as string).getTime() - new Date(b.start as string).getTime());
-    const updatedData = { ...roadmapData, events: updatedEvents };
-    saveRoadmap(updatedData);
-    setEventModal(null);
+
+  const handleSaveEvent = (updatedEvent) => {
+    const exists = roadmapData.events.some(e => e.id === updatedEvent.id);
+    let updatedEvents;
+    if (exists) {
+      updatedEvents = roadmapData.events.map(e => e.id === updatedEvent.id ? updatedEvent : e);
+    } else {
+      updatedEvents = [...roadmapData.events, updatedEvent];
+    }
+    setRoadmapData({ ...roadmapData, events: updatedEvents });
+    setShowEventModal(false);
+  };
+
+  const handleDeleteEvent = (eventId) => {
+    const updatedEvents = roadmapData.events.filter(e => e.id !== eventId);
+    setRoadmapData({ ...roadmapData, events: updatedEvents });
+    setShowEventModal(false);
+  };
+
+  // Remove right-click/contextmenu logic and use onSelectSlot for left click
+  const handleSelectSlot = (slotInfo) => {
+    setSelectedEvent({
+      id: `custom-${Date.now()}`,
+      title: '',
+      start: new Date(slotInfo.start),
+      end: new Date(slotInfo.end),
+      extendedProps: {},
+    });
+    setShowEventModal(true);
   };
 
   // --- UI ---
@@ -289,7 +283,18 @@ export default function SemesterRoadmapPage() {
           >
             {currentStep.fields.map((field, idx) => (
               <div key={idx}>
-                {field.type === "text" && (
+                {field.type === "text" && field.name === "meetingFrequency" ? (
+                  <select
+                    className="input-field w-full"
+                    value={formData.meetingFrequency}
+                    onChange={e => setFormData({ ...formData, meetingFrequency: e.target.value })}
+                    required
+                  >
+                    <option value="weekly">Weekly</option>
+                    <option value="biweekly">Bi-Weekly</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                ) : field.type === "text" ? (
                   <input
                     type="text"
                     value={formData[field.name]}
@@ -298,25 +303,25 @@ export default function SemesterRoadmapPage() {
                     className="input-field"
                     required
                   />
-                )}
+                ) : null}
                 {field.type === "date" && (
-                  <input
-                    type="date"
+                    <input
+                      type="date"
                     value={formData[field.name]}
                     onChange={e => setFormData({ ...formData, [field.name]: e.target.value })}
                     className="input-field"
-                    required
-                  />
-                )}
+                      required
+                    />
+                  )}
                 {field.type === "time" && (
-                  <input
-                    type="time"
+                    <input
+                      type="time"
                     value={formData[field.name]}
                     onChange={e => setFormData({ ...formData, [field.name]: e.target.value })}
                     className="input-field"
-                    required
-                  />
-                )}
+                      required
+                    />
+                  )}
                 {field.type === "checkbox-group" && (
                   <div className="flex flex-wrap gap-2">
                     {field.options.map((option: any) => (
@@ -327,7 +332,7 @@ export default function SemesterRoadmapPage() {
                           onChange={e => {
                             const checked = e.target.checked;
                             setFormData({
-                              ...formData,
+                        ...formData,
                               meetingDays: checked
                                 ? [...formData.meetingDays, option.value]
                                 : formData.meetingDays.filter((d: string) => d !== option.value),
@@ -348,8 +353,8 @@ export default function SemesterRoadmapPage() {
                     </div>
                     {formData.specialEvents.map((event, i) => (
                       <div key={i} className="flex gap-2 items-center mb-1">
-                        <input
-                          type="text"
+                          <input
+                            type="text"
                           value={event.name ?? ''}
                           onChange={e => {
                             const updated = [...formData.specialEvents];
@@ -368,95 +373,31 @@ export default function SemesterRoadmapPage() {
                             setFormData({ ...formData, specialEvents: updated });
                           }}
                           className="input-field w-1/2"
-                        />
-                        <button
-                          type="button"
+                          />
+                          <button
+                            type="button"
                           onClick={() => setFormData({ ...formData, specialEvents: formData.specialEvents.filter((_, idx) => idx !== i) })}
                           className="btn-secondary px-2 py-1"
                           disabled={formData.specialEvents.length === 1}
                         >
                           ✕
-                        </button>
-                      </div>
-                    ))}
-                    <button
-                      type="button"
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
                       onClick={() => setFormData({ ...formData, specialEvents: [...formData.specialEvents, { name: "", date: "" }] })}
                       className="btn-primary px-4 py-2 mt-2"
                     >
                       + Add Event
-                    </button>
+                      </button>
                     {specialEventError && (
                       <div className="text-red-500 font-semibold mb-2">{specialEventError}</div>
                     )}
-                  </div>
-                )}
-              </div>
-            ))}
-            {/* AI Step */}
-            {onboardingStep === onboardingSteps.length - 1 && (
-              <div className="space-y-4">
-                {aiLoading && <div className="text-blue-500 font-semibold">Generating topics with AI...</div>}
-                {aiError && <div className="text-red-500 font-semibold">{aiError}</div>}
-                {!aiLoading && !aiError && aiTopics.length > 0 && (
-                  <div className="space-y-2">
-                    {aiTopics.map((t, i) => (
-                      <div key={i} className="bg-gray-100 rounded-lg px-4 py-2 flex items-center gap-2">
-                        <span className="font-semibold text-blue-700">{t.date}:</span>
-                        <span className="text-black">{t.topic}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                <div className="flex gap-2 mt-4">
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    onClick={handleOnboardingBack}
-                  >Back</button>
-                  <button
-                    type="button"
-                    className="btn-primary"
-                    onClick={async () => {
-                      setAiLoading(true);
-                      setAiError("");
-                      try {
-                        const url = getGenerateTopicsUrl();
-                        if (!url) throw new Error('Club info not loaded.');
-                        const res = await fetch(url, {
-                          method: "POST",
-                          headers: { "Content-Type": "application/json" },
-                          body: JSON.stringify({
-                            clubTopic: formData.clubTopic,
-                            semesterStart: formData.semesterStart,
-                            semesterEnd: formData.semesterEnd,
-                            frequency: formData.meetingFrequency,
-                            specialEvents: formData.specialEvents.filter(e => e.name && e.date),
-                          }),
-                        });
-                        let data;
-                        try {
-                          data = await res.json();
-                        } catch (err) {
-                          const text = await res.text();
-                          console.error('API returned non-JSON:', text);
-                          throw new Error('Server error: ' + text.slice(0, 100));
-                        }
-                        if (!data.topics) throw new Error(data.error || "Failed to generate topics");
-                        setAiTopics(data.topics);
-                        setTopicsGenerated(true);
-                        handleOnboardingSubmit();
-                        setShowOnboarding(false);
-                      } catch (e: any) {
-                        setAiError(e.message || "Failed to generate topics");
-                      } finally {
-                        setAiLoading(false);
-                      }
-                    }}
-                  >Save and Confirm</button>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
+              ))}
             {/* Navigation */}
             {onboardingStep < onboardingSteps.length - 1 && (
               <div className="flex gap-2 mt-4">
@@ -469,7 +410,19 @@ export default function SemesterRoadmapPage() {
                 <button type="submit" className="btn-primary">Next</button>
               </div>
             )}
-          </form>
+            {onboardingStep === onboardingSteps.length - 1 && (
+              <div className="flex gap-2 mt-4">
+                <button
+                  type="button"
+                  className="btn-primary"
+                  onClick={() => {
+                    handleOnboardingSubmit();
+                    setShowOnboarding(false);
+                  }}
+                >Save and Confirm</button>
+              </div>
+            )}
+            </form>
         </div>
       </div>
     );
@@ -483,6 +436,17 @@ export default function SemesterRoadmapPage() {
       </div>
     );
   }
+
+  const locales = {
+    'en-US': enUS,
+  };
+  const localizer = dateFnsLocalizer({
+    format,
+    parse,
+    startOfWeek,
+    getDay,
+    locales,
+  });
 
   return (
     <div className="min-h-screen bg-gray-50 pt-10 pb-20">
@@ -504,137 +468,88 @@ export default function SemesterRoadmapPage() {
           </button>
         </div>
         <div className="bg-white rounded-2xl shadow-2xl border border-gray-200 p-4 md:p-8 mb-8 animate-fade-in-up">
-          <FullCalendar
-            ref={calendarRef}
-            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
-            headerToolbar={{
-              left: "prev,next today",
-              center: "title",
-              right: "dayGridMonth,timeGridWeek,listWeek",
-            }}
-            initialView="dayGridMonth"
-            editable={true}
-            selectable={true}
-            selectMirror={true}
-            dayMaxEvents={true}
-            weekends={true}
-            events={roadmapData.events}
-            select={handleDateSelect}
-            eventClick={handleEventClick}
-            eventDrop={info => {
-              // Drag to move
-              const event = info.event.toPlainObject();
-              handleEventSave(event);
-            }}
-            eventResize={info => {
-              // Resize to change time
-              const event = info.event.toPlainObject();
-              handleEventSave(event);
-            }}
-            height="auto"
+          <ReactBigCalendar
+            localizer={localizer}
+            events={roadmapData.events.map(e => ({
+              ...e,
+              start: typeof e.start === 'string' ? new Date(e.start) : e.start,
+              end: typeof e.end === 'string' ? new Date(e.end) : e.end,
+            }))}
+            startAccessor="start"
+            endAccessor="end"
+            style={{ height: 600, borderRadius: 16, background: '#fafbfc', padding: 16 }}
+            date={calendarDate}
+            view={calendarView}
+            views={['month', 'week', 'day']}
+            onNavigate={handleNavigate}
+            onView={handleView}
+            onSelectEvent={handleSelectEvent}
+            selectable
+            onSelectSlot={handleSelectSlot}
           />
         </div>
-        {/* Meeting & Event Details Modal */}
-        {eventModal && (
-          <EventModal
-            event={eventModal.event}
-            type={eventModal.type}
-            onClose={() => setEventModal(null)}
-            onDelete={handleEventDelete}
-            onSave={handleEventSave}
-            clubName={clubName}
-          />
+        {/* Full-screen event modal */}
+        {showEventModal && selectedEvent && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
+            <div className="w-full h-full flex flex-col justify-center items-center">
+              <div className="bg-white rounded-3xl shadow-2xl p-10 w-full max-w-3xl h-[90vh] overflow-y-auto flex flex-col gap-8 animate-fade-in-up relative">
+                <button className="absolute top-6 right-8 text-3xl text-gray-400 hover:text-black" onClick={() => setShowEventModal(false)}>&times;</button>
+                <h2 className="text-3xl font-bold mb-4 text-black">Edit Event</h2>
+                <div className="flex flex-col gap-6 flex-1">
+                  <div>
+                    <label className="block font-semibold mb-1">Meeting Title</label>
+                    <input
+                      type="text"
+                      className="input-field w-full text-lg"
+                      value={selectedEvent.title}
+                      onChange={e => setSelectedEvent({ ...selectedEvent, title: e.target.value })}
+                    />
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <label className="block font-semibold mb-1">Start Time</label>
+                      <input
+                        type="datetime-local"
+                        className="input-field w-full text-lg"
+                        value={selectedEvent.start ? new Date(selectedEvent.start).toISOString().slice(0, 16) : ''}
+                        onChange={e => setSelectedEvent({ ...selectedEvent, start: e.target.value })}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block font-semibold mb-1">End Time</label>
+                      <input
+                        type="datetime-local"
+                        className="input-field w-full text-lg"
+                        value={selectedEvent.end ? new Date(selectedEvent.end).toISOString().slice(0, 16) : ''}
+                        onChange={e => setSelectedEvent({ ...selectedEvent, end: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-4 mt-2">
+                    <button
+                      className="btn-primary flex-1 text-lg"
+                      onClick={() => router.push(`/generate?clubId=${selectedEvent.extendedProps?.clubId || ''}&date=${selectedEvent.start}`)}
+                      type="button"
+                    >Generate Presentation</button>
+                    <button
+                      className="btn-primary flex-1 text-lg"
+                      onClick={() => router.push(`/clubs/${encodeURIComponent(clubName)}/attendance-notes?date=${selectedEvent.start}`)}
+                      type="button"
+                    >Record Meeting</button>
+                  </div>
+                </div>
+                <div className="flex gap-4 mt-8">
+                  <button className="btn-secondary flex-1 text-lg" onClick={() => setShowEventModal(false)}>Cancel</button>
+                  <button className="btn-secondary flex-1 text-lg" onClick={() => handleDeleteEvent(selectedEvent.id)}>Delete</button>
+                  <button
+                    className="btn-primary flex-1 text-lg"
+                    onClick={() => handleSaveEvent(selectedEvent)}
+                  >Save</button>
+                </div>
+              </div>
+            </div>
+          </div>
         )}
-        {/* Info Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
-            <h3 className="text-lg font-bold text-black mb-2">Meeting Schedule</h3>
-            <div className="space-y-1">
-              <p><strong>Topic:</strong> {roadmapData.settings.clubTopic}</p>
-              <p><strong>Frequency:</strong> {roadmapData.settings.meetingFrequency}</p>
-              <p><strong>Day:</strong> {roadmapData.settings.meetingDay}</p>
-              <p><strong>Time:</strong> {roadmapData.settings.meetingTime}</p>
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6">
-            <h3 className="text-lg font-bold text-black mb-2">Semester Period</h3>
-            <div className="space-y-1">
-              <p><strong>Start:</strong> {new Date(roadmapData.settings.semesterStart).toLocaleDateString()}</p>
-              <p><strong>End:</strong> {new Date(roadmapData.settings.semesterEnd).toLocaleDateString()}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// --- Event Modal ---
-function EventModal({ event, type, onClose, onDelete, onSave, clubName }: {
-  event: EventInput;
-  type: string;
-  onClose: () => void;
-  onDelete: (id: string) => void;
-  onSave: (event: EventInput) => void;
-  clubName: string;
-}) {
-  const [editTitle, setEditTitle] = useState(event.title || "");
-  const [editStart, setEditStart] = useState(event.start ? new Date(event.start).toISOString().slice(0, 16) : "");
-  const [editEnd, setEditEnd] = useState(event.end ? new Date(event.end).toISOString().slice(0, 16) : "");
-  const router = useRouter();
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md animate-fade-in-up">
-        <h2 className="text-xl font-bold mb-4 text-black">{type === "meeting" ? "Meeting Details" : type === "special" ? "Special Event" : "Event"}</h2>
-        <div className="space-y-4">
-          <input
-            type="text"
-            className="input-field"
-            value={editTitle}
-            onChange={e => setEditTitle(e.target.value)}
-            placeholder="Event Title"
-          />
-          <div className="flex gap-2">
-            <input
-              type="datetime-local"
-              className="input-field flex-1"
-              value={editStart}
-              onChange={e => setEditStart(e.target.value)}
-            />
-            <input
-              type="datetime-local"
-              className="input-field flex-1"
-              value={editEnd}
-              onChange={e => setEditEnd(e.target.value)}
-            />
-          </div>
-        </div>
-        <div className="flex gap-2 mt-6">
-          <button className="btn-secondary flex-1" onClick={onClose}>Cancel</button>
-          <button className="btn-secondary flex-1" onClick={() => onDelete(event.id as string)}>Delete</button>
-          {type === "meeting" && (
-            <button
-              className="btn-primary flex-1"
-              onClick={() => router.push(`/generate?clubId=${clubName}&date=${editStart}`)}
-            >
-              Generate Presentation
-            </button>
-          )}
-          {type === "meeting" && (
-            <button
-              className="btn-primary flex-1"
-              onClick={() => router.push(`/clubs/${encodeURIComponent(clubName)}/attendance-notes?date=${editStart}`)}
-            >
-              Attendance & Notes
-            </button>
-          )}
-          <button
-            className="btn-primary flex-1"
-            onClick={() => onSave({ ...event, title: editTitle, start: editStart, end: editEnd })}
-          >
-            Save
-          </button>
-        </div>
       </div>
     </div>
   );

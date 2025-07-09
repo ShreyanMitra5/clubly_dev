@@ -17,6 +17,5 @@ tmp/
 /.clerk/
 
 # Whisper.cpp model files
-whisper.cpp/models/*.bin
 .env.local
 frontend/.env.local

@@ -1,18 +1,24 @@
 "use client";
 import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { useUser } from '@clerk/nextjs';
+import { XIcon } from '@heroicons/react/outline';
+import { ChatAlt2Icon } from '@heroicons/react/solid';
 
 interface Message {
   id: string;
   content: string;
   isUser: boolean;
   timestamp: Date;
+  system?: boolean;
 }
 
 export default function ClubAdvisorPage() {
   const params = useParams();
   const router = useRouter();
   const clubName = decodeURIComponent(params.clubName as string);
+  const { user } = useUser();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -32,6 +38,23 @@ export default function ClubAdvisorPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Load chat history from localStorage
+  useEffect(() => {
+    if (!user) return;
+    const key = `advisorChatHistory_${user.id}_${clubName}`;
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      setMessages(JSON.parse(saved).map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+    }
+  }, [user, clubName]);
+
+  // Save chat history to localStorage
+  useEffect(() => {
+    if (!user) return;
+    const key = `advisorChatHistory_${user.id}_${clubName}`;
+    localStorage.setItem(key, JSON.stringify(messages));
+  }, [messages, user, clubName]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,106 +113,84 @@ export default function ClubAdvisorPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'transparent' }}>
-      {/* Centered Advisor Header below navbar */}
-      <div className="w-full flex justify-center mt-8 mb-8">
-        <div className="flex items-center gap-4 px-8 py-5 rounded-2xl shadow-lg bg-white/90 border border-gray-100">
-          <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-            </svg>
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">AI Club Advisor</h1>
-            <p className="text-base text-gray-500 font-medium">{clubName}</p>
-          </div>
+    <div className="min-h-screen w-full flex items-center justify-center bg-gray-100">
+      {/* Chat Card */}
+      <div className="w-full max-w-2xl h-[80vh] flex flex-col rounded-3xl shadow-2xl border border-gray-200 bg-white overflow-hidden relative mx-4 md:mx-auto" style={{ minWidth: 350 }}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-8 py-4 border-b border-gray-200 bg-white">
+          <span className="font-bold text-2xl text-gray-900">Chat</span>
+          <button onClick={() => router.back()} className="p-2 rounded-full hover:bg-gray-100 transition"><XIcon className="w-7 h-7 text-gray-500" /></button>
         </div>
-      </div>
-
-      {/* Centered Chat Area */}
-      <div className="flex-1 flex flex-col items-center" style={{ background: 'transparent' }}>
-        <div className="w-full max-w-2xl flex-1 flex flex-col justify-end">
-          <div className="flex-1 flex flex-col gap-6 pb-4" style={{ background: 'transparent' }}>
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}
-                style={{ background: 'transparent' }}
-              >
-                <div className={`max-w-[80%] ${message.isUser ? 'order-2' : 'order-1'}`} style={{ background: 'transparent' }}>
-                  <div
-                    className={`rounded-2xl px-4 py-3 ${
-                      message.isUser
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-white/80 text-gray-900 border border-gray-100 shadow-sm'
-                    }`}
-                  >
-                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.content}</p>
-                  </div>
-                  <div className={`text-xs text-gray-400 mt-2 ${message.isUser ? 'text-right' : 'text-left'}`}
-                    style={{ background: 'transparent' }}>
-                    {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </div>
+        {/* Live Chat Bar */}
+        <div className="flex items-center gap-3 px-8 py-3 bg-[#2d3e50] text-white text-base font-semibold border-b border-gray-200">
+          <ChatAlt2Icon className="w-6 h-6 text-white" />
+          Live Chat
+        </div>
+        {/* Chat Area */}
+        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6 bg-white" style={{scrollBehavior:'smooth'}}>
+          {messages.map((message, idx) => (
+            <div key={message.id} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'} w-full`}>
+              {/* System message */}
+              {message.system ? (
+                <div className="bg-gray-100 text-gray-500 text-xs px-3 py-2 rounded-lg max-w-[80%] shadow-sm">
+                  {message.content}
+                  <div className="text-[10px] text-gray-400 mt-1">{message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                 </div>
-                {!message.isUser && (
-                  <div className="order-2 ml-3">
-                    <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                      <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                      </svg>
+              ) : message.isUser ? (
+                <div className="flex flex-col items-end max-w-[80%]">
+                  <div className="bg-gray-200 text-gray-900 px-4 py-2 rounded-xl rounded-br-3xl shadow-sm text-sm">
+                    {message.content}
+                  </div>
+                  <div className="text-[10px] text-gray-400 mt-1 pr-1">{message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                </div>
+              ) : (
+                <div className="flex items-end max-w-[80%]">
+                  <Image src="/logo-rounded.png" alt="Clubly Logo" width={28} height={28} className="rounded-full border border-gray-200 bg-white mr-2" />
+                  <div className="flex flex-col">
+                    <div className="bg-gray-100 text-gray-900 px-4 py-2 rounded-xl rounded-bl-3xl shadow-sm text-sm">
+                      {message.content}
                     </div>
-                  </div>
-                )}
-              </div>
-            ))}
-            {isLoading && (
-              <div className="flex justify-start" style={{ background: 'transparent' }}>
-                <div className="order-2">
-                  <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                    <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
+                    <div className="text-[10px] text-gray-400 mt-1 pl-1">{message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
                   </div>
                 </div>
-                <div className="order-1 ml-3">
-                  <div className="bg-white/80 text-gray-900 border border-gray-100 shadow-sm rounded-2xl px-4 py-3">
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                    </div>
-                  </div>
-                </div>
+              )}
+            </div>
+          ))}
+          {isLoading && (
+            <div className="flex justify-start w-full">
+              <Image src="/logo-rounded.png" alt="Clubly Logo" width={28} height={28} className="rounded-full border border-gray-200 bg-white mr-2" />
+              <div className="bg-gray-100 text-gray-900 px-4 py-2 rounded-xl rounded-bl-3xl shadow-sm text-sm flex items-center gap-1">
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
           <div ref={messagesEndRef} />
         </div>
-      </div>
-
-      {/* Centered Input Area */}
-      <div className="w-full flex justify-center pb-8" style={{ background: 'transparent' }}>
-        <form onSubmit={handleSubmit} className="flex w-full max-w-2xl space-x-4" style={{ background: 'transparent' }}>
-          <div className="flex-1 relative">
-            <input
-              type="text"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Ask your AI Club Advisor anything..."
-              className="w-full px-4 py-3 border border-gray-200 bg-white/80 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none shadow-sm"
-              disabled={isLoading}
-              style={{ background: 'rgba(255,255,255,0.8)' }}
-            />
-          </div>
+        {/* Input Area */}
+        <form onSubmit={handleSubmit} className="flex items-center gap-3 px-8 py-4 border-t border-gray-200 bg-white">
+          {/* Optional icons */}
+          <button type="button" className="p-1 rounded hover:bg-gray-100"><span className="text-base font-bold text-gray-400">T</span></button>
+          <button type="button" className="p-1 rounded hover:bg-gray-100"><span className="text-base font-bold text-gray-400">🔊</span></button>
+          <input
+            type="text"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            placeholder="Type Something..."
+            className="flex-1 px-5 py-3 border border-gray-200 bg-gray-50 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm text-base"
+            disabled={isLoading}
+            style={{ fontFamily: 'Inter, sans-serif' }}
+            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { handleSubmit(e); } }}
+          />
           <button
             type="submit"
             disabled={!inputValue.trim() || isLoading}
-            className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl font-medium hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center space-x-2"
+            className="p-3 rounded-full bg-blue-600 hover:bg-blue-700 transition text-white shadow disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
             </svg>
-            <span>Send</span>
           </button>
         </form>
       </div>
