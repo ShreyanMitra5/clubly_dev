@@ -1,4 +1,5 @@
 import { ClubData } from './clubDataManager';
+import { supabase } from '../../utils/supabaseClient';
 
 export interface ProductionClubData {
   clubId: string;
@@ -78,39 +79,60 @@ export class ProductionClubManager {
    * Get all clubs for a user
    */
   static async getUserClubs(userId: string): Promise<ProductionClubData[]> {
-    try {
-      const response = await fetch('/api/clubs/user/' + userId);
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch user clubs: ${response.statusText}`);
-      }
+    // Fetch clubs for this user from Supabase
+    const { data, error } = await supabase
+      .from('memberships')
+      .select('club_id, role, clubs (id, name, description, mission, goals, audience, owner_id, created_at, updated_at)')
+      .eq('user_id', userId);
 
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching user clubs:', error);
-      throw error;
+    if (error) {
+      console.error('Error fetching user clubs from Supabase:', error);
+      return [];
     }
+
+    // Map the data to ProductionClubData[]
+    return (data || []).map((m: any) => ({
+      clubId: m.club_id,
+      userId,
+      userName: '', // Optionally fetch or pass this if needed
+      userRole: m.role,
+      clubName: m.clubs?.name,
+      description: m.clubs?.description,
+      mission: m.clubs?.mission,
+      goals: m.clubs?.goals,
+      createdAt: m.clubs?.created_at,
+      updatedAt: m.clubs?.updated_at,
+    })).filter(c => c.clubName);
   }
 
   /**
    * Get specific club data by clubId
    */
   static async getClubData(clubId: string): Promise<ProductionClubData | null> {
-    try {
-      const response = await fetch('/api/clubs/' + clubId);
-      
-      if (!response.ok) {
-        if (response.status === 404) {
-          return null;
-        }
-        throw new Error(`Failed to fetch club data: ${response.statusText}`);
-      }
+    const { data, error } = await supabase
+      .from('clubs')
+      .select('*')
+      .eq('id', clubId)
+      .single();
 
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching club data:', error);
-      throw error;
+    if (error || !data) {
+      console.error('Error fetching club data from Supabase:', error);
+      return null;
     }
+
+    // Map to ProductionClubData
+    return {
+      clubId: data.id,
+      userId: data.owner_id,
+      userName: '', // Optionally fetch or pass this if needed
+      userRole: '', // Optionally fetch or pass this if needed
+      clubName: data.name,
+      description: data.description,
+      mission: data.mission,
+      goals: data.goals,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
+    };
   }
 
   /**

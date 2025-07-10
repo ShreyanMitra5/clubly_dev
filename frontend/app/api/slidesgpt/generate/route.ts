@@ -4,6 +4,9 @@ import { join } from 'path';
 import { uploadFileToS3 } from '../../../utils/s3uploader';
 import fetch from 'node-fetch';
 import os from 'os';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,6 +22,10 @@ export async function POST(request: NextRequest) {
     if (!clubData) {
       return NextResponse.json({ error: 'Club not found' }, { status: 404 });
     }
+
+    // Log the prompt and clubData for debugging
+    console.log('SlidesGPT prompt:', prompt);
+    console.log('SlidesGPT clubData:', clubData);
 
     // Call SlidesGPT API
     const slidesGPTResponse = await callSlidesGPTAPI(prompt);
@@ -66,23 +73,17 @@ export async function POST(request: NextRequest) {
 }
 
 async function getClubData(clubId: string): Promise<any> {
-  const dataDir = join(process.cwd(), 'data', 'clubs');
-  const userDirs = await readdir(dataDir);
-  
-  for (const userId of userDirs) {
-    const userDir = join(dataDir, userId);
-    const files = await readdir(userDir);
-    
-    for (const file of files) {
-      if (file.includes(clubId)) {
-        const filePath = join(userDir, file);
-        const fileContent = await readFile(filePath, 'utf-8');
-        return JSON.parse(fileContent);
-      }
-    }
+  const { data, error } = await supabase
+    .from('clubs')
+    .select('*')
+    .eq('id', clubId)
+    .single();
+
+  if (error || !data) {
+    console.error('Error fetching club data from Supabase:', error);
+    return null;
   }
-  
-  return null;
+  return data;
 }
 
 async function callSlidesGPTAPI(prompt: string): Promise<any> {

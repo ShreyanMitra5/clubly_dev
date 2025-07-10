@@ -116,6 +116,14 @@ export default function GeneratePage() {
     }
   }, [searchParams, userClubs]);
 
+  // Auto-select the only club if there is just one and not already selected
+  useEffect(() => {
+    if (userClubs.length === 1 && (!formData.clubId || formData.clubId === '')) {
+      setSelectedClub(userClubs[0]);
+      setFormData(prev => ({ ...prev, clubId: userClubs[0].clubId }));
+    }
+  }, [userClubs, formData.clubId]);
+
   const loadUserClubs = async () => {
     if (!user) return;
     
@@ -199,10 +207,8 @@ export default function GeneratePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Main Content */}
       <main className="section-padding">
         <div className="max-w-4xl mx-auto">
-          {/* Header */}
           <div className="text-center mb-12">
             <h1 className="heading-lg mb-4">Create your presentation</h1>
             <p className="body-lg max-w-2xl mx-auto">
@@ -211,29 +217,34 @@ export default function GeneratePage() {
             </p>
           </div>
 
-          {/* Display current club name */}
-          {selectedClub && (
-            <div className="mb-8 text-center">
-              <span className="inline-block text-2xl font-bold text-blue-700 bg-blue-50 rounded-lg px-6 py-2 shadow">
-                Generating Presentation for: {selectedClub.clubName}
-              </span>
+          {/* Club selection dropdown if more than one club */}
+          {userClubs.length > 1 && (
+            <div className="mb-8">
+              <SelectField
+                label="Select Club"
+                name="clubId"
+                value={formData.clubId}
+                onChange={handleInputChange}
+                options={userClubs.map(club => ({ value: club.clubId, label: club.clubName }))}
+                description="Choose which club this presentation is for."
+              />
             </div>
           )}
 
-          {/* Form */}
+          {/* Heads up warning if a club is selected */}
+          {selectedClub && (
+            <div className="mb-8 text-center">
+              <div className="bg-yellow-50 border border-yellow-400 text-yellow-900 rounded-lg p-4 flex items-center justify-center">
+                <span className="text-2xl mr-3">⚠️</span>
+                <div>
+                  <strong>Heads up:</strong> The details you provided during onboarding will <b>also</b> be used to generate your {selectedClub.clubName} presentation. You can update this information anytime in the club's <b>Settings</b> page.
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="card p-8">
             <form onSubmit={handleSubmit} className="space-y-8">
-              {/* Club Info Display */}
-              {selectedClub && (
-                <div className="bg-yellow-50 border border-yellow-400 text-yellow-900 rounded-lg p-4 flex items-center mb-8">
-                  <span className="text-2xl mr-3">⚠️</span>
-                  <div>
-                    <strong>Heads up:</strong> The details you provided during onboarding will <b>also</b> be used to generate your {selectedClub.clubName} presentation. You can update this information anytime in the club's <b>Settings</b> page.
-                  </div>
-                </div>
-              )}
-
-              {/* Presentation Details */}
               <div>
                 <h2 className="text-xl font-semibold text-black mb-6">Presentation Details</h2>
                 <div className="grid-2">
@@ -266,8 +277,6 @@ export default function GeneratePage() {
                   />
                 </div>
               </div>
-
-              {/* Submit Button */}
               <div className="pt-8 border-t border-gray-200">
                 <button
                   type="submit"
@@ -290,7 +299,6 @@ export default function GeneratePage() {
                 </button>
               </div>
             </form>
-
             {/* Error State */}
             {error && (
               <div className="status-error mt-8">
