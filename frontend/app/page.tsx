@@ -5,6 +5,7 @@ import { SignInButton, SignUpButton, UserButton, SignedIn, SignedOut, SignOutBut
 import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { supabase } from '../utils/supabaseClient';
 
 const FeatureCard = ({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) => (
   <div className="feature-card group">
@@ -30,9 +31,19 @@ export default function HomePage() {
   const { sessionId } = useAuth();
 
   useEffect(() => {
-    if (isSignedIn && user && sessionId && typeof window !== 'undefined' && !localStorage.getItem(`onboardingComplete_${user.id}`)) {
-      router.push('/onboarding');
+    async function checkOnboarding() {
+      if (isSignedIn && user && sessionId && typeof window !== 'undefined') {
+        // Check Supabase for onboarding completion
+        const { data, error } = await supabase
+          .from('memberships')
+          .select('user_id')
+          .eq('user_id', user.id);
+        if ((!data || data.length === 0) && window.location.pathname !== '/onboarding') {
+          router.push('/onboarding');
+        }
+      }
     }
+    checkOnboarding();
   }, [isSignedIn, user, sessionId, router]);
 
   useEffect(() => {

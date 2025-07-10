@@ -4,10 +4,22 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { ClubDataManager, ClubData } from '../utils/clubDataManager';
 import { ProductionClubManager } from '../utils/productionClubManager';
+import { supabase } from '../../utils/supabaseClient';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { user } = useUser();
+  const userHook = useUser();
+  console.log('useUser() result:', userHook);
+  console.log('useUser() result (JSON):', JSON.stringify(userHook, null, 2));
+  let user = userHook.user;
+  // Fallback: try to get user from Clerk global if not present
+  const w = typeof window !== 'undefined' ? (window as any) : {};
+  if (!user && w?.Clerk?.user) {
+    user = w.Clerk.user;
+    console.log('Fallback Clerk user:', user);
+  }
+  console.log('User object (JSON):', JSON.stringify(user, null, 2));
   const [currentStep, setCurrentStep] = useState(1);
   const [name, setName] = useState('');
   const [clubs, setClubs] = useState<string[]>([]);
@@ -101,26 +113,71 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleSubmit = () => {
-    if (user) {
-      // Save using the production system
-      ProductionClubManager.saveClubData(user.id, name, clubRoles[currentClubIndex], clubData)
-        .then(() => {
-          // Also save legacy data for backward compatibility
-          localStorage.setItem(`onboardingComplete_${user.id}`, 'true');
-          localStorage.setItem(`userName_${user.id}`, name);
-          localStorage.setItem(`userClubs_${user.id}`, JSON.stringify(clubs));
-          localStorage.setItem(`userRoles_${user.id}`, JSON.stringify(clubRoles));
-          localStorage.setItem(`userAudiences_${user.id}`, JSON.stringify(clubAudiences));
-          localStorage.setItem(`clubData_${user.id}`, JSON.stringify(clubData));
-          
-          router.push('/dashboard');
-        })
-        .catch((error) => {
-          console.error('Error saving club data:', error);
-          setError('Failed to save club data. Please try again.');
-        });
+  const handleSubmit = async () => {
+    if (!user) {
+      setError('User not found. Please sign in again.');
+      console.error('User object is missing:', user);
+      return;
     }
+    const { id, emailAddresses, fullName } = user;
+    console.log('User object:', user);
+    if (!id || !emailAddresses || !fullName) {
+      setError('User information is incomplete. Please sign out and sign in again.');
+      console.error('User info incomplete:', { id, emailAddresses, fullName });
+      return;
+    }
+    const email = emailAddresses?.[0]?.emailAddress || '';
+    setError('');
+    // 1. Upsert user
+    const now = new Date().toISOString();
+    const { data: userData, error: userError } = await supabase.from('users').upsert([{ id, email, name: fullName, created_at: now, updated_at: now }]);
+    if (userError) {
+      console.error('Supabase user upsert error:', JSON.stringify(userError, null, 2));
+      if (userError.message) console.error('Supabase user upsert error message:', userError.message);
+      if (userError.details) console.error('Supabase user upsert error details:', userError.details);
+      if (userError.hint) console.error('Supabase user upsert error hint:', userError.hint);
+    }
+    // 2. For each club, insert into clubs and memberships
+    for (let i = 0; i < clubs.length; i++) {
+      const clubName = clubs[i];
+      const clubDetails = clubData[i];
+      const role = clubRoles[i] || '';
+      const audience = clubAudiences[i] || '';
+      const clubId = uuidv4();
+      // Insert club
+      const { data: clubInsert, error: clubError } = await supabase
+        .from('clubs')
+        .insert([{
+          id: clubId,
+          name: clubName,
+          description: clubDetails.description,
+          mission: clubDetails.mission,
+          goals: clubDetails.goals,
+          audience,
+          owner_id: id,
+          created_at: now,
+          updated_at: now
+        }])
+        .select()
+        .single();
+      if (clubError) {
+        console.error('Supabase club insert error:', JSON.stringify(clubError, null, 2));
+        if (clubError.message) console.error('Supabase club insert error message:', clubError.message);
+        if (clubError.details) console.error('Supabase club insert error details:', clubError.details);
+        if (clubError.hint) console.error('Supabase club insert error hint:', clubError.hint);
+      }
+      // Insert membership
+      const { error: membershipError } = await supabase.from('memberships').insert([
+        { user_id: id, club_id: clubId, role, created_at: now }
+      ]);
+      if (membershipError) {
+        console.error('Supabase membership insert error:', JSON.stringify(membershipError, null, 2));
+        if (membershipError.message) console.error('Supabase membership insert error message:', membershipError.message);
+        if (membershipError.details) console.error('Supabase membership insert error details:', membershipError.details);
+        if (membershipError.hint) console.error('Supabase membership insert error hint:', membershipError.hint);
+      }
+    }
+    router.push('/dashboard');
   };
 
   const renderStep1 = () => (
