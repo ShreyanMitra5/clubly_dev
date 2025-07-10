@@ -122,6 +122,23 @@ export default function HomePage() {
               description="Get creative, AI-powered ideas for impactful club events."
             />
             <FeatureCard
+              icon={<svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>}
+              title="Settings"
+              description="Customize your club experience and manage preferences."
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Coming Soon Section */}
+      <section className="section-padding bg-gray-100">
+        <div className="container-width">
+          <div className="text-center mb-12">
+            <h2 className="heading-lg mb-4">Coming Soon</h2>
+            <p className="body-lg max-w-2xl mx-auto text-gray-600">We're working hard to bring you even more features to supercharge your club experience!</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <FeatureCard
               icon={<svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>}
               title="Club Website"
               description="Auto-generate a beautiful website for your club in one click."
@@ -135,11 +152,6 @@ export default function HomePage() {
               icon={<svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7h18M3 12h18M3 17h18" /></svg>}
               title="Templates"
               description="Access a library of templates for meetings, events, and more."
-            />
-            <FeatureCard
-              icon={<svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>}
-              title="Settings"
-              description="Customize your club experience and manage preferences."
             />
           </div>
         </div>
