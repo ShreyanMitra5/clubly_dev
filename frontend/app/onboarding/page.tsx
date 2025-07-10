@@ -168,7 +168,7 @@ export default function OnboardingPage() {
       }
       // Insert membership
       const { error: membershipError } = await supabase.from('memberships').insert([
-        { user_id: id, club_id: clubId, role, created_at: now }
+        { id: uuidv4(), user_id: id, club_id: clubId, role, created_at: now }
       ]);
       if (membershipError) {
         console.error('Supabase membership insert error:', JSON.stringify(membershipError, null, 2));

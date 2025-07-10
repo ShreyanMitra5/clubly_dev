@@ -9,7 +9,7 @@ import { supabase } from '../../utils/supabaseClient';
 export default function DashboardPage() {
   const router = useRouter();
   const { user } = useUser();
-  const [clubs, setClubs] = useState<string[]>([]);
+  const [clubs, setClubs] = useState<{ id: string, name: string }[]>([]);
   const [name, setName] = useState('');
 
   useEffect(() => {
@@ -25,14 +25,14 @@ export default function DashboardPage() {
         setClubs([]);
         return;
       }
-      setClubs((data || []).map((m: any) => m.clubs?.name).filter(Boolean));
+      setClubs((data || []).map((m: any) => ({ id: m.club_id, name: m.clubs?.name })).filter(c => c.id && c.name));
       setName(user.fullName || user.firstName || '');
     }
     fetchClubs();
   }, [user]);
 
-  const handleClubClick = (club: string) => {
-    router.push(`/clubs/${encodeURIComponent(club)}`);
+  const handleClubClick = (club: { id: string, name: string }) => {
+    router.push(`/clubs/${encodeURIComponent(club.name)}`);
   };
 
   return (
@@ -47,12 +47,12 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {clubs.map(club => (
             <div
-              key={club}
+              key={club.id}
               className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition p-6 flex flex-col justify-between cursor-pointer group"
               onClick={() => handleClubClick(club)}
               style={{ minHeight: 100 }}
             >
-              <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-blue-700 transition">{club}</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-blue-700 transition">{club.name}</h3>
               <p className="text-gray-500 text-sm">Click to manage this club</p>
             </div>
           ))}
