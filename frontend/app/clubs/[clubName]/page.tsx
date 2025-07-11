@@ -77,6 +77,19 @@ export default function ClubDetailsPage() {
               <p className="text-gray-500 text-sm">Plan exciting events for your club with your AI Club Advisor.</p>
             </div>
           </Link>
+          <Link href={`/clubs/${encodeURIComponent(clubName)}/tasks`}>
+            <div className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition p-6 flex flex-col justify-between cursor-pointer group">
+              <h2 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-blue-700 transition">Task Manager</h2>
+              <p className="text-gray-500 text-sm">Assign and track tasks for officers and members.</p>
+            </div>
+          </Link>
+          {/* Club Email Manager Feature */}
+          <Link href={`/clubs/${encodeURIComponent(clubName)}/email-manager`}>
+            <div className="bg-white border border-blue-200 rounded-xl shadow-sm hover:shadow-md transition p-6 flex flex-col justify-between cursor-pointer group">
+              <h2 className="text-lg font-semibold text-blue-700 mb-1 group-hover:text-blue-800 transition">Club Email Manager</h2>
+              <p className="text-gray-500 text-sm">Upload a CSV, manage emails, and send club-wide announcements.</p>
+            </div>
+          </Link>
         </div>
         <div className="flex gap-3">
           <button className="px-5 py-2 rounded-lg border border-blue-200 bg-white text-blue-700 font-medium shadow hover:bg-blue-50 transition" onClick={() => router.push('/dashboard')}>← Back to Dashboard</button>
