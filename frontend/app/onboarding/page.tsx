@@ -83,6 +83,10 @@ export default function OnboardingPage() {
         setError('Please fill out all fields.');
         return;
       }
+      // Ensure clubData is in sync with clubs
+      const syncedClubData = clubs.map((club, i) => clubData[i] || { name: club, description: '', mission: '', goals: '' });
+      setClubData(syncedClubData);
+      setCurrentClubIndex(0); // Always start at the first club
       setCurrentStep(2);
       setError('');
     } else if (currentStep === 2) {
@@ -92,7 +96,6 @@ export default function OnboardingPage() {
         setError('Please fill out at least the Club Description and Mission Statement.');
         return;
       }
-      
       if (currentClubIndex < clubs.length - 1) {
         setCurrentClubIndex(currentClubIndex + 1);
         setError('');
@@ -238,12 +241,9 @@ export default function OnboardingPage() {
           <div className="text-sm text-gray-500 mb-2">
             Club {currentClubNumber} of {totalClubs}
           </div>
-          <h2 className="text-2xl font-bold text-black">
-            Tell us about <span className="text-blue-600">{currentClub?.name}</span>
-          </h2>
-          <p className="text-gray-600 mt-2">
-            This helps us generate better content and recommendations for your club
-          </p>
+          <div className="text-lg font-semibold text-gray-800">
+            {clubs[currentClubIndex]}
+          </div>
         </div>
 
         <div className="space-y-6">
@@ -320,22 +320,22 @@ export default function OnboardingPage() {
 
         {error && <div className="text-red-500 text-sm">{error}</div>}
         
-        <div className="flex gap-3">
-          <button 
-            type="button" 
-            className="btn-secondary flex-1" 
+        <button
+          type="button"
+          className="btn-primary w-full text-lg py-3"
+          onClick={handleNextStep}
+        >
+          {currentClubIndex < clubs.length - 1 ? 'Next Club' : 'Finish and Go to Dashboard'}
+        </button>
+        {currentClubIndex > 0 && (
+          <button
+            type="button"
+            className="btn-secondary w-full text-lg py-3 mt-2"
             onClick={handlePreviousStep}
           >
-            {currentClubIndex === 0 ? 'Back' : 'Previous Club'}
+            Previous Club
           </button>
-          <button 
-            type="button" 
-            className="btn-primary flex-1 text-lg py-3" 
-            onClick={handleNextStep}
-          >
-            {currentClubIndex === clubs.length - 1 ? 'Complete Setup' : 'Next Club'}
-          </button>
-        </div>
+        )}
       </div>
     );
   };

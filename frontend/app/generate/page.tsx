@@ -124,6 +124,14 @@ export default function GeneratePage() {
     }
   }, [userClubs, formData.clubId]);
 
+  // After userClubs are loaded, if no club is selected, auto-select the first club
+  useEffect(() => {
+    if (userClubs.length > 0 && !selectedClub) {
+      setSelectedClub(userClubs[0]);
+      setFormData(prev => ({ ...prev, clubId: userClubs[0].clubId }));
+    }
+  }, [userClubs, selectedClub]);
+
   const loadUserClubs = async () => {
     if (!user) return;
     
@@ -217,28 +225,25 @@ export default function GeneratePage() {
             </p>
           </div>
 
-          {/* Club selection dropdown if more than one club */}
-          {userClubs.length > 1 && (
-            <div className="mb-8">
-              <SelectField
-                label="Select Club"
-                name="clubId"
-                value={formData.clubId}
-                onChange={handleInputChange}
-                options={userClubs.map(club => ({ value: club.clubId, label: club.clubName }))}
-                description="Choose which club this presentation is for."
-              />
-            </div>
-          )}
-
-          {/* Heads up warning if a club is selected */}
-          {selectedClub && (
+          {/* Show selected club name and warning if a club is available */}
+          {(selectedClub || userClubs.length > 0) ? (
             <div className="mb-8 text-center">
-              <div className="bg-yellow-50 border border-yellow-400 text-yellow-900 rounded-lg p-4 flex items-center justify-center">
-                <span className="text-2xl mr-3">⚠️</span>
-                <div>
-                  <strong>Heads up:</strong> The details you provided during onboarding will <b>also</b> be used to generate your {selectedClub.clubName} presentation. You can update this information anytime in the club's <b>Settings</b> page.
+              <div className="flex flex-col items-center">
+                <div className="flex items-center mb-2">
+                  <span className="text-3xl mr-2">⚠️</span>
+                  <span className="text-xl font-bold text-yellow-700">You are generating a presentation for:</span>
                 </div>
+                <div className="text-2xl font-extrabold text-yellow-900 mb-2">{selectedClub ? selectedClub.clubName : userClubs[0].clubName}</div>
+                <div className="bg-yellow-50 border border-yellow-400 text-yellow-900 rounded-lg p-4 max-w-xl mx-auto">
+                  <strong>Note:</strong> The onboarding information you provided (club description, mission, goals, your role, and audience) was collected and will be used to generate this presentation. You can update this information anytime in the club's <b>Settings</b> page.
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="mb-8 text-center">
+              <div className="flex items-center justify-center text-yellow-700">
+                <span className="text-3xl mr-2">⚠️</span>
+                <span className="text-lg">No club found. Please complete onboarding or add a club to generate a presentation.</span>
               </div>
             </div>
           )}

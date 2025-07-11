@@ -10,7 +10,7 @@ export default function ClubSettingsPage() {
   const { user } = useUser();
   const clubName = decodeURIComponent(params.clubName as string);
   const [clubInfo, setClubInfo] = useState<ProductionClubData | null>(null);
-  const [form, setForm] = useState({ description: '', mission: '', goals: '' });
+  const [form, setForm] = useState({ description: '', mission: '', goals: '', userRole: '', audience: '' });
   const [loading, setLoading] = useState(true);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
@@ -25,7 +25,9 @@ export default function ClubSettingsPage() {
             setForm({
               description: club.description || '',
               mission: club.mission || '',
-              goals: club.goals || ''
+              goals: club.goals || '',
+              userRole: club.userRole || '',
+              audience: club.audience || ''
             });
           }
           setLoading(false);
@@ -52,12 +54,13 @@ export default function ClubSettingsPage() {
         body: JSON.stringify({
           userId: user.id,
           userName: clubInfo.userName,
-          userRole: clubInfo.userRole,
+          userRole: form.userRole,
           clubs: [{
             name: clubInfo.clubName,
             description: form.description,
             mission: form.mission,
-            goals: form.goals
+            goals: form.goals,
+            audience: form.audience
           }]
         })
       });
@@ -74,11 +77,12 @@ export default function ClubSettingsPage() {
 
   return (
     <div className="max-w-2xl mx-auto p-8">
-      <h1 className="text-3xl font-bold mb-6">Settings</h1>
+      <h1 className="text-3xl font-bold mb-2">Settings</h1>
+      <div className="text-lg font-semibold mb-6">Editing info for: <span className="text-blue-700">{clubName}</span></div>
       <p className="mb-6 text-gray-600">Manage club settings and preferences.</p>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
-          <label className="block font-semibold mb-1">Club Description</label>
+          <label className="block font-semibold mb-1">Club Description / Purpose</label>
           <textarea name="description" value={form.description} onChange={handleChange} className="w-full border rounded p-2" rows={3} maxLength={1000} required />
         </div>
         <div>
@@ -88,6 +92,14 @@ export default function ClubSettingsPage() {
         <div>
           <label className="block font-semibold mb-1">Goals & Objectives</label>
           <textarea name="goals" value={form.goals} onChange={handleChange} className="w-full border rounded p-2" rows={2} maxLength={1000} required />
+        </div>
+        <div>
+          <label className="block font-semibold mb-1">Your Role in the Club</label>
+          <input name="userRole" value={form.userRole} onChange={handleChange} className="w-full border rounded p-2" maxLength={100} required />
+        </div>
+        <div>
+          <label className="block font-semibold mb-1">Target Audience</label>
+          <textarea name="audience" value={form.audience} onChange={handleChange} className="w-full border rounded p-2" rows={2} maxLength={1000} required />
         </div>
         <button type="submit" className="btn-primary">Save Changes</button>
         {success && (
