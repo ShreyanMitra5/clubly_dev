@@ -10,6 +10,7 @@ export interface ProductionClubData {
   description: string;
   mission: string;
   goals: string;
+  audience: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -100,6 +101,7 @@ export class ProductionClubManager {
       description: m.clubs?.description,
       mission: m.clubs?.mission,
       goals: m.clubs?.goals,
+      audience: m.clubs?.audience || '',
       createdAt: m.clubs?.created_at,
       updatedAt: m.clubs?.updated_at,
     })).filter(c => c.clubName);
@@ -109,29 +111,31 @@ export class ProductionClubManager {
    * Get specific club data by clubId
    */
   static async getClubData(clubId: string): Promise<ProductionClubData | null> {
-    const { data, error } = await supabase
+    // First get the club data
+    const { data: clubData, error: clubError } = await supabase
       .from('clubs')
-      .select('*')
+      .select('*, memberships!inner(*)')
       .eq('id', clubId)
       .single();
 
-    if (error || !data) {
-      console.error('Error fetching club data from Supabase:', error);
+    if (clubError || !clubData) {
+      console.error('Error fetching club data from Supabase:', clubError);
       return null;
     }
 
     // Map to ProductionClubData
     return {
-      clubId: data.id,
-      userId: data.owner_id,
+      clubId: clubData.id,
+      userId: clubData.owner_id,
       userName: '', // Optionally fetch or pass this if needed
-      userRole: '', // Optionally fetch or pass this if needed
-      clubName: data.name,
-      description: data.description,
-      mission: data.mission,
-      goals: data.goals,
-      createdAt: data.created_at,
-      updatedAt: data.updated_at,
+      userRole: clubData.memberships?.[0]?.role || '',
+      clubName: clubData.name,
+      description: clubData.description,
+      mission: clubData.mission,
+      goals: clubData.goals,
+      audience: clubData.audience || '',
+      createdAt: clubData.created_at,
+      updatedAt: clubData.updated_at,
     };
   }
 
@@ -180,11 +184,11 @@ Club Information:
 - Mission Statement: ${clubData.mission}
 - Goals & Objectives: ${clubData.goals}
 - User Role: ${clubData.userRole}
-- User Name: ${clubData.userName}
+- Target Audience: ${clubData.audience}
 
 Presentation Requirements:
 - Topic: ${topic}
-- Target Audience: Club members and stakeholders
+- Target Audience: ${clubData.audience || 'Club members and stakeholders'}
 - Tone: Professional yet engaging
 - Structure: Include introduction, main content sections, and conclusion
 - Visual Style: Modern and clean design
@@ -193,10 +197,10 @@ Please create a presentation that:
 1. Aligns with the club's mission and goals
 2. Is appropriate for the user's role in the club
 3. Provides valuable information about the topic
-4. Engages the audience effectively
+4. Engages the target audience effectively
 5. Includes relevant examples and practical applications
 
-Make sure the content is tailored specifically for ${clubData.clubName} and its members.
+Make sure the content is tailored specifically for ${clubData.clubName} and its target audience: ${clubData.audience}.
       `.trim();
     } catch (error) {
       console.error('Error creating SlidesGPT prompt:', error);

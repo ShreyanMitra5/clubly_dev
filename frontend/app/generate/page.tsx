@@ -105,18 +105,19 @@ export default function GeneratePage() {
     }
   }, [user]);
 
+  // Get clubId from URL and set selected club
   useEffect(() => {
     const clubId = searchParams.get('clubId');
     if (clubId && userClubs.length > 0) {
       const club = userClubs.find(c => c.clubId === clubId);
       if (club) {
         setSelectedClub(club);
-        setFormData(prev => ({ ...prev, clubId }));
+        setFormData(prev => ({ ...prev, clubId: club.clubId }));
       }
     }
   }, [searchParams, userClubs]);
 
-  // Auto-select the only club if there is just one and not already selected
+  // Remove auto-selection of first club if none selected
   useEffect(() => {
     if (userClubs.length === 1 && (!formData.clubId || formData.clubId === '')) {
       setSelectedClub(userClubs[0]);
@@ -132,12 +133,23 @@ export default function GeneratePage() {
     }
   }, [userClubs, selectedClub]);
 
+  // Update the loadUserClubs function to ensure we're getting fresh data
   const loadUserClubs = async () => {
     if (!user) return;
     
     try {
       const clubs = await ProductionClubManager.getUserClubs(user.id);
       setUserClubs(clubs);
+      
+      // If we have a clubId in the URL, select that club
+      const clubId = searchParams.get('clubId');
+      if (clubId) {
+        const club = clubs.find(c => c.clubId === clubId);
+        if (club) {
+          setSelectedClub(club);
+          setFormData(prev => ({ ...prev, clubId }));
+        }
+      }
     } catch (error) {
       console.error('Error loading user clubs:', error);
     }
@@ -155,15 +167,22 @@ export default function GeneratePage() {
     }
   };
 
+  // Update the handleSubmit function to ensure we're using the correct club data
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsLoading(true);
     setGenerationResult(null);
     setError(null);
 
+    if (!selectedClub) {
+      setError('Please select a club first');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const result = await ProductionClubManager.generatePresentation(
-        formData.clubId,
+        selectedClub.clubId,
         formData.description,
         formData.week ? parseInt(formData.week) : undefined
       );
@@ -195,7 +214,7 @@ export default function GeneratePage() {
           body: JSON.stringify({
             userId: user.id,
             presentation: {
-              clubId: formData.clubId,
+              clubId: selectedClub.clubId,
               description: formData.description,
               week: formData.week,
               generatedAt: result.generatedAt,
@@ -225,25 +244,18 @@ export default function GeneratePage() {
             </p>
           </div>
 
-          {/* Show selected club name and warning if a club is available */}
-          {(selectedClub || userClubs.length > 0) ? (
+          {/* Show selected club name and warning if a club is selected */}
+          {selectedClub && (
             <div className="mb-8 text-center">
               <div className="flex flex-col items-center">
                 <div className="flex items-center mb-2">
                   <span className="text-3xl mr-2">⚠️</span>
                   <span className="text-xl font-bold text-yellow-700">You are generating a presentation for:</span>
                 </div>
-                <div className="text-2xl font-extrabold text-yellow-900 mb-2">{selectedClub ? selectedClub.clubName : userClubs[0].clubName}</div>
+                <div className="text-2xl font-extrabold text-yellow-900 mb-4">{selectedClub.clubName}</div>
                 <div className="bg-yellow-50 border border-yellow-400 text-yellow-900 rounded-lg p-4 max-w-xl mx-auto">
-                  <strong>Note:</strong> The onboarding information you provided (club description, mission, goals, your role, and audience) was collected and will be used to generate this presentation. You can update this information anytime in the club's <b>Settings</b> page.
+                  <strong>Note:</strong> The onboarding information you provided for this club (description, mission, goals, your role, and audience) will be used to generate this presentation. You can update this information anytime in the club's <Link href={`/clubs/${encodeURIComponent(selectedClub.clubName)}/settings`} className="underline">Settings</Link> page.
                 </div>
-              </div>
-            </div>
-          ) : (
-            <div className="mb-8 text-center">
-              <div className="flex items-center justify-center text-yellow-700">
-                <span className="text-3xl mr-2">⚠️</span>
-                <span className="text-lg">No club found. Please complete onboarding or add a club to generate a presentation.</span>
               </div>
             </div>
           )}

@@ -53,7 +53,7 @@ export default function ClubDetailsPage() {
           <div className="flex-1 border-t border-gray-200" />
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <Link href={`/generate?clubId=${clubInfo?.clubId}`}>
+          <Link href={`/generate?clubId=${clubInfo?.id}`}>
             <div className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition p-6 flex flex-col justify-between cursor-pointer group">
               <h2 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-blue-700 transition">Generate Presentation</h2>
               <p className="text-gray-500 text-sm">Create AI-powered slides for your next meeting.</p>
