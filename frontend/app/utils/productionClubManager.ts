@@ -2,6 +2,7 @@ import { ClubData } from './clubDataManager';
 import { supabase } from '../../utils/supabaseClient';
 
 export interface ProductionClubData {
+  id: string; // Add this for compatibility
   clubId: string;
   userId: string;
   userName: string;
@@ -93,6 +94,7 @@ export class ProductionClubManager {
 
     // Map the data to ProductionClubData[]
     return (data || []).map((m: any) => ({
+      id: m.club_id, // Map club_id to id for compatibility
       clubId: m.club_id,
       userId,
       userName: '', // Optionally fetch or pass this if needed
@@ -125,7 +127,8 @@ export class ProductionClubManager {
 
     // Map to ProductionClubData
     return {
-      clubId: clubData.id,
+      id: clubId, // Map clubId to id for compatibility
+      clubId: clubId,
       userId: clubData.owner_id,
       userName: '', // Optionally fetch or pass this if needed
       userRole: clubData.memberships?.[0]?.role || '',

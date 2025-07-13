@@ -11,7 +11,8 @@ export async function POST(request: NextRequest) {
     if (!GROQ_API_KEY) {
       return NextResponse.json({ error: 'Groq API key not set in environment variables.' }, { status: 500 });
     }
-    const { transcript } = await request.json();
+    const body = await request.json();
+    const { transcript, userId, clubId, clubName } = body;
     if (!transcript || !transcript.trim()) {
       return NextResponse.json({ error: 'Transcript is empty. Please record some audio.' }, { status: 400 });
     }
@@ -45,6 +46,35 @@ export async function POST(request: NextRequest) {
     if (!summary || summary.trim() === '') {
       return NextResponse.json({ error: 'Summarization failed. Please try again with a longer or clearer recording.' }, { status: 500 });
     }
+
+    // Save meeting note to S3 history (now handled by frontend, so remove this block)
+    // const meetingNote = {
+    //   clubId: clubId || null,
+    //   clubName: clubName || null,
+    //   summary,
+    //   transcript,
+    //   createdAt: new Date().toISOString(),
+    // };
+    // if (userId) {
+    //   // Use robust base URL for internal fetch
+    //   const baseUrl = process.env.VERCEL_URL
+    //     ? `https://${process.env.VERCEL_URL}`
+    //     : 'http://localhost:3000';
+    //   const historyUrl = `${baseUrl}/api/attendance-notes/history`;
+    //   console.log('[Summarize][POST] Saving meeting note to:', historyUrl, 'userId:', userId);
+    //   try {
+    //     const resp = await fetch(historyUrl, {
+    //       method: 'POST',
+    //       headers: { 'Content-Type': 'application/json' },
+    //       body: JSON.stringify({ userId, meetingNote }),
+    //     });
+    //     const respJson = await resp.json();
+    //     console.log('[Summarize][POST] History API response:', resp.status, respJson);
+    //   } catch (err) {
+    //     console.error('[Summarize][POST] Error saving meeting note:', err);
+    //   }
+    // }
+
     return NextResponse.json({ summary });
   } catch (error) {
     console.error('Groq summarization error:', error);

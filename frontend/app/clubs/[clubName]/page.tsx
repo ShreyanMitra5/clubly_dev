@@ -29,7 +29,7 @@ export default function ClubDetailsPage() {
         setLoading(false);
         return;
       }
-      const club = (data || []).map((m: any) => m.clubs).find((c: any) => c?.name === clubName);
+      const club = (data || []).map((m: any) => ({ ...m.clubs, id: m.club_id })).find((c: any) => c?.name === clubName);
       setClubInfo(club || null);
       setLoading(false);
     }

@@ -2,11 +2,13 @@
 import React, { useRef, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
 
 // Dynamic import for docx only on client
 const { saveAs } = typeof window !== 'undefined' ? require('file-saver') : { saveAs: undefined };
 
 export default function ClubAttendanceNotesPage() {
+  const { user } = useUser();
   const [isRecording, setIsRecording] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
   const [isCountingDown, setIsCountingDown] = useState(false);
@@ -201,6 +203,48 @@ export default function ClubAttendanceNotesPage() {
           }
           const data = await res.json();
           setSummary(data.summary);
+          
+          // Save meeting note to history after summarization
+          if (user?.id && data.summary) {
+            try {
+              console.log('=== SAVING MEETING NOTE TO HISTORY ===');
+              console.log('User ID:', user.id);
+              console.log('Summary length:', data.summary.length);
+              console.log('Transcript length:', transcript?.length);
+              
+              const clubName = "AI_Club"; // TODO: Get actual club name from URL params
+              const payload = {
+                userId: user.id,
+                summary: data.summary,
+                transcript,
+                clubName,
+                createdAt: new Date().toISOString(),
+              };
+              console.log('POST payload:', payload);
+              console.log('Making POST request to /api/attendance-notes/history...');
+              
+              const resp = await fetch('/api/attendance-notes/history', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+              });
+              console.log('POST response status:', resp.status);
+              const respJson = await resp.json();
+              console.log('POST response body:', respJson);
+              
+              if (!resp.ok) {
+                console.error('Failed to save meeting summary:', respJson.error || resp.status);
+              } else {
+                console.log('Successfully saved meeting summary to history!');
+              }
+            } catch (err: any) {
+              console.error('Error saving meeting summary:', err);
+            }
+          } else {
+            console.log('=== NOT SAVING MEETING NOTE ===');
+            console.log('User ID exists:', !!user?.id);
+            console.log('Summary exists:', !!data.summary);
+          }
         } catch (err: any) {
           setError(err.message || 'Summarization failed');
         } finally {
@@ -208,7 +252,7 @@ export default function ClubAttendanceNotesPage() {
         }
       })();
     }
-  }, [transcript]);
+  }, [transcript, user?.id]);
 
   // Download summary as DOCX
   const handleDownload = async () => {

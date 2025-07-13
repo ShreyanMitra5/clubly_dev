@@ -23,7 +23,7 @@ interface RoadmapData {
   settings: {
     clubTopic: string;
     meetingFrequency: string;
-    meetingDay: string;
+    meetingDay?: string; // Make this optional
     meetingTime: string;
     specialEvents: SpecialEvent[];
     semesterStart: string;
