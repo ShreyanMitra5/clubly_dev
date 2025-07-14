@@ -4,6 +4,68 @@ import { useUser } from "@clerk/nextjs";
 import Modal from 'react-modal';
 import ReactMarkdown from 'react-markdown';
 
+function EmailModal({ clubName, subjectDefault, contentDefault, onSend, onClose, sending }: {
+  clubName: string;
+  subjectDefault: string;
+  contentDefault: string;
+  onSend: (subject: string, content: string) => void;
+  onClose: () => void;
+  sending: boolean;
+}) {
+  const [subject, setSubject] = useState(subjectDefault);
+  const [content, setContent] = useState(contentDefault);
+
+  const handleSend = () => {
+    if (!subject.trim() || !content.trim()) return;
+    onSend(subject, content);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-8">
+          <h3 className="text-2xl font-bold mb-6">Send to Club Members</h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block font-semibold mb-2">Subject</label>
+              <input
+                type="text"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold mb-2">Message</label>
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg"
+                rows={8}
+              />
+            </div>
+          </div>
+          <div className="flex gap-4 mt-6">
+            <button
+              onClick={handleSend}
+              disabled={!subject.trim() || !content.trim() || sending}
+              className="flex-1 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {sending ? 'Sending...' : 'Send Email'}
+            </button>
+            <button
+              onClick={onClose}
+              className="flex-1 px-6 py-3 bg-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-400"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function HistoryPage() {
   const { user } = useUser();
   const [history, setHistory] = useState<any[]>([]);
@@ -11,6 +73,11 @@ export default function HistoryPage() {
   const [loading, setLoading] = useState(true);
   const [loadingNotes, setLoadingNotes] = useState(true);
   const [selectedNote, setSelectedNote] = useState<any | null>(null);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [emailModalData, setEmailModalData] = useState<any>(null);
+  const [sending, setSending] = useState(false);
+  const [emailSuccess, setEmailSuccess] = useState('');
+  const [emailError, setEmailError] = useState('');
 
   useEffect(() => {
     if (!user) return;
@@ -27,6 +94,37 @@ export default function HistoryPage() {
         setLoadingNotes(false);
       });
   }, [user]);
+
+  const handleSendEmail = async (clubId: string, clubName: string, subject: string, content: string) => {
+    if (!user) return;
+    setSending(true);
+    setEmailError('');
+    setEmailSuccess('');
+    try {
+      const response = await fetch('/api/clubs/emails/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clubId,
+          clubName,
+          senderName: user.fullName || user.firstName || user.username || 'A Club Member',
+          subject,
+          content
+        }),
+      });
+      if (response.ok) {
+        setEmailSuccess('Sent to club mailing list!');
+        setShowEmailModal(false);
+      } else {
+        const errorData = await response.json();
+        setEmailError(errorData.error || 'Failed to send email');
+      }
+    } catch (err) {
+      setEmailError('Failed to send email');
+    } finally {
+      setSending(false);
+    }
+  };
 
   if (!user) return <div className="p-8">Please sign in to view your history.</div>;
   if (loading && loadingNotes) return <div className="p-8">Loading...</div>;
@@ -67,6 +165,20 @@ export default function HistoryPage() {
                 >
                   Download
                 </a>
+                <button
+                  className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm"
+                  onClick={() => {
+                    setEmailModalData({
+                      clubId: item.clubId,
+                      clubName: item.clubName || item.description || 'Club',
+                      subject: `[${item.clubName || item.description || 'Club'}] New Presentation Available`,
+                      content: `Dear club members,\n\nA new presentation has been created for our club: "${item.description}".\n\nYou can view and download the presentation here: ${item.viewerUrl}\n\nBest regards,\n${item.clubName || item.description || 'Club'} Team`
+                    });
+                    setShowEmailModal(true);
+                  }}
+                >
+                  📧 Send to Club Members
+                </button>
               </div>
             </div>
           ))}
@@ -89,6 +201,21 @@ export default function HistoryPage() {
               <div className="text-gray-600 text-sm mb-2">{note.createdAt && new Date(note.createdAt).toLocaleString()}</div>
               <div className="flex-1 mb-2 text-gray-700 truncate">{note.summary ? (note.summary.length > 120 ? note.summary.slice(0, 120) + '...' : note.summary) : ''}</div>
               <div className="mt-auto text-blue-600 text-sm font-medium">View</div>
+              <button
+                className="mt-2 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm"
+                onClick={e => {
+                  e.stopPropagation();
+                  setEmailModalData({
+                    clubId: note.clubId,
+                    clubName: note.clubName || 'Club',
+                    subject: `[${note.clubName || 'Club'}] Meeting Summary`,
+                    content: `Dear club members,\n\nHere is the summary of our recent meeting:\n\n${note.summary}\n\nBest regards,\n${note.clubName || 'Club'} Team`
+                  });
+                  setShowEmailModal(true);
+                }}
+              >
+                📧 Send to Club Members
+              </button>
             </div>
           ))}
         </div>
@@ -126,6 +253,28 @@ export default function HistoryPage() {
           </div>
         )}
       </Modal>
+
+      {/* Email Modal */}
+      {showEmailModal && emailModalData && (
+        <EmailModal
+          clubName={emailModalData.clubName}
+          subjectDefault={emailModalData.subject}
+          contentDefault={emailModalData.content}
+          sending={sending}
+          onSend={(subject, content) => handleSendEmail(emailModalData.clubId, emailModalData.clubName, subject, content)}
+          onClose={() => setShowEmailModal(false)}
+        />
+      )}
+      {emailSuccess && (
+        <div className="fixed bottom-8 right-8 bg-green-100 border border-green-300 text-green-800 px-6 py-4 rounded-xl shadow-xl z-50">
+          {emailSuccess}
+        </div>
+      )}
+      {emailError && (
+        <div className="fixed bottom-8 right-8 bg-red-100 border border-red-300 text-red-800 px-6 py-4 rounded-xl shadow-xl z-50">
+          {emailError}
+        </div>
+      )}
     </div>
   );
 } 

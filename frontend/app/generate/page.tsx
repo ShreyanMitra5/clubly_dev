@@ -98,6 +98,10 @@ export default function GeneratePage() {
   const [isLoading, setIsLoading] = useState(false);
   const [generationResult, setGenerationResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [emailSuccess, setEmailSuccess] = useState('');
+  const [emailError, setEmailError] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -232,6 +236,39 @@ export default function GeneratePage() {
     }
   };
 
+  const handleSendEmail = async (subject: string, content: string) => {
+    if (!selectedClub) return;
+
+    setSending(true);
+    setEmailError('');
+    setEmailSuccess('');
+
+    try {
+      const response = await fetch('/api/clubs/emails/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clubId: selectedClub.clubId,
+          clubName: selectedClub.clubName,
+          subject,
+          content
+        }),
+      });
+
+      if (response.ok) {
+        setEmailSuccess('Presentation sent successfully to club mailing list');
+        setShowEmailModal(false);
+      } else {
+        const errorData = await response.json();
+        setEmailError(errorData.error || 'Failed to send email');
+      }
+    } catch (err) {
+      setEmailError('Failed to send email');
+    } finally {
+      setSending(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <main className="section-padding">
@@ -341,22 +378,23 @@ export default function GeneratePage() {
                   <div className="flex-1">
                     <h3 className="font-medium">Presentation generated successfully!</h3>
                     <p className="mt-1 mb-4">Your presentation has been created using your club's data.</p>
-                    {/* View Online Button (embed) */}
-                    {generationResult.slidesGPTResponse && generationResult.slidesGPTResponse.embed && (
-                      <div className="mb-4">
+                    
+                    {/* Action Buttons */}
+                    <div className="space-y-3">
+                      {/* View Online Button */}
+                      {generationResult.slidesGPTResponse && generationResult.slidesGPTResponse.embed && (
                         <a
                           href={generationResult.viewerUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-block w-full text-center px-4 py-3 mb-2 bg-black text-white font-semibold rounded-lg shadow hover:bg-gray-900 transition"
+                          className="inline-block w-full text-center px-4 py-3 bg-black text-white font-semibold rounded-lg shadow hover:bg-gray-900 transition"
                         >
                           View Presentation Online
                         </a>
-                      </div>
-                    )}
-                    {/* Download Button (restyled) */}
-                    {generationResult.slidesGPTResponse && generationResult.slidesGPTResponse.download && (
-                      <div className="mb-2">
+                      )}
+                      
+                      {/* Download Button */}
+                      {generationResult.slidesGPTResponse && generationResult.slidesGPTResponse.download && (
                         <a
                           href={generationResult.slidesGPTResponse.download.startsWith('http') ? generationResult.slidesGPTResponse.download : `https://${generationResult.slidesGPTResponse.download}`}
                           target="_blank"
@@ -365,15 +403,115 @@ export default function GeneratePage() {
                         >
                           Download Presentation (.pptx)
                         </a>
-                      </div>
-                    )}
+                      )}
+                      
+                      {/* Send to Club Button */}
+                      {selectedClub && (
+                        <button
+                          onClick={() => setShowEmailModal(true)}
+                          className="w-full text-center px-4 py-3 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 transition"
+                        >
+                          📧 Send to Club Members
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Email Success/Error Messages */}
+            {emailSuccess && (
+              <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+                {emailSuccess}
+              </div>
+            )}
+            
+            {emailError && (
+              <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                {emailError}
               </div>
             )}
           </div>
         </div>
       </main>
+
+      {/* Email Modal */}
+      {showEmailModal && selectedClub && (
+        <EmailModal
+          clubName={selectedClub.clubName}
+          topic={formData.description}
+          onSend={handleSendEmail}
+          onClose={() => setShowEmailModal(false)}
+          sending={sending}
+        />
+      )}
+    </div>
+  );
+}
+
+interface EmailModalProps {
+  clubName: string;
+  topic: string;
+  onSend: (subject: string, content: string) => void;
+  onClose: () => void;
+  sending: boolean;
+}
+
+function EmailModal({ clubName, topic, onSend, onClose, sending }: EmailModalProps) {
+  const [subject, setSubject] = useState(`[${clubName}] New Presentation Available`);
+  const [content, setContent] = useState(`Dear club members,\n\nA new presentation has been created for our club: "${topic}"\n\nYou can view and download the presentation from the link below.\n\nBest regards,\n${clubName} Team`);
+
+  const handleSend = () => {
+    if (!subject.trim() || !content.trim()) return;
+    onSend(subject, content);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="p-8">
+          <h3 className="text-2xl font-bold mb-6">Send Presentation to Club</h3>
+          
+          <div className="space-y-4">
+            <div>
+              <label className="block font-semibold mb-2">Subject</label>
+              <input
+                type="text"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg"
+              />
+            </div>
+            
+            <div>
+              <label className="block font-semibold mb-2">Message</label>
+              <textarea
+                value={content}
+                onChange={(e) => setContent(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg"
+                rows={8}
+              />
+            </div>
+          </div>
+          
+          <div className="flex gap-4 mt-6">
+            <button
+              onClick={handleSend}
+              disabled={!subject.trim() || !content.trim() || sending}
+              className="flex-1 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50"
+            >
+              {sending ? 'Sending...' : 'Send Email'}
+            </button>
+            <button
+              onClick={onClose}
+              className="flex-1 px-6 py-3 bg-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-400"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
