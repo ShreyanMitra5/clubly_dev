@@ -3,6 +3,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
+import { useParams } from 'next/navigation';
 
 // Dynamic import for docx only on client
 const { saveAs } = typeof window !== 'undefined' ? require('file-saver') : { saveAs: undefined };
@@ -29,6 +30,22 @@ export default function ClubAttendanceNotesPage() {
   const router = useRouter();
   const volumeRef = useRef(0);
   const lastUpdateRef = useRef(Date.now());
+  const params = useParams();
+  const clubName = decodeURIComponent(params.clubName as string);
+  const [clubInfo, setClubInfo] = useState<any>(null);
+
+  useEffect(() => {
+    if (!user || !clubName) return;
+    // Fetch club info for clubId
+    async function fetchClubInfo() {
+      const res = await fetch(`/api/clubs/${encodeURIComponent(clubName)}`);
+      if (res.ok) {
+        const data = await res.json();
+        setClubInfo(data);
+      }
+    }
+    fetchClubInfo();
+  }, [user, clubName]);
 
   // Start countdown then recording
   const handleRecordClick = async () => {
@@ -207,36 +224,19 @@ export default function ClubAttendanceNotesPage() {
           // Save meeting note to history after summarization
           if (user?.id && data.summary) {
             try {
-              console.log('=== SAVING MEETING NOTE TO HISTORY ===');
-              console.log('User ID:', user.id);
-              console.log('Summary length:', data.summary.length);
-              console.log('Transcript length:', transcript?.length);
-              
-              const clubName = "AI_Club"; // TODO: Get actual club name from URL params
               const payload = {
                 userId: user.id,
                 summary: data.summary,
                 transcript,
                 clubName,
+                clubId: clubInfo?.id || clubInfo?.clubId || undefined,
                 createdAt: new Date().toISOString(),
               };
-              console.log('POST payload:', payload);
-              console.log('Making POST request to /api/attendance-notes/history...');
-              
-              const resp = await fetch('/api/attendance-notes/history', {
+              await fetch('/api/attendance-notes/history', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
               });
-              console.log('POST response status:', resp.status);
-              const respJson = await resp.json();
-              console.log('POST response body:', respJson);
-              
-              if (!resp.ok) {
-                console.error('Failed to save meeting summary:', respJson.error || resp.status);
-              } else {
-                console.log('Successfully saved meeting summary to history!');
-              }
             } catch (err: any) {
               console.error('Error saving meeting summary:', err);
             }
@@ -252,7 +252,7 @@ export default function ClubAttendanceNotesPage() {
         }
       })();
     }
-  }, [transcript, user?.id]);
+  }, [transcript, user?.id, clubInfo]);
 
   // Download summary as DOCX
   const handleDownload = async () => {
@@ -310,9 +310,9 @@ export default function ClubAttendanceNotesPage() {
     if (!isTranscribing && !isSummarizing && summary) {
       // Navigate to result page with summary as query param
       const summaryParam = encodeURIComponent(summary);
-      router.replace(`/clubs/AI_Club/attendance-notes/result?summary=${summaryParam}`); // TODO: use real clubName
+      router.replace(`/clubs/${clubName}/attendance-notes/result?summary=${summaryParam}`);
     }
-  }, [isTranscribing, isSummarizing, summary, router]);
+  }, [isTranscribing, isSummarizing, summary, router, clubName]);
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center" style={gradientBg}>

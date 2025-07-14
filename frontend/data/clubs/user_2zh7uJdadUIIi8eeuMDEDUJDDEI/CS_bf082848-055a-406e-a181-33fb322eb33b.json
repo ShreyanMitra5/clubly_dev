@@ -1,0 +1,197 @@
+{
+  "clubId": "bf082848-055a-406e-a181-33fb322eb33b",
+  "clubName": "CS",
+  "userId": "user_2zh7uJdadUIIi8eeuMDEDUJDDEI",
+  "roadmap": {
+    "events": [
+      {
+        "id": "meeting-1752109200000",
+        "title": "Club Meeting",
+        "start": "2025-07-10T01:00:00.000Z",
+        "end": "2025-07-10T03:00:00.000Z",
+        "backgroundColor": "#3B82F6",
+        "borderColor": "#2563EB",
+        "textColor": "#FFFFFF",
+        "extendedProps": {
+          "type": "meeting",
+          "topic": "Club Meeting"
+        }
+      },
+      {
+        "id": "meeting-1752454800000",
+        "title": "Club Meeting",
+        "start": "2025-07-14T01:00:00.000Z",
+        "end": "2025-07-14T03:00:00.000Z",
+        "backgroundColor": "#3B82F6",
+        "borderColor": "#2563EB",
+        "textColor": "#FFFFFF",
+        "extendedProps": {
+          "type": "meeting",
+          "topic": "Club Meeting"
+        }
+      },
+      {
+        "id": "meeting-1752627600000",
+        "title": "Club Meeting",
+        "start": "2025-07-16T01:00:00.000Z",
+        "end": "2025-07-16T03:00:00.000Z",
+        "backgroundColor": "#3B82F6",
+        "borderColor": "#2563EB",
+        "textColor": "#FFFFFF",
+        "extendedProps": {
+          "type": "meeting",
+          "topic": "Club Meeting"
+        }
+      },
+      {
+        "id": "meeting-1752714000000",
+        "title": "Club Meeting",
+        "start": "2025-07-17T01:00:00.000Z",
+        "end": "2025-07-17T03:00:00.000Z",
+        "backgroundColor": "#3B82F6",
+        "borderColor": "#2563EB",
+        "textColor": "#FFFFFF",
+        "extendedProps": {
+          "type": "meeting",
+          "topic": "Club Meeting"
+        }
+      },
+      {
+        "id": "meeting-1753059600000",
+        "title": "Club Meeting",
+        "start": "2025-07-21T01:00:00.000Z",
+        "end": "2025-07-21T03:00:00.000Z",
+        "backgroundColor": "#3B82F6",
+        "borderColor": "#2563EB",
+        "textColor": "#FFFFFF",
+        "extendedProps": {
+          "type": "meeting",
+          "topic": "Club Meeting"
+        }
+      },
+      {
+        "id": "meeting-1753232400000",
+        "title": "Club Meeting",
+        "start": "2025-07-23T01:00:00.000Z",
+        "end": "2025-07-23T03:00:00.000Z",
+        "backgroundColor": "#3B82F6",
+        "borderColor": "#2563EB",
+        "textColor": "#FFFFFF",
+        "extendedProps": {
+          "type": "meeting",
+          "topic": "Club Meeting"
+        }
+      },
+      {
+        "id": "meeting-1753318800000",
+        "title": "Club Meeting",
+        "start": "2025-07-24T01:00:00.000Z",
+        "end": "2025-07-24T03:00:00.000Z",
+        "backgroundColor": "#3B82F6",
+        "borderColor": "#2563EB",
+        "textColor": "#FFFFFF",
+        "extendedProps": {
+          "type": "meeting",
+          "topic": "Club Meeting"
+        }
+      },
+      {
+        "id": "meeting-1753664400000",
+        "title": "Club Meeting",
+        "start": "2025-07-28T01:00:00.000Z",
+        "end": "2025-07-28T03:00:00.000Z",
+        "backgroundColor": "#3B82F6",
+        "borderColor": "#2563EB",
+        "textColor": "#FFFFFF",
+        "extendedProps": {
+          "type": "meeting",
+          "topic": "Club Meeting"
+        }
+      },
+      {
+        "id": "meeting-1753837200000",
+        "title": "Club Meeting",
+        "start": "2025-07-30T01:00:00.000Z",
+        "end": "2025-07-30T03:00:00.000Z",
+        "backgroundColor": "#3B82F6",
+        "borderColor": "#2563EB",
+        "textColor": "#FFFFFF",
+        "extendedProps": {
+          "type": "meeting",
+          "topic": "Club Meeting"
+        }
+      },
+      {
+        "id": "meeting-1753923600000",
+        "title": "Club Meeting",
+        "start": "2025-07-31T01:00:00.000Z",
+        "end": "2025-07-31T03:00:00.000Z",
+        "backgroundColor": "#3B82F6",
+        "borderColor": "#2563EB",
+        "textColor": "#FFFFFF",
+        "extendedProps": {
+          "type": "meeting",
+          "topic": "Club Meeting"
+        }
+      },
+      {
+        "id": "meeting-1754269200000",
+        "title": "Club Meeting",
+        "start": "2025-08-04T01:00:00.000Z",
+        "end": "2025-08-04T03:00:00.000Z",
+        "backgroundColor": "#3B82F6",
+        "borderColor": "#2563EB",
+        "textColor": "#FFFFFF",
+        "extendedProps": {
+          "type": "meeting",
+          "topic": "Club Meeting"
+        }
+      },
+      {
+        "id": "meeting-1754442000000",
+        "title": "Club Meeting",
+        "start": "2025-08-06T01:00:00.000Z",
+        "end": "2025-08-06T03:00:00.000Z",
+        "backgroundColor": "#3B82F6",
+        "borderColor": "#2563EB",
+        "textColor": "#FFFFFF",
+        "extendedProps": {
+          "type": "meeting",
+          "topic": "Club Meeting"
+        }
+      },
+      {
+        "id": "special-0",
+        "title": "ggg",
+        "start": "2025-07-16T19:00:00.000Z",
+        "end": "2025-07-16T21:00:00.000Z",
+        "backgroundColor": "#10B981",
+        "borderColor": "#059669",
+        "textColor": "#FFFFFF",
+        "extendedProps": {
+          "type": "special"
+        }
+      }
+    ],
+    "settings": {
+      "clubTopic": "python",
+      "semesterStart": "2025-07-10",
+      "semesterEnd": "2025-08-06",
+      "meetingFrequency": "weekly",
+      "meetingDays": [
+        "sunday",
+        "tuesday",
+        "wednesday"
+      ],
+      "meetingTime": "18:00",
+      "specialEvents": [
+        {
+          "name": "ggg",
+          "date": "2025-07-17"
+        }
+      ],
+      "aiTopics": []
+    }
+  },
+  "updatedAt": "2025-07-14T05:22:39.607Z"
+}

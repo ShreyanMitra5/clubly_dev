@@ -49,7 +49,7 @@ export async function DELETE(
   { params }: { params: { clubId: string; contactId: string } }
 ) {
   try {
-    const { clubId, contactId } = params;
+    const { clubId, contactId } = await params;
 
     if (!clubId) {
       return NextResponse.json({ error: 'Club ID is required' }, { status: 400 });

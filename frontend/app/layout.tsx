@@ -66,7 +66,6 @@ export default function RootLayout({
                 <div className="hidden md:flex items-center space-x-8">
                   <SignedIn>
                     <a href="/dashboard" className="font-semibold text-black hover:bg-gray-100 hover:text-black transition-colors rounded-lg px-3 py-2">Dashboard</a>
-                    <Link href="/history" className="ml-4 px-4 py-2 rounded hover:bg-gray-100 font-semibold">History</Link>
                     <SignOutButton>
                       <button className="btn-ghost rounded-lg shadow-sm hover:bg-gray-100 transition px-4 py-2">Logout</button>
                     </SignOutButton>
@@ -97,7 +96,6 @@ export default function RootLayout({
                     <div ref={menuRef} className="absolute right-4 top-16 bg-white rounded-xl shadow-lg border border-gray-200 w-48 z-50 flex flex-col py-2 animate-fade-in">
                       <SignedIn>
                         <a href="/dashboard" className="block px-6 py-3 text-black font-semibold hover:bg-gray-100" onClick={() => setMobileMenuOpen(false)}>Dashboard</a>
-                        <Link href="/history" className="block w-full text-left px-6 py-3 text-black hover:bg-gray-100" onClick={() => setMobileMenuOpen(false)}>History</Link>
                         <SignOutButton>
                           <button className="block w-full text-left px-6 py-3 text-black hover:bg-gray-100" onClick={() => setMobileMenuOpen(false)}>Logout</button>
                         </SignOutButton>
