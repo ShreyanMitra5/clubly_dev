@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
-import { readFile } from 'fs/promises';
-import { join } from 'path';
+import { supabase } from '../../../../../utils/supabaseClient';
 
 interface Recipient {
   email: string;
@@ -29,28 +28,6 @@ interface SendEmailRequest {
   content: string;
 }
 
-// Helper function to get the emails file path
-function getEmailsFilePath(clubId: string): string {
-  const emailsDir = join(process.cwd(), 'data', 'emails');
-  return join(emailsDir, `${clubId}.json`);
-}
-
-// Helper function to load emails for a club
-async function loadClubEmails(clubId: string): Promise<ClubEmails> {
-  try {
-    const filePath = getEmailsFilePath(clubId);
-    const fileContent = await readFile(filePath, 'utf-8');
-    return JSON.parse(fileContent);
-  } catch (error) {
-    // If file doesn't exist, return empty structure
-    return {
-      clubId,
-      contacts: [],
-      updatedAt: new Date().toISOString()
-    };
-  }
-}
-
 export async function POST(request: NextRequest) {
   try {
     const body: SendEmailRequest = await request.json();
@@ -63,8 +40,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Load club's email list
-    const clubEmails = await loadClubEmails(clubId);
-    const recipients = clubEmails.contacts.map(contact => ({
+    const { data: contacts, error } = await supabase
+      .from('club_emails')
+      .select('email, name')
+      .eq('club_id', clubId);
+    if (error) {
+      return NextResponse.json({ error: 'Failed to fetch club emails from Supabase' }, { status: 500 });
+    }
+    const recipients = (contacts || []).map(contact => ({
       email: contact.email,
       name: contact.name
     }));

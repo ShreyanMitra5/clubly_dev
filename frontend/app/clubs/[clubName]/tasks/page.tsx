@@ -193,8 +193,6 @@ export default function TaskManager() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Back to Club Features Button */}
-      // Fixed a potential bug where clubName could be an array (from Next.js dynamic routes).
-      // Now, we ensure clubName is a string before encoding and using in the URL.
       <button
         className="px-5 py-2 rounded-lg border border-blue-200 bg-white text-blue-700 font-medium shadow hover:bg-blue-50 transition mb-6 mt-2 self-start"
         onClick={() => router.push(`/clubs/${encodeURIComponent(Array.isArray(clubName) ? clubName[0] : clubName)}`)}

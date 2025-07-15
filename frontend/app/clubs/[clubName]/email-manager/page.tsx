@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { ProductionClubManager, ProductionClubData } from '../../../utils/productionClubManager';
+import { supabase } from '../../../../utils/supabaseClient';
 
 interface EmailContact {
   id: string;
@@ -55,13 +56,13 @@ export default function ClubEmailManagerPage() {
 
   const loadContacts = async () => {
     if (!clubInfo?.clubId) return;
-    
     try {
-      const response = await fetch(`/api/clubs/${clubInfo.clubId}/emails`);
-      if (response.ok) {
-        const data = await response.json();
-        setContacts(data.contacts || []);
-      }
+      const { data, error } = await supabase
+        .from('club_emails')
+        .select('*')
+        .eq('club_id', clubInfo.clubId);
+      if (error) throw error;
+      setContacts(data || []);
     } catch (err) {
       console.error('Failed to load contacts:', err);
     }
@@ -102,26 +103,15 @@ export default function ClubEmailManagerPage() {
 
   const handleAddContact = async () => {
     if (!newEmail || !clubInfo) return;
-
     try {
-      const response = await fetch(`/api/clubs/${clubInfo.clubId}/emails`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: newEmail,
-          name: newName || undefined
-        }),
-      });
-
-      if (response.ok) {
-        setSuccess('Contact added successfully');
-        setNewEmail('');
-        setNewName('');
-        loadContacts();
-      } else {
-        const errorData = await response.json();
-        setError(errorData.error || 'Failed to add contact');
-      }
+      const { error } = await supabase
+        .from('club_emails')
+        .insert([{ club_id: clubInfo.clubId, email: newEmail, name: newName || null }]);
+      if (error) throw error;
+      setSuccess('Contact added successfully');
+      setNewEmail('');
+      setNewName('');
+      loadContacts();
     } catch (err) {
       setError('Failed to add contact');
     }
@@ -129,18 +119,15 @@ export default function ClubEmailManagerPage() {
 
   const handleRemoveContact = async (contactId: string) => {
     if (!clubInfo) return;
-
     try {
-      const response = await fetch(`/api/clubs/${clubInfo.clubId}/emails/${contactId}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setSuccess('Contact removed successfully');
-        loadContacts();
-      } else {
-        setError('Failed to remove contact');
-      }
+      const { error } = await supabase
+        .from('club_emails')
+        .delete()
+        .eq('id', contactId)
+        .eq('club_id', clubInfo.clubId);
+      if (error) throw error;
+      setSuccess('Contact removed successfully');
+      loadContacts();
     } catch (err) {
       setError('Failed to remove contact');
     }

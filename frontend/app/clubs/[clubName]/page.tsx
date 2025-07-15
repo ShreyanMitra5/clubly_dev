@@ -234,14 +234,27 @@ export default function ClubDetailsPage() {
                   <div className="text-gray-500 text-xs mb-2">{note.createdAt && new Date(note.createdAt).toLocaleString()}</div>
                   <div className="text-gray-800 text-base mb-4 line-clamp-4 whitespace-pre-line">{note.summary?.slice(0, 120) || ''}{note.summary && note.summary.length > 120 ? '...' : ''}</div>
                   <button
-                    className="w-full py-2 rounded-lg bg-blue-600 text-white font-bold text-lg shadow hover:bg-blue-700 transition mb-2"
-                    onClick={e => { e.stopPropagation(); setSelectedNote(note); }}
-                  >
-                    View Full Summary
-                  </button>
-                  <button
                     className="w-full py-2 rounded-lg bg-green-600 text-white font-semibold text-base shadow hover:bg-green-700 transition flex items-center justify-center gap-2"
-                    onClick={e => { e.stopPropagation(); setShowEmailModal(true); setEmailModalData(note); }}
+                    onClick={e => {
+                      e.stopPropagation();
+                      // Simple markdown to HTML for email (headings, bold, lists)
+                      let summaryHtml = note.summary || '';
+                      summaryHtml = summaryHtml
+                        .replace(/^\*\*([^\*]+)\*\*/gm, '<b>$1</b>') // bold
+                        .replace(/^\* ([^\n]+)/gm, '<li>$1</li>') // bullet points
+                        .replace(/^\+ ([^\n]+)/gm, '<li>$1</li>') // plus bullet points
+                        .replace(/\n{2,}/g, '<br>') // double newlines to <br>
+                        .replace(/\n/g, '<br>') // single newline to <br>
+                        .replace(/\*+/g, ''); // remove excessive asterisks
+                      setEmailModalData({
+                        clubId: note.clubId || clubInfo?.id || clubInfo?.clubId,
+                        clubName: note.clubName || clubName,
+                        subject: `[${note.clubName || clubName}] Meeting Summary`,
+                        content:
+                          `Dear club members,<br><br><b>Meeting Summary:</b><br><br>${summaryHtml}<br><br>Best regards,<br>${note.clubName || clubName} Team`
+                      });
+                      setShowEmailModal(true);
+                    }}
                   >
                     <span role="img" aria-label="email">📧</span> Send to Club Members
                   </button>
@@ -325,10 +338,10 @@ function EmailModal({ clubName, subjectDefault, contentDefault, onSend, onClose,
   onClose: () => void;
   sending: boolean;
 }) {
-  const [subject, setSubject] = useState(subjectDefault);
-  const [content, setContent] = useState(contentDefault);
+  const [subject, setSubject] = useState(subjectDefault || '');
+  const [content, setContent] = useState(contentDefault || '');
   const handleSend = () => {
-    if (!subject.trim() || !content.trim()) return;
+    if (!subject?.trim() || !content?.trim()) return;
     onSend(subject, content);
   };
   return (
@@ -359,7 +372,7 @@ function EmailModal({ clubName, subjectDefault, contentDefault, onSend, onClose,
           <div className="flex gap-4 mt-6">
             <button
               onClick={handleSend}
-              disabled={!subject.trim() || !content.trim() || sending}
+              disabled={!subject?.trim() || !content?.trim() || sending}
               className="flex-1 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
               {sending ? 'Sending...' : 'Send Email'}
