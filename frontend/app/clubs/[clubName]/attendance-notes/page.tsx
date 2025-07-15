@@ -316,6 +316,13 @@ export default function ClubAttendanceNotesPage() {
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center" style={gradientBg}>
+      {/* Back to Club Features Button */}
+      <button
+        className="px-5 py-2 rounded-lg border border-blue-200 bg-white text-blue-700 font-medium shadow hover:bg-blue-50 transition mb-6 mt-6 self-start"
+        onClick={() => router.push(`/clubs/${encodeURIComponent(clubName)}`)}
+      >
+        ← Back to Club Features
+      </button>
       {/* Countdown overlay */}
       {isCountingDown && (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm">

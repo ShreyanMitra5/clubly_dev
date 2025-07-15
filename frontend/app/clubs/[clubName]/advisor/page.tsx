@@ -125,6 +125,13 @@ export default function ClubAdvisorPage() {
     <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Chat Card */}
       <div className="w-full max-w-4xl h-[85vh] flex flex-col rounded-2xl shadow-2xl bg-white overflow-hidden relative mx-4 md:mx-auto" style={{ minWidth: 350 }}>
+        {/* Back to Club Features Button */}
+        <button
+          className="px-5 py-2 rounded-lg border border-blue-200 bg-white text-blue-700 font-medium shadow hover:bg-blue-50 transition m-4 self-start"
+          onClick={() => router.push(`/clubs/${encodeURIComponent(clubName)}`)}
+        >
+          ← Back to Club Features
+        </button>
         {/* Header */}
         <div className="flex flex-col bg-white border-b border-gray-100">
           <div className="flex items-center justify-between px-6 py-4">

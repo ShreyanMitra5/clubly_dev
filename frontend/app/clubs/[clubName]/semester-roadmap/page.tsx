@@ -450,6 +450,13 @@ export default function SemesterRoadmapPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pt-10 pb-20">
+      {/* Back to Club Features Button */}
+      <button
+        className="px-5 py-2 rounded-lg border border-blue-200 bg-white text-blue-700 font-medium shadow hover:bg-blue-50 transition mb-6 mt-2 ml-4 self-start"
+        onClick={() => router.push(`/clubs/${encodeURIComponent(clubName)}`)}
+      >
+        ← Back to Club Features
+      </button>
       <div className="container-width max-w-5xl mx-auto px-4">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
           <div>

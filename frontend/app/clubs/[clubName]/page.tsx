@@ -203,7 +203,7 @@ export default function ClubDetailsPage() {
                           clubId: item.clubId,
                           clubName: item.clubName || clubName,
                           subject: `[${item.clubName || clubName}] New Presentation Available`,
-                          content: `Dear club members,\n\nA new presentation has been created for our club: \"${item.description}\".\n\nYou can view and download the presentation here: ${item.viewerUrl}\n\nBest regards,\n${item.clubName || clubName} Team`
+                          content: `Dear club members,\n\nA new presentation has been created for our club: \"${item.description}\".\n\nYou can view and download the presentation here: ${item.viewerUrl ? item.viewerUrl : '[Link not available]'}\n\nBest regards,\n${item.clubName || clubName} Team`
                         });
                         setShowEmailModal(true);
                       }}
@@ -225,28 +225,27 @@ export default function ClubDetailsPage() {
               {meetingNotes.map((note, idx) => (
                 <div
                   key={idx}
-                  className="bg-white rounded-lg shadow p-4 flex flex-col cursor-pointer hover:shadow-lg transition"
+                  className="bg-white rounded-2xl shadow-xl p-6 flex flex-col cursor-pointer hover:shadow-2xl transition group border border-gray-100 relative"
                   onClick={() => setSelectedNote(note)}
                 >
-                  <div className="font-bold text-lg mb-2 truncate">{note.clubName || clubName}</div>
-                  <div className="text-gray-600 text-sm mb-2">{note.createdAt && new Date(note.createdAt).toLocaleString()}</div>
-                  <div className="flex-1 mb-2 text-gray-700 truncate">{note.summary ? (note.summary.length > 120 ? note.summary.slice(0, 120) + '...' : note.summary) : ''}</div>
-                  <div className="mt-auto text-blue-600 text-sm font-medium">View</div>
+                  <div className="font-bold text-lg mb-2 truncate text-blue-700 group-hover:underline">
+                    {note.title ? note.title : (note.clubName || clubName)}
+                  </div>
+                  <div className="text-gray-500 text-xs mb-2">{note.createdAt && new Date(note.createdAt).toLocaleString()}</div>
+                  <div className="text-gray-800 text-base mb-4 line-clamp-4 whitespace-pre-line">{note.summary?.slice(0, 120) || ''}{note.summary && note.summary.length > 120 ? '...' : ''}</div>
                   <button
-                    className="mt-2 bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm"
-                    onClick={e => {
-                      e.stopPropagation();
-                      setEmailModalData({
-                        clubId: note.clubId || (clubInfo.id || clubInfo.clubId),
-                        clubName: note.clubName || clubName,
-                        subject: `[${note.clubName || clubName}] Meeting Summary`,
-                        content: `Dear club members,\n\nHere is the summary of our recent meeting:\n\n${note.summary}\n\nBest regards,\n${note.clubName || clubName} Team`
-                      });
-                      setShowEmailModal(true);
-                    }}
+                    className="w-full py-2 rounded-lg bg-blue-600 text-white font-bold text-lg shadow hover:bg-blue-700 transition mb-2"
+                    onClick={e => { e.stopPropagation(); setSelectedNote(note); }}
                   >
-                    📧 Send to Club Members
+                    View Full Summary
                   </button>
+                  <button
+                    className="w-full py-2 rounded-lg bg-green-600 text-white font-semibold text-base shadow hover:bg-green-700 transition flex items-center justify-center gap-2"
+                    onClick={e => { e.stopPropagation(); setShowEmailModal(true); setEmailModalData(note); }}
+                  >
+                    <span role="img" aria-label="email">📧</span> Send to Club Members
+                  </button>
+                  <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-blue-300 pointer-events-none transition" />
                 </div>
               ))}
             </div>
@@ -270,7 +269,9 @@ export default function ClubDetailsPage() {
                 </button>
                 <div className="mb-4">
                   <div className="text-xs text-gray-500 mb-1">{selectedNote.createdAt && new Date(selectedNote.createdAt).toLocaleString()}</div>
-                  <div className="text-2xl font-bold text-black mb-2">{selectedNote.clubName || clubName}</div>
+                  <div className="text-2xl font-bold text-black mb-2">
+                    {selectedNote.title ? selectedNote.title : (selectedNote.clubName || clubName)}
+                  </div>
                 </div>
                 <div className="mb-6">
                   <div className="font-semibold mb-2 text-gray-700">Summary</div>

@@ -77,4 +77,47 @@ export async function GET(request: NextRequest) {
     console.log('[MeetingNotesHistory][GET] No history found or error:', e?.message || e);
     return NextResponse.json({ history: [] });
   }
+}
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const { userId, clubName, clubId, title } = await request.json();
+    if (!userId || (!clubName && !clubId) || !title) {
+      return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
+    }
+    const key = `meeting-notes-history/${userId}.json`;
+    // Fetch existing history
+    let history: any[] = [];
+    try {
+      const getCmd = new GetObjectCommand({ Bucket: BUCKET, Key: key });
+      const data = await s3.send(getCmd);
+      const body = await data.Body.transformToString();
+      history = JSON.parse(body);
+    } catch (e) {
+      return NextResponse.json({ success: false, error: 'No history found' }, { status: 404 });
+    }
+    // Find the first matching entry (most recent for this club)
+    const idx = history.findIndex(note =>
+      (clubId && note.clubId === clubId) || (!clubId && note.clubName === clubName)
+    );
+    if (idx === -1) {
+      return NextResponse.json({ success: false, error: 'No matching meeting summary found' }, { status: 404 });
+    }
+    history[idx].title = title;
+    // Save back to S3
+    try {
+      const putCmd = new PutObjectCommand({
+        Bucket: BUCKET,
+        Key: key,
+        Body: JSON.stringify(history),
+        ContentType: 'application/json',
+      });
+      await s3.send(putCmd);
+    } catch (e) {
+      return NextResponse.json({ success: false, error: e?.message || e }, { status: 500 });
+    }
+    return NextResponse.json({ success: true });
+  } catch (e) {
+    return NextResponse.json({ success: false, error: e?.message || e }, { status: 500 });
+  }
 } 

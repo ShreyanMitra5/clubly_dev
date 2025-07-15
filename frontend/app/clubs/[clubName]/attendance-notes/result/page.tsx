@@ -4,6 +4,7 @@ import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { useUser } from '@clerk/nextjs';
 import saveAs from "file-saver";
 import { ProductionClubManager, ProductionClubData } from '../../../../utils/productionClubManager';
+import ReactMarkdown from 'react-markdown';
 
 export default function AttendanceNotesResultPage() {
   const router = useRouter();
@@ -17,6 +18,9 @@ export default function AttendanceNotesResultPage() {
   const [sending, setSending] = useState(false);
   const [emailSuccess, setEmailSuccess] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [meetingTitle, setMeetingTitle] = useState("");
+  const [titleSaved, setTitleSaved] = useState(false);
 
   useEffect(() => {
     if (!summary) {
@@ -30,6 +34,27 @@ export default function AttendanceNotesResultPage() {
       loadClubData();
     }
   }, [user, clubName]);
+
+  // Save the summary with the title when the user clicks save (or auto-save if you prefer)
+  const handleSaveSummary = async () => {
+    if (!user?.id || !meetingTitle.trim()) return;
+    try {
+      const payload = {
+        userId: user.id,
+        clubName,
+        clubId: clubInfo?.id || clubInfo?.clubId || undefined,
+        title: meetingTitle.trim(),
+      };
+      await fetch('/api/attendance-notes/history', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      setTitleSaved(true);
+    } catch (err) {
+      // handle error
+    }
+  };
 
   const loadClubData = async () => {
     try {
@@ -113,9 +138,52 @@ export default function AttendanceNotesResultPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-white via-gray-100 to-gray-200 px-4">
       <div className="max-w-2xl w-full bg-white/90 rounded-3xl shadow-2xl border border-gray-100 p-12 flex flex-col items-center backdrop-blur-xl" style={{marginTop: 40, marginBottom: 40}}>
         <h2 className="text-4xl font-extrabold mb-8 tracking-tight text-center drop-shadow-lg">Summary of Meeting</h2>
-        <div className="w-full bg-gradient-to-r from-gray-50 to-gray-200 rounded-xl p-6 text-xl text-gray-900 mb-8 shadow-inner font-semibold text-center border border-gray-200" style={{letterSpacing: "0.01em"}}>
-          {preview}
+        {/* Meeting Title Input */}
+        <div className="w-full mb-6">
+          <label className="block text-lg font-semibold mb-2 text-gray-700">Meeting Title</label>
+          <input
+            type="text"
+            className="w-full p-3 border border-gray-300 rounded-lg text-lg"
+            placeholder="e.g. Project Kickoff, Guest Speaker, etc."
+            value={meetingTitle}
+            onChange={e => { setMeetingTitle(e.target.value); setTitleSaved(false); }}
+            maxLength={80}
+          />
+          <button
+            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition disabled:opacity-50"
+            onClick={handleSaveSummary}
+            disabled={!meetingTitle.trim() || titleSaved}
+          >
+            {titleSaved ? 'Title Saved!' : 'Save Title'}
+          </button>
         </div>
+        <div
+          className="w-full bg-gradient-to-r from-gray-50 to-gray-200 rounded-xl p-6 text-xl text-gray-900 mb-8 shadow-inner font-semibold text-center border border-gray-200 cursor-pointer hover:bg-blue-50 transition relative"
+          style={{letterSpacing: "0.01em"}}
+          onClick={() => setShowSummaryModal(true)}
+          title="Click to view full summary"
+        >
+          {preview}
+          <span className="absolute right-4 bottom-2 text-blue-500 text-xs font-medium">Click to view full summary</span>
+        </div>
+        {/* Summary Modal */}
+        {showSummaryModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-10 relative flex flex-col items-center border border-blue-200 animate-fade-in-up">
+              <button
+                onClick={() => setShowSummaryModal(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-3xl font-bold focus:outline-none"
+                aria-label="Close"
+              >
+                ×
+              </button>
+              <h3 className="text-3xl font-extrabold mb-6 text-center text-blue-700">Full Meeting Summary</h3>
+              <div className="prose prose-blue max-h-[60vh] overflow-y-auto w-full bg-gray-50 rounded-xl p-6 border border-gray-100 text-lg">
+                <ReactMarkdown>{summary}</ReactMarkdown>
+              </div>
+            </div>
+          </div>
+        )}
         
         {emailSuccess && (
           <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700 text-center">
@@ -160,6 +228,7 @@ export default function AttendanceNotesResultPage() {
           onSend={handleSendEmail}
           onClose={() => setShowEmailModal(false)}
           sending={sending}
+          meetingTitle={meetingTitle}
         />
       )}
     </div>
@@ -174,8 +243,8 @@ interface EmailModalProps {
   sending: boolean;
 }
 
-function EmailModal({ clubName, summary, onSend, onClose, sending }: EmailModalProps) {
-  const [subject, setSubject] = useState(`[${clubName}] Meeting Summary`);
+function EmailModal({ clubName, summary, onSend, onClose, sending, meetingTitle }: EmailModalProps & { meetingTitle: string }) {
+  const [subject, setSubject] = useState(meetingTitle ? meetingTitle : `[${clubName}] Meeting Summary`);
   const [content, setContent] = useState(`Dear club members,\n\nHere is the summary of our recent meeting:\n\n${summary}\n\nBest regards,\n${clubName} Team`);
 
   const handleSend = () => {

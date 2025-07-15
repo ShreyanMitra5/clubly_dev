@@ -197,6 +197,13 @@ export default function ClubEmailManagerPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white via-gray-100 to-gray-200">
+      {/* Back to Club Features Button */}
+      <button
+        className="px-5 py-2 rounded-lg border border-blue-200 bg-white text-blue-700 font-medium shadow hover:bg-blue-50 transition mb-6 mt-2 self-start"
+        onClick={() => router.push(`/clubs/${encodeURIComponent(clubName)}`)}
+      >
+        ← Back to Club Features
+      </button>
       <div className="max-w-6xl mx-auto p-8">
         <div className="mb-8">
           <h1 className="text-4xl font-extrabold mb-2 tracking-tight">Club Email Manager</h1>
