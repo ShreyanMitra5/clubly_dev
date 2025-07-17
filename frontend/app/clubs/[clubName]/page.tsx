@@ -1,26 +1,20 @@
 "use client";
 import React, { useState, useEffect } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
-import { ProductionClubManager, ProductionClubData } from '../../utils/productionClubManager';
-import Image from 'next/image';
+import { ProductionClubData } from '../../utils/productionClubManager';
 import { supabase } from '../../../utils/supabaseClient';
 import Modal from 'react-modal';
-import ReactMarkdown from 'react-markdown';
+import ClubLayout from '../../components/ClubLayout';
 
 export default function ClubDetailsPage() {
   const params = useParams();
-  const router = useRouter();
   const { user } = useUser();
   const clubName = decodeURIComponent(params.clubName as string);
   const [clubInfo, setClubInfo] = useState<ProductionClubData | null>(null);
   const [loading, setLoading] = useState(true);
   const [history, setHistory] = useState<any[]>([]);
   const [meetingNotes, setMeetingNotes] = useState<any[]>([]);
-  const [loadingHistory, setLoadingHistory] = useState(true);
-  const [loadingNotes, setLoadingNotes] = useState(true);
-  const [selectedNote, setSelectedNote] = useState<any | null>(null);
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [emailModalData, setEmailModalData] = useState<any>(null);
   const [sending, setSending] = useState(false);
@@ -58,7 +52,6 @@ export default function ClubDetailsPage() {
         setHistory((data.history || []).filter((item: any) =>
           (item.clubId && item.clubId === clubId) || (!item.clubId && item.clubName === clubName)
         ));
-        setLoadingHistory(false);
       });
     // Fetch meeting notes history for this user, then filter for this club
     fetch(`/api/attendance-notes/history?userId=${user.id}`)
@@ -68,7 +61,6 @@ export default function ClubDetailsPage() {
         setMeetingNotes((data.history || []).filter((note: any) =>
           (note.clubId && note.clubId === clubId) || (!note.clubId && note.clubName === clubName)
         ));
-        setLoadingNotes(false);
       });
   }, [user, clubInfo, clubName]);
 
@@ -105,227 +97,87 @@ export default function ClubDetailsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-lg">Loading club information...</div>
+      <div className="min-h-screen bg-gradient-to-br from-pulse-50 via-white to-orange-50 flex items-center justify-center">
+        <div className="text-lg text-pulse-500">Loading club information...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <main className="w-full max-w-4xl mx-auto flex-1 px-6 py-10">
-        <h1 className="text-2xl font-bold text-gray-900 mb-10">{clubName}</h1>
-        <div className="mb-6 flex items-center gap-3">
-          <h2 className="text-lg font-semibold text-gray-800">Club Features</h2>
-          <div className="flex-1 border-t border-gray-200" />
+    <ClubLayout>
+      <div className="p-8">
+        {/* Welcome Section */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-pulse-500 mb-2">Welcome to {clubName}</h1>
+          <p className="text-gray-600">Manage your club activities and stay organized</p>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <Link href={`/generate?clubId=${clubInfo?.id}`}>
-            <div className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition p-6 flex flex-col justify-between cursor-pointer group">
-              <h2 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-blue-700 transition">Generate Presentation</h2>
-              <p className="text-gray-500 text-sm">Create AI-powered slides for your next meeting.</p>
-            </div>
-          </Link>
-          <Link href={`/clubs/${encodeURIComponent(clubName)}/semester-roadmap`}>
-            <div className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition p-6 flex flex-col justify-between cursor-pointer group">
-              <h2 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-blue-700 transition">Semester Roadmap</h2>
-              <p className="text-gray-500 text-sm">Plan your club's semester with AI assistance.</p>
-            </div>
-          </Link>
-          <Link href={`/clubs/${encodeURIComponent(clubName)}/attendance-notes`}>
-            <div className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition p-6 flex flex-col justify-between cursor-pointer group">
-              <h2 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-blue-700 transition">Attendance & Notes</h2>
-              <p className="text-gray-500 text-sm">Track attendance and keep meeting notes.</p>
-            </div>
-          </Link>
-          <Link href={`/clubs/${encodeURIComponent(clubName)}/advisor`}>
-            <div className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition p-6 flex flex-col justify-between cursor-pointer group">
-              <h2 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-blue-700 transition">AI Club Advisor</h2>
-              <p className="text-gray-500 text-sm">Plan exciting events for your club with your AI Club Advisor.</p>
-            </div>
-          </Link>
-          <Link href={`/clubs/${encodeURIComponent(clubName)}/tasks`}>
-            <div className="bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition p-6 flex flex-col justify-between cursor-pointer group">
-              <h2 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-blue-700 transition">Task Manager</h2>
-              <p className="text-gray-500 text-sm">Assign and track tasks for officers and members.</p>
-            </div>
-          </Link>
-          {/* Club Email Manager Feature */}
-          <Link href={`/clubs/${encodeURIComponent(clubName)}/email-manager`}>
-            <div className="bg-white border border-blue-200 rounded-xl shadow-sm hover:shadow-md transition p-6 flex flex-col justify-between cursor-pointer group">
-              <h2 className="text-lg font-semibold text-blue-700 mb-1 group-hover:text-blue-800 transition">Club Email Manager</h2>
-              <p className="text-gray-500 text-sm">Upload a CSV, manage emails, and send club-wide announcements.</p>
-            </div>
-          </Link>
-        </div>
-        {/* --- Club History Section --- */}
-        <div className="mt-12">
-          <h2 className="text-2xl font-bold mb-6">Presentation History</h2>
-          {loadingHistory ? (
-            <div>Loading...</div>
-          ) : history.length === 0 ? (
-            <div>No presentations found for this club.</div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-              {history.map((item, idx) => (
-                <div key={idx} className="bg-white rounded-lg shadow p-4 flex flex-col">
-                  <div className="font-bold text-lg mb-2 truncate">{item.description || "Untitled"}</div>
-                  <div className="w-full h-32 bg-gray-100 rounded mb-2 flex items-center justify-center overflow-hidden">
-                    <img
-                      src={item.thumbnailUrl || "/logo.png"}
-                      alt="Presentation thumbnail"
-                      className="object-contain h-full"
-                    />
-                  </div>
-                  <div className="text-gray-600 text-sm mb-2">{item.generatedAt && new Date(item.generatedAt).toLocaleString()}</div>
-                  <div className="flex-1 mb-2 text-gray-700 truncate">{item.description}</div>
-                  <div className="flex gap-2 mt-auto">
-                    <a
-                      href={item.viewerUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 text-sm"
-                    >
-                      View Online
-                    </a>
-                    <a
-                      href={item.s3Url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="bg-gray-200 text-black px-3 py-1 rounded hover:bg-gray-300 text-sm"
-                    >
-                      Download
-                    </a>
-                    <button
-                      className="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 text-sm"
-                      onClick={() => {
-                        setEmailModalData({
-                          clubId: item.clubId,
-                          clubName: item.clubName || clubName,
-                          subject: `[${item.clubName || clubName}] New Presentation Available`,
-                          content: `Dear club members,\n\nA new presentation has been created for our club: \"${item.description}\".\n\nYou can view and download the presentation here: ${item.viewerUrl ? item.viewerUrl : '[Link not available]'}\n\nBest regards,\n${item.clubName || clubName} Team`
-                        });
-                        setShowEmailModal(true);
-                      }}
-                    >
-                      📧 Send to Club Members
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          <h2 className="text-2xl font-bold mt-16 mb-6">Meeting Summaries</h2>
-          {loadingNotes ? (
-            <div>Loading...</div>
-          ) : meetingNotes.length === 0 ? (
-            <div>No meeting summaries found for this club.</div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-              {meetingNotes.map((note, idx) => (
-                <div
-                  key={idx}
-                  className="bg-white rounded-2xl shadow-xl p-6 flex flex-col cursor-pointer hover:shadow-2xl transition group border border-gray-100 relative"
-                  onClick={() => setSelectedNote(note)}
-                >
-                  <div className="font-bold text-lg mb-2 truncate text-blue-700 group-hover:underline">
-                    {note.title ? note.title : (note.clubName || clubName)}
-                  </div>
-                  <div className="text-gray-500 text-xs mb-2">{note.createdAt && new Date(note.createdAt).toLocaleString()}</div>
-                  <div className="text-gray-800 text-base mb-4 line-clamp-4 whitespace-pre-line">{note.summary?.slice(0, 120) || ''}{note.summary && note.summary.length > 120 ? '...' : ''}</div>
-                  <button
-                    className="w-full py-2 rounded-lg bg-green-600 text-white font-semibold text-base shadow hover:bg-green-700 transition flex items-center justify-center gap-2"
-                    onClick={e => {
-                      e.stopPropagation();
-                      // Simple markdown to HTML for email (headings, bold, lists)
-                      let summaryHtml = note.summary || '';
-                      summaryHtml = summaryHtml
-                        .replace(/^\*\*([^\*]+)\*\*/gm, '<b>$1</b>') // bold
-                        .replace(/^\* ([^\n]+)/gm, '<li>$1</li>') // bullet points
-                        .replace(/^\+ ([^\n]+)/gm, '<li>$1</li>') // plus bullet points
-                        .replace(/\n{2,}/g, '<br>') // double newlines to <br>
-                        .replace(/\n/g, '<br>') // single newline to <br>
-                        .replace(/\*+/g, ''); // remove excessive asterisks
-                      setEmailModalData({
-                        clubId: note.clubId || clubInfo?.id || clubInfo?.clubId,
-                        clubName: note.clubName || clubName,
-                        subject: `[${note.clubName || clubName}] Meeting Summary`,
-                        content:
-                          `Dear club members,<br><br><b>Meeting Summary:</b><br><br>${summaryHtml}<br><br>Best regards,<br>${note.clubName || clubName} Team`
-                      });
-                      setShowEmailModal(true);
-                    }}
-                  >
-                    <span role="img" aria-label="email">📧</span> Send to Club Members
-                  </button>
-                  <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-blue-300 pointer-events-none transition" />
-                </div>
-              ))}
-            </div>
-          )}
-          {/* Modal for viewing meeting note */}
-          <Modal
-            isOpen={!!selectedNote}
-            onRequestClose={() => setSelectedNote(null)}
-            contentLabel="View Meeting Note"
-            ariaHideApp={false}
-            className="fixed inset-0 flex items-center justify-center z-50"
-            overlayClassName="fixed inset-0 bg-black bg-opacity-40 z-40"
-          >
-            {selectedNote && (
-              <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full p-8 relative flex flex-col">
-                <button
-                  onClick={() => setSelectedNote(null)}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl"
-                >
-                  ×
-                </button>
-                <div className="mb-4">
-                  <div className="text-xs text-gray-500 mb-1">{selectedNote.createdAt && new Date(selectedNote.createdAt).toLocaleString()}</div>
-                  <div className="text-2xl font-bold text-black mb-2">
-                    {selectedNote.title ? selectedNote.title : (selectedNote.clubName || clubName)}
-                  </div>
-                </div>
-                <div className="mb-6">
-                  <div className="font-semibold mb-2 text-gray-700">Summary</div>
-                  <div className="prose prose-blue bg-gray-50 rounded p-4 mb-4 max-h-60 overflow-y-auto">
-                    <ReactMarkdown>{selectedNote.summary}</ReactMarkdown>
-                  </div>
-                  <div className="font-semibold mb-2 text-gray-700">Full Transcript</div>
-                  <div className="whitespace-pre-line text-gray-800 text-sm bg-gray-50 rounded p-4 max-h-40 overflow-y-auto">{selectedNote.transcript}</div>
-                </div>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="glass-card bg-white/90 border border-pulse-100 rounded-2xl p-6 shadow-lg">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-pulse-500 to-orange-400 rounded-xl flex items-center justify-center">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-white">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <rect x="7" y="8" width="10" height="8"></rect>
+                </svg>
               </div>
-            )}
-          </Modal>
-          {/* Email Modal */}
-          {showEmailModal && emailModalData && (
-            <EmailModal
-              clubName={emailModalData.clubName}
-              subjectDefault={emailModalData.subject}
-              contentDefault={emailModalData.content}
-              sending={sending}
-              onSend={(subject, content) => handleSendEmail(emailModalData.clubId, emailModalData.clubName, subject, content)}
-              onClose={() => setShowEmailModal(false)}
-            />
-          )}
-          {emailSuccess && (
-            <div className="fixed bottom-8 right-8 bg-green-100 border border-green-300 text-green-800 px-6 py-4 rounded-xl shadow-xl z-50">
-              {emailSuccess}
+              <div>
+                <p className="text-2xl font-bold text-pulse-500">{history.length}</p>
+                <p className="text-sm text-gray-500">Presentations</p>
+              </div>
             </div>
-          )}
-          {emailError && (
-            <div className="fixed bottom-8 right-8 bg-red-100 border border-red-300 text-red-800 px-6 py-4 rounded-xl shadow-xl z-50">
-              {emailError}
+          </div>
+          
+          <div className="glass-card bg-white/90 border border-pulse-100 rounded-2xl p-6 shadow-lg">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-400 rounded-xl flex items-center justify-center">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-white">
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-green-500">{meetingNotes.length}</p>
+                <p className="text-sm text-gray-500">Meeting Notes</p>
+              </div>
             </div>
-          )}
+          </div>
+          
+          <div className="glass-card bg-white/90 border border-pulse-100 rounded-2xl p-6 shadow-lg">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-400 rounded-xl flex items-center justify-center">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-white">
+                  <path d="M12 2a10 10 0 1 0 10 10 4 4 0 1 1-4-4"></path>
+                  <path d="M12 8a4 4 0 1 0 4 4"></path>
+                  <circle cx="12" cy="12" r="1"></circle>
+                </svg>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-blue-500">Active</p>
+                <p className="text-sm text-gray-500">Club Status</p>
+              </div>
+            </div>
+          </div>
         </div>
-        {/* --- End Club History Section --- */}
-        <div className="flex gap-3 mt-10">
-          <button className="px-5 py-2 rounded-lg border border-blue-200 bg-white text-blue-700 font-medium shadow hover:bg-blue-50 transition" onClick={() => router.push('/dashboard')}>← Back to Dashboard</button>
-          <button className="px-5 py-2 rounded-lg bg-blue-600 text-white font-medium shadow hover:bg-blue-700 transition" onClick={() => router.push(`/clubs/${encodeURIComponent(clubName)}/settings`)}>Settings</button>
-        </div>
-      </main>
-    </div>
+
+
+
+        {/* Email Modal */}
+        {showEmailModal && emailModalData && (
+          <EmailModal
+            clubName={emailModalData.clubName}
+            subjectDefault={emailModalData.subject}
+            contentDefault={emailModalData.content}
+            onSend={handleSendEmail}
+            onClose={() => setShowEmailModal(false)}
+            sending={sending}
+          />
+        )}
+
+
+      </div>
+    </ClubLayout>
   );
 }
 
@@ -334,7 +186,7 @@ function EmailModal({ clubName, subjectDefault, contentDefault, onSend, onClose,
   clubName: string;
   subjectDefault: string;
   contentDefault: string;
-  onSend: (subject: string, content: string) => void;
+  onSend: (clubId: string, clubName: string, subject: string, content: string) => void;
   onClose: () => void;
   sending: boolean;
 }) {
@@ -342,7 +194,7 @@ function EmailModal({ clubName, subjectDefault, contentDefault, onSend, onClose,
   const [content, setContent] = useState(contentDefault || '');
   const handleSend = () => {
     if (!subject?.trim() || !content?.trim()) return;
-    onSend(subject, content);
+    onSend(emailModalData.clubId, emailModalData.clubName, subject, content);
   };
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">

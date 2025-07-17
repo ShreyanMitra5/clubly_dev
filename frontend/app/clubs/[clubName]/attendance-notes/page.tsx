@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { useParams } from 'next/navigation';
+import ClubLayout from '../../../components/ClubLayout';
 
 // Dynamic import for docx only on client
 const { saveAs } = typeof window !== 'undefined' ? require('file-saver') : { saveAs: undefined };
@@ -315,92 +316,96 @@ export default function ClubAttendanceNotesPage() {
   }, [isTranscribing, isSummarizing, summary, router, clubName]);
 
   return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center" style={gradientBg}>
-      {/* Back to Club Features Button */}
-      <button
-        className="px-5 py-2 rounded-lg border border-blue-200 bg-white text-blue-700 font-medium shadow hover:bg-blue-50 transition mb-6 mt-6 self-start"
-        onClick={() => router.push(`/clubs/${encodeURIComponent(clubName)}`)}
-      >
-        ← Back to Club Features
-      </button>
-      {/* Countdown overlay */}
-      {isCountingDown && (
-        <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm">
-          <div className="text-7xl font-extrabold text-white drop-shadow-lg animate-pulse">
-            {countdown}
-          </div>
+    <ClubLayout>
+      <div className="p-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-pulse-500 mb-2">Attendance & Notes</h1>
+          <p className="text-gray-600">Record meetings and generate summaries automatically</p>
         </div>
-      )}
-      {/* Loading screens */}
-      {isTranscribing && <LoadingScreen text="Transcribing audio..." subtext="Hang tight! We're turning your words into text." />}
-      {!isTranscribing && isSummarizing && <LoadingScreen text="Summarizing transcript..." subtext="Almost there! Creating a concise summary for you." />}
-      {/* Centered bars */}
-      <div className={`flex flex-col items-center justify-center flex-1 w-full transition-all ${isCountingDown ? 'blur-sm pointer-events-none' : ''}`}
-           style={{ minHeight: '60vh' }}>
-        <div className="flex flex-row items-center justify-center gap-6 mb-12" style={{ height: 156 }}>
-          {getBarHeights().map((h, i) => (
-            <div
-              key={i}
-              style={{
-                height: h,
-                width: 38,
-                borderRadius: 20,
-                background: '#111',
-                transition: 'height 0.18s cubic-bezier(0.4,0.2,0.2,1)',
-                display: 'flex',
-                alignItems: 'center',
-                marginTop: (156 - h) / 2,
-                marginBottom: (156 - h) / 2,
-              }}
-            />
-          ))}
-        </div>
-        <div className="mt-2 text-lg text-black text-center select-none font-medium tracking-tight">
-          {isRecording ? (isPaused ? 'Paused' : 'Recording...') : 'Click mic to record'}
-        </div>
-      </div>
-      {/* Floating controls */}
-      {!(isTranscribing || isSummarizing) && (
-        <div className="fixed flex flex-col items-center z-50" style={{ left: '4vw', bottom: '4vh' }}>
-          {!isRecording && !isCountingDown && (
-            <div className="relative w-32 h-32 mb-2">
-              {/* Single animated arrow pointing to mic, to the right */}
-              <img src="/curved-arrow.png" alt="arrow" className="absolute" style={{ left: '110px', top: '-4px', width: '96px', height: '96px', transform: 'scaleX(-1) rotate(-8deg)' }} />
-              <button
-                className="w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center border border-gray-200 hover:shadow-xl transition focus:outline-none relative z-10 p-0"
-                onClick={handleRecordClick}
-                disabled={isTranscribing || isSummarizing}
-                aria-label="Start Recording"
-                style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
-              >
-                <img src="/microphone.png" alt="Mic" className="w-8 h-8 m-0 p-0 block" style={{ display: 'block', margin: 0, padding: 0 }} />
-              </button>
+
+        {/* Rest of the existing content with updated styling */}
+        <div className="max-w-4xl mx-auto">
+          {/* Countdown overlay */}
+          {isCountingDown && (
+            <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm">
+              <div className="text-7xl font-extrabold text-white drop-shadow-lg animate-pulse">
+                {countdown}
+              </div>
             </div>
           )}
+          {/* Loading screens */}
+          {isTranscribing && <LoadingScreen text="Transcribing audio..." subtext="Hang tight! We're turning your words into text." />}
+          {!isTranscribing && isSummarizing && <LoadingScreen text="Summarizing transcript..." subtext="Almost there! Creating a concise summary for you." />}
+          {/* Centered bars */}
+          <div className={`flex flex-col items-center justify-center flex-1 w-full transition-all ${isCountingDown ? 'blur-sm pointer-events-none' : ''}`}
+               style={{ minHeight: '60vh' }}>
+            <div className="flex flex-row items-center justify-center gap-6 mb-12" style={{ height: 156 }}>
+              {getBarHeights().map((h, i) => (
+                <div
+                  key={i}
+                  style={{
+                    height: h,
+                    width: 38,
+                    borderRadius: 20,
+                    background: '#111',
+                    transition: 'height 0.18s cubic-bezier(0.4,0.2,0.2,1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    marginTop: (156 - h) / 2,
+                    marginBottom: (156 - h) / 2,
+                  }}
+                />
+              ))}
+            </div>
+            <div className="mt-2 text-lg text-black text-center select-none font-medium tracking-tight">
+              {isRecording ? (isPaused ? 'Paused' : 'Recording...') : 'Click mic to record'}
+            </div>
+          </div>
+          {/* Floating controls */}
+          {!(isTranscribing || isSummarizing) && (
+            <div className="fixed flex flex-col items-center z-50" style={{ left: '4vw', bottom: '4vh' }}>
+              {!isRecording && !isCountingDown && (
+                <div className="relative w-32 h-32 mb-2">
+                  {/* Single animated arrow pointing to mic, to the right */}
+                  <img src="/curved-arrow.png" alt="arrow" className="absolute" style={{ left: '110px', top: '-4px', width: '96px', height: '96px', transform: 'scaleX(-1) rotate(-8deg)' }} />
+                  <button
+                    className="w-16 h-16 rounded-full bg-white shadow-lg flex items-center justify-center border border-gray-200 hover:shadow-xl transition focus:outline-none relative z-10 p-0"
+                    onClick={handleRecordClick}
+                    disabled={isTranscribing || isSummarizing}
+                    aria-label="Start Recording"
+                    style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
+                  >
+                    <img src="/microphone.png" alt="Mic" className="w-8 h-8 m-0 p-0 block" style={{ display: 'block', margin: 0, padding: 0 }} />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          <div className="fixed bottom-10 right-10 flex items-center gap-4 z-50">
+            {isRecording && (
+              <>
+                <button
+                  className="w-16 h-16 rounded-full bg-red-500 shadow-lg flex items-center justify-center hover:bg-red-600 transition focus:outline-none"
+                  onClick={handleStop}
+                  aria-label="Stop Recording"
+                >
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="6" width="12" height="12" rx="3" fill="#fff"/></svg>
+                </button>
+                <button
+                  className="ml-4 px-6 py-2 rounded-full bg-black text-white font-semibold text-lg shadow hover:bg-gray-800 transition"
+                  onClick={handlePauseResume}
+                  disabled={isCountingDown || isTranscribing || isSummarizing}
+                >
+                  {isPaused ? 'Resume' : 'Pause'}
+                </button>
+              </>
+            )}
+          </div>
+          {/* Error */}
+          {error && <div className="text-red-600 mb-4 absolute top-6 left-1/2 -translate-x-1/2 z-50">{error}</div>}
         </div>
-      )}
-      <div className="fixed bottom-10 right-10 flex items-center gap-4 z-50">
-        {isRecording && (
-          <>
-            <button
-              className="w-16 h-16 rounded-full bg-red-500 shadow-lg flex items-center justify-center hover:bg-red-600 transition focus:outline-none"
-              onClick={handleStop}
-              aria-label="Stop Recording"
-            >
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="6" width="12" height="12" rx="3" fill="#fff"/></svg>
-            </button>
-            <button
-              className="ml-4 px-6 py-2 rounded-full bg-black text-white font-semibold text-lg shadow hover:bg-gray-800 transition"
-              onClick={handlePauseResume}
-              disabled={isCountingDown || isTranscribing || isSummarizing}
-            >
-              {isPaused ? 'Resume' : 'Pause'}
-            </button>
-          </>
-        )}
       </div>
-      {/* Error */}
-      {error && <div className="text-red-600 mb-4 absolute top-6 left-1/2 -translate-x-1/2 z-50">{error}</div>}
-    </div>
+    </ClubLayout>
   );
 } 

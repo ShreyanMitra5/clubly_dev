@@ -4,6 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { ProductionClubManager, ProductionClubData } from '../../../utils/productionClubManager';
 import { supabase } from '../../../../utils/supabaseClient';
+import ClubLayout from '../../../components/ClubLayout';
 
 interface EmailContact {
   id: string;
@@ -183,18 +184,12 @@ export default function ClubEmailManagerPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-gray-100 to-gray-200">
-      {/* Back to Club Features Button */}
-      <button
-        className="px-5 py-2 rounded-lg border border-blue-200 bg-white text-blue-700 font-medium shadow hover:bg-blue-50 transition mb-6 mt-2 self-start"
-        onClick={() => router.push(`/clubs/${encodeURIComponent(clubName)}`)}
-      >
-        ← Back to Club Features
-      </button>
-      <div className="max-w-6xl mx-auto p-8">
+    <ClubLayout>
+      <div className="p-8">
+        {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-extrabold mb-2 tracking-tight">Club Email Manager</h1>
-          <p className="text-xl text-gray-600">Manage your club's mailing list for: <span className="font-semibold text-blue-700">{clubName}</span></p>
+          <h1 className="text-4xl font-bold text-pulse-500 mb-2">Club Email Manager</h1>
+          <p className="text-gray-600">Manage your club's mailing list and send announcements</p>
         </div>
 
         {error && (
@@ -313,7 +308,7 @@ export default function ClubEmailManagerPage() {
           </button>
         </div>
       </div>
-    </div>
+    </ClubLayout>
   );
 }
 

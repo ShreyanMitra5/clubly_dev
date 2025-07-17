@@ -4,6 +4,7 @@ import { useUser } from "@clerk/nextjs";
 import { useParams, useRouter } from "next/navigation";
 import { ProductionClubManager, ProductionClubData } from '../../../utils/productionClubManager';
 import { v4 as uuidv4 } from 'uuid';
+import ClubLayout from '../../../components/ClubLayout';
 
 // --- Types ---
 interface Semester {
@@ -162,6 +163,7 @@ export default function SemesterRoadmapPage() {
               setRoadmapData(updatedRoadmap);
               const activeSem = updatedRoadmap.semesters.find((s: Semester) => s.isActive);
               setActiveSemester(activeSem || updatedRoadmap.semesters[0]);
+              setShowSetup(false); // Always hide setup if roadmap exists
             } else {
               // Old roadmap structure - show setup to migrate
               console.log('Old roadmap structure detected, showing setup');
@@ -211,59 +213,59 @@ export default function SemesterRoadmapPage() {
   const generateMeetingEventsForSemester = (semester: Semester, settings: RoadmapData['settings'], clubName: string): ClubEvent[] => {
     const events: ClubEvent[] = [];
     const { meetingFrequency, meetingDays, meetingTime, meetingEndTime, meetingDuration } = settings;
-    
+
+    // Map meetingDays (e.g., 'monday') to JS Date getDay()
+    const dayMap: { [key: string]: number } = {
+      monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5
+    };
+    const selectedDays = meetingDays.map(day => dayMap[day.toLowerCase()]).filter(day => day >= 1 && day <= 5);
+
     let currentDate = new Date(semester.startDate + 'T00:00:00');
     const endDate = new Date(semester.endDate + 'T23:59:59');
     const [startHours, startMinutes] = meetingTime.split(':').map(Number);
     const [endHours, endMinutes] = meetingEndTime.split(':').map(Number);
-    
-    const dayMap: { [key: string]: number } = {
-      'mon': 1, 'tue': 2, 'wed': 3, 'thu': 4, 'fri': 5
-    };
 
-    let weekCounter = 0;
-    
+    // Find the first selected day on or after the start date
     while (currentDate <= endDate) {
-      const dayName = Object.keys(dayMap).find(key => dayMap[key] === currentDate.getDay());
-      
-      if (meetingDays.includes(dayName!) && !shouldSkipDate(currentDate)) {
-        // Check frequency
+      // For each selected day in the week, check if it falls within the range
+      for (const day of selectedDays) {
+        const date = new Date(currentDate);
+        date.setDate(currentDate.getDate() + ((day - currentDate.getDay() + 7) % 7));
+        if (date > endDate) continue;
+        if (date < currentDate) continue;
+        // Frequency logic
         let shouldAdd = false;
         if (meetingFrequency === 'weekly') {
           shouldAdd = true;
         } else if (meetingFrequency === 'biweekly') {
-          shouldAdd = weekCounter % 2 === 0;
+          // Only add every other week (even week number since start)
+          const weekNum = Math.floor((date.getTime() - new Date(semester.startDate).getTime()) / (1000 * 60 * 60 * 24 * 7));
+          shouldAdd = weekNum % 2 === 0;
         } else if (meetingFrequency === 'monthly') {
-          shouldAdd = currentDate.getDate() <= 7; // First week of month
+          // Only add if it's the first selected day of the month
+          shouldAdd = date.getDate() <= 7;
         }
-
         if (shouldAdd) {
-          const startDate = new Date(currentDate);
+          const startDate = new Date(date);
           startDate.setHours(startHours, startMinutes, 0, 0);
-          
-          const endDate = new Date(currentDate);
-          endDate.setHours(endHours, endMinutes, 0, 0);
-          
-          const meetingEvent = {
+          const endDateObj = new Date(date);
+          endDateObj.setHours(endHours, endMinutes, 0, 0);
+          events.push({
             id: uuidv4(),
             title: `${clubName} Meeting`,
             start: startDate,
-            end: endDate,
+            end: endDateObj,
             type: 'meeting' as const,
             backgroundColor: '#3B82F6',
             borderColor: '#2563EB',
             textColor: '#FFFFFF',
             semesterId: semester.id,
-          };
-          
-          events.push(meetingEvent);
+          });
         }
       }
-      
-      currentDate.setDate(currentDate.getDate() + 1);
-      if (currentDate.getDay() === 1) weekCounter++; // Monday = start of week
+      // Move to next week
+      currentDate.setDate(currentDate.getDate() + 7);
     }
-
     return events;
   };
 
@@ -425,11 +427,11 @@ export default function SemesterRoadmapPage() {
     await saveRoadmap(newRoadmapData);
     setRoadmapData(newRoadmapData);
     setActiveSemester(firstSemester);
-    setShowSetup(false);
+    setShowSetup(false); // Hide setup modal after roadmap is generated
   };
 
   const saveRoadmap = async (data: RoadmapData) => {
-    if (!user || !clubInfo) return;
+    if (!user || !clubInfo?.clubId) return;
 
     try {
       const response = await fetch(`/api/clubs/${clubInfo.clubId}/roadmap`, {
@@ -589,7 +591,7 @@ export default function SemesterRoadmapPage() {
   }
 
   // --- Setup Modal ---
-  if (showSetup) {
+  if (showSetup && !roadmapData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-2xl">
@@ -705,7 +707,7 @@ export default function SemesterRoadmapPage() {
 
               <div className="mt-4">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Meeting Days</label>
-                <div className="grid grid-cols-7 gap-2">
+                <div className="grid grid-cols-5 gap-2">
                   {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map((day, index) => (
                     <label key={day} className="flex items-center justify-center">
                       <input
@@ -746,24 +748,171 @@ export default function SemesterRoadmapPage() {
 
   // --- Main Calendar View ---
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <ClubLayout>
+      <div className="p-8">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-pulse-500 mb-2">Semester Roadmap</h1>
+          <p className="text-gray-600">Plan and organize your club's semester activities</p>
+        </div>
+
+        {/* Rest of the existing content with updated styling */}
+        {showSetup ? (
+          <div className="glass-card bg-white/90 border border-pulse-100 rounded-2xl p-8 shadow-lg">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold text-gray-900 mb-2">Plan Your Semester</h1>
+              <p className="text-gray-600">Set up your {clubName} semester roadmap with intelligent scheduling</p>
+            </div>
+
+            <div className="space-y-6">
+              {/* Club Topic */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Club Topic</label>
+                <input
+                  type="text"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="e.g., Artificial Intelligence, Robotics, Finance..."
+                  value={setupData.clubTopic}
+                  onChange={(e) => setSetupData({...setupData, clubTopic: e.target.value})}
+                />
+              </div>
+
+              {/* Semester Dates */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Fall Semester</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                      <input
+                        type="date"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        value={setupData.firstSemesterStart}
+                        onChange={(e) => setSetupData({...setupData, firstSemesterStart: e.target.value})}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Set the start date for the semester</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                      <input
+                        type="date"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        value={setupData.firstSemesterEnd}
+                        onChange={(e) => setSetupData({...setupData, firstSemesterEnd: e.target.value})}
+                        min={setupData.firstSemesterStart}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Spring Semester</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                      <input
+                        type="date"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        value={setupData.secondSemesterStart}
+                        onChange={(e) => setSetupData({...setupData, secondSemesterStart: e.target.value})}
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Set the start date for the semester</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                      <input
+                        type="date"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                        value={setupData.secondSemesterEnd}
+                        onChange={(e) => setSetupData({...setupData, secondSemesterEnd: e.target.value})}
+                        min={setupData.secondSemesterStart}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Meeting Schedule */}
+              <div className="bg-gray-50 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Meeting Schedule</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Frequency</label>
+                    <select
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      value={setupData.meetingFrequency}
+                      onChange={(e) => setSetupData({...setupData, meetingFrequency: e.target.value as any})}
+                    >
+                      <option value="weekly">Weekly</option>
+                      <option value="biweekly">Bi-weekly</option>
+                      <option value="monthly">Monthly</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Meeting Start Time</label>
+                    <input
+                      type="time"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      value={setupData.meetingTime}
+                      onChange={(e) => setSetupData({...setupData, meetingTime: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Meeting End Time</label>
+                    <input
+                      type="time"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                      value={setupData.meetingEndTime}
+                      onChange={(e) => setSetupData({...setupData, meetingEndTime: e.target.value})}
+                      min={setupData.meetingTime}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Meeting Days</label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {['Mon', 'Tue', 'Wed', 'Thu', 'Fri'].map((day, index) => (
+                      <label key={day} className="flex items-center justify-center">
+                        <input
+                          type="checkbox"
+                          className="sr-only"
+                          checked={setupData.meetingDays.includes(day.toLowerCase())}
+                          onChange={(e) => {
+                            const days = e.target.checked
+                              ? [...setupData.meetingDays, day.toLowerCase()]
+                              : setupData.meetingDays.filter(d => d !== day.toLowerCase());
+                            setSetupData({...setupData, meetingDays: days});
+                          }}
+                        />
+                        <div className={`w-10 h-10 rounded-lg border-2 flex items-center justify-center text-sm font-medium cursor-pointer transition-all ${
+                          setupData.meetingDays.includes(day.toLowerCase())
+                            ? 'bg-blue-500 border-blue-500 text-white'
+                            : 'border-gray-300 text-gray-600 hover:border-blue-300'
+                        }`}>
+                          {day}
+                        </div>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
               <button
-                onClick={() => router.push(`/clubs/${encodeURIComponent(clubName)}`)}
-                className="text-gray-500 hover:text-gray-700 transition-colors"
+                onClick={handleSetupSubmit}
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 transform hover:scale-105"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                </svg>
+                Create Semester Roadmap
               </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between h-16">
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">{clubName}</h1>
                 <p className="text-sm text-gray-500">Semester Roadmap</p>
-              </div>
             </div>
 
             <div className="flex items-center space-x-4">
@@ -790,13 +939,10 @@ export default function SemesterRoadmapPage() {
               >
                 Reset Roadmap
               </button>
-            </div>
-          </div>
         </div>
       </div>
 
       {/* Calendar Controls */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
@@ -1253,6 +1399,8 @@ export default function SemesterRoadmapPage() {
             </div>
           </div>
         </div>
+          </div>
+        )}
       </div>
 
       {/* Event Modal */}
@@ -1371,8 +1519,6 @@ export default function SemesterRoadmapPage() {
                   />
                 </div>
               </div>
-
-
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
@@ -1601,6 +1747,6 @@ export default function SemesterRoadmapPage() {
           </div>
         </div>
       )}
-    </div>
+    </ClubLayout>
   );
 } 

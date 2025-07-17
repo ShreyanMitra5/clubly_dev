@@ -40,6 +40,16 @@ module.exports = {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        pulse: {
+          50: '#FFF9F5',
+          100: '#FFF5F0',
+          200: '#FFE8D6',
+          500: '#FE5C02',
+          600: '#E54D00',
+        },
+        dark: {
+          900: '#1A1A1A',
+        },
       },
       borderRadius: {
         lg: `var(--radius)`,
@@ -47,7 +57,10 @@ module.exports = {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: ['var(--font-inter)'],
+        sans: ['Inter', 'sans-serif'],
+        display: ['Brockmann', 'SF Pro Display', 'Inter', 'sans-serif'],
+        brockmann: ['Brockmann', 'serif'],
+        playfair: ['"Playfair Display"', 'serif'],
       },
     },
   },

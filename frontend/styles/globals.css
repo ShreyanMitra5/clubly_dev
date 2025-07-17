@@ -1,3 +1,12 @@
+@font-face {
+  font-family: 'Brockmann';
+  src: url('/brockmann-medium-webfont.ttf') format('truetype'),
+       url('/brockmann-medium.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -16,11 +25,20 @@
   --text-secondary: #4B5563;
   --text-disabled: #9CA3AF;
   --border: #E5E7EB;
+  
+  /* Landing page specific colors */
+  --pulse-500: #FE5C02;
+  --pulse-600: #E54D00;
+  --pulse-100: #FFF5F0;
+  --pulse-50: #FFF9F5;
+  --pulse-200: #FFE8D6;
+  --dark-900: #1A1A1A;
 }
 
 @layer base {
   body {
-    @apply bg-gray-50 text-gray-900;
+    @apply bg-gray-50 text-gray-900 font-sans antialiased;
+    font-family: 'Inter', sans-serif;
   }
 
   /* Modern Typography */
@@ -139,11 +157,74 @@
   .nav-link-active {
     @apply text-gray-900 after:w-full;
   }
+
+  /* Landing page specific styles */
+  .pulse-chip {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-pulse-100 text-pulse-600 border border-pulse-200;
+  }
+  
+  .section-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12;
+  }
+
+  .section-title {
+    @apply text-3xl md:text-4xl lg:text-5xl font-display font-bold tracking-tight;
+  }
+
+  .section-subtitle {
+    @apply text-lg md:text-xl text-gray-600 mt-4 max-w-3xl;
+  }
+
+  .glass-card {
+    @apply bg-white/70 backdrop-blur-sm border border-white/20 rounded-2xl shadow-elegant transition-all duration-300 hover:shadow-elegant-hover;
+  }
+
+  .shadow-elegant {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+
+  .shadow-elegant-hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+
+  .bg-pulse-gradient {
+    background: linear-gradient(135deg, #FE5C02 0%, #E54D00 100%);
+  }
+
+  .font-display {
+    font-family: 'Brockmann', 'SF Pro Display', 'Inter', sans-serif;
+  }
+
+  .font-brockmann {
+    font-family: 'Brockmann', serif;
+  }
+
+  .font-playfair {
+    font-family: 'Playfair Display', serif;
+  }
+
+  .animate-on-scroll {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .animate-on-scroll.animate-fade-in {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .parallax {
+    transform: translateY(var(--parallax-y, 0));
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.6s ease-out forwards;
 }
 
 @keyframes slideUp {
