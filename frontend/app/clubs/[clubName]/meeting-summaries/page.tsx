@@ -72,7 +72,7 @@ export default function MeetingSummariesPage() {
       <div className="p-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-pulse-500 mb-2">Meeting Summaries</h1>
+          <h1 className="text-4xl font-bold text-pulse-500 mb-2">Past Summaries</h1>
           <p className="text-gray-600">View and manage all meeting summaries for {clubName}</p>
         </div>
 

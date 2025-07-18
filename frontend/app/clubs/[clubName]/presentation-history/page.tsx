@@ -72,7 +72,7 @@ export default function PresentationHistoryPage() {
       <div className="p-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-pulse-500 mb-2">Presentation History</h1>
+          <h1 className="text-4xl font-bold text-pulse-500 mb-2">Past Presentations</h1>
           <p className="text-gray-600">View and manage all presentations for {clubName}</p>
         </div>
 

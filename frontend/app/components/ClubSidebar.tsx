@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
-import { ProductionClubManager, ProductionClubData } from '../../utils/productionClubManager';
+import { ProductionClubManager, ProductionClubData } from '../utils/productionClubManager';
 import { supabase } from '../../utils/supabaseClient';
 
 interface ClubSidebarProps {
@@ -41,8 +41,8 @@ export default function ClubSidebar({ activeFeature, setActiveFeature, clubName,
     { id: 'advisor', label: 'AI Club Advisor', icon: null },
     { id: 'tasks', label: 'Task Manager', icon: null },
     { id: 'email', label: 'Email Manager', icon: null },
-    { id: 'history', label: 'Presentation History', icon: null },
-    { id: 'summaries', label: 'Meeting Summaries', icon: null },
+    { id: 'history', label: 'Past Presentations', icon: null },
+    { id: 'summaries', label: 'Past Summaries', icon: null },
     { id: 'settings', label: 'Settings', icon: null },
   ];
 
