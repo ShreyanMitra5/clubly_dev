@@ -1,243 +1,155 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+
+import React from 'react';
 import { useParams } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
-import { ProductionClubData } from '../../utils/productionClubManager';
-import { supabase } from '../../../utils/supabaseClient';
-import Modal from 'react-modal';
 import ClubLayout from '../../components/ClubLayout';
 
-export default function ClubDetailsPage() {
+export default function ClubPage() {
   const params = useParams();
-  const { user } = useUser();
   const clubName = decodeURIComponent(params.clubName as string);
-  const [clubInfo, setClubInfo] = useState<ProductionClubData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [history, setHistory] = useState<any[]>([]);
-  const [meetingNotes, setMeetingNotes] = useState<any[]>([]);
-  const [showEmailModal, setShowEmailModal] = useState(false);
-  const [emailModalData, setEmailModalData] = useState<any>(null);
-  const [sending, setSending] = useState(false);
-  const [emailSuccess, setEmailSuccess] = useState('');
-  const [emailError, setEmailError] = useState('');
-
-  useEffect(() => {
-    if (!user || !clubName) return;
-    async function fetchClubInfo() {
-      // Get all memberships for this user, join with clubs
-      const { data, error } = await supabase
-        .from('memberships')
-        .select('club_id, role, clubs (id, name, description, mission, goals, audience, owner_id)')
-        .eq('user_id', user.id);
-      if (error) {
-        console.error('Error fetching club info:', error);
-        setClubInfo(null);
-        setLoading(false);
-        return;
-      }
-      const club = (data || []).map((m: any) => ({ ...m.clubs, id: m.club_id })).find((c: any) => c?.name === clubName);
-      setClubInfo(club || null);
-      setLoading(false);
-    }
-    fetchClubInfo();
-  }, [user, clubName]);
-
-  useEffect(() => {
-    if (!user || !clubInfo?.id && !clubInfo?.clubId) return;
-    // Fetch presentation history for this user, then filter for this club
-    fetch(`/api/presentations/history?userId=${user.id}`)
-      .then(res => res.json())
-      .then(data => {
-        const clubId = clubInfo.id || clubInfo.clubId;
-        setHistory((data.history || []).filter((item: any) =>
-          (item.clubId && item.clubId === clubId) || (!item.clubId && item.clubName === clubName)
-        ));
-      });
-    // Fetch meeting notes history for this user, then filter for this club
-    fetch(`/api/attendance-notes/history?userId=${user.id}`)
-      .then(res => res.json())
-      .then(data => {
-        const clubId = clubInfo.id || clubInfo.clubId;
-        setMeetingNotes((data.history || []).filter((note: any) =>
-          (note.clubId && note.clubId === clubId) || (!note.clubId && note.clubName === clubName)
-        ));
-      });
-  }, [user, clubInfo, clubName]);
-
-  const handleSendEmail = async (clubId: string, clubName: string, subject: string, content: string) => {
-    if (!user) return;
-    setSending(true);
-    setEmailError('');
-    setEmailSuccess('');
-    try {
-      const response = await fetch('/api/clubs/emails/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clubId,
-          clubName,
-          senderName: user.fullName || user.firstName || user.username || 'A Club Member',
-          subject,
-          content
-        }),
-      });
-      if (response.ok) {
-        setEmailSuccess('Sent to club mailing list!');
-        setShowEmailModal(false);
-      } else {
-        const errorData = await response.json();
-        setEmailError(errorData.error || 'Failed to send email');
-      }
-    } catch (err) {
-      setEmailError('Failed to send email');
-    } finally {
-      setSending(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-pulse-50 via-white to-orange-50 flex items-center justify-center">
-        <div className="text-lg text-pulse-500">Loading club information...</div>
-      </div>
-    );
-  }
 
   return (
     <ClubLayout>
-      <div className="p-8">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-pulse-500 mb-2">Welcome to {clubName}</h1>
-          <p className="text-gray-600">Manage your club activities and stay organized</p>
+      <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+        {/* Hero Section */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#FF5F1F] via-[#FF7F1F] to-[#FF9F1F] mb-8">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 bg-[url('/background-section2.png')] bg-cover opacity-5" />
+          <div className="absolute inset-0 bg-black/10" />
+          
+          {/* Content */}
+          <div className="relative z-10 px-8 py-12 flex items-center justify-between">
+            <div className="max-w-2xl">
+              <h1 className="text-4xl font-bold text-white mb-4">
+                Welcome to {clubName}
+              </h1>
+              <p className="text-white/90 text-lg mb-6">
+                Manage your club activities and stay organized with Clubly.
+              </p>
+              <div className="flex items-center space-x-4">
+                <button className="px-6 py-3 bg-white text-[#FF5F1F] rounded-xl font-medium hover:bg-white/90 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105">
+                  Create Presentation
+                </button>
+                <button className="px-6 py-3 bg-white/10 text-white rounded-xl font-medium hover:bg-white/20 transition-all duration-200 backdrop-blur-sm ring-2 ring-white/20">
+                  View Roadmap
+                </button>
+              </div>
+            </div>
+            <div className="w-64 h-64 flex-shrink-0">
+              <img 
+                src="/lovable-uploads/5663820f-6c97-4492-9210-9eaa1a8dc415.png"
+                alt="Club Management"
+                className="w-full h-full object-contain"
+              />
+            </div>
+          </div>
         </div>
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="glass-card bg-white/90 border border-pulse-100 rounded-2xl p-6 shadow-lg">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-pulse-500 to-orange-400 rounded-xl flex items-center justify-center">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-white">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                  <rect x="7" y="8" width="10" height="8"></rect>
+          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 group">
+            <div className="flex items-center">
+              <div className="w-12 h-12 bg-[#FF5F1F]/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                <svg className="w-6 h-6 text-[#FF5F1F]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
               </div>
-              <div>
-                <p className="text-2xl font-bold text-pulse-500">{history.length}</p>
-                <p className="text-sm text-gray-500">Presentations</p>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Presentations</p>
+                <p className="text-2xl font-semibold text-gray-900">1</p>
               </div>
             </div>
           </div>
-          
-          <div className="glass-card bg-white/90 border border-pulse-100 rounded-2xl p-6 shadow-lg">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-400 rounded-xl flex items-center justify-center">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-white">
-                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
+
+          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 group">
+            <div className="flex items-center">
+              <div className="w-12 h-12 bg-[#FF8C33]/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                <svg className="w-6 h-6 text-[#FF8C33]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </div>
-              <div>
-                <p className="text-2xl font-bold text-green-500">{meetingNotes.length}</p>
-                <p className="text-sm text-gray-500">Meeting Notes</p>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Meeting Notes</p>
+                <p className="text-2xl font-semibold text-gray-900">2</p>
               </div>
             </div>
           </div>
-          
-          <div className="glass-card bg-white/90 border border-pulse-100 rounded-2xl p-6 shadow-lg">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-400 rounded-xl flex items-center justify-center">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-white">
-                  <path d="M12 2a10 10 0 1 0 10 10 4 4 0 1 1-4-4"></path>
-                  <path d="M12 8a4 4 0 1 0 4 4"></path>
-                  <circle cx="12" cy="12" r="1"></circle>
+
+          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 group">
+            <div className="flex items-center">
+              <div className="w-12 h-12 bg-[#FFA64D]/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                <svg className="w-6 h-6 text-[#FFA64D]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
               </div>
-              <div>
-                <p className="text-2xl font-bold text-blue-500">Active</p>
-                <p className="text-sm text-gray-500">Club Status</p>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Tasks</p>
+                <p className="text-2xl font-semibold text-gray-900">5</p>
               </div>
             </div>
           </div>
         </div>
 
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 group cursor-pointer">
+            <div className="flex items-center justify-between mb-6">
+              <div className="w-12 h-12 bg-[#FF5F1F]/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                <svg className="w-6 h-6 text-[#FF5F1F]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16" />
+                </svg>
+              </div>
+              <svg className="w-5 h-5 text-gray-400 group-hover:text-[#FF5F1F] group-hover:translate-x-1 transition-all duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-[#FF5F1F] transition-colors duration-200">
+              Create Presentation
+            </h3>
+            <p className="text-gray-500 text-sm">
+              Generate a new presentation for your next meeting
+            </p>
+          </div>
 
+          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 group cursor-pointer">
+            <div className="flex items-center justify-between mb-6">
+              <div className="w-12 h-12 bg-[#FF8C33]/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                <svg className="w-6 h-6 text-[#FF8C33]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+              </div>
+              <svg className="w-5 h-5 text-gray-400 group-hover:text-[#FF8C33] group-hover:translate-x-1 transition-all duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-[#FF8C33] transition-colors duration-200">
+              Record Meeting Notes
+            </h3>
+            <p className="text-gray-500 text-sm">
+              Take notes and track attendance for your meetings
+            </p>
+          </div>
 
-        {/* Email Modal */}
-        {showEmailModal && emailModalData && (
-          <EmailModal
-            clubName={emailModalData.clubName}
-            subjectDefault={emailModalData.subject}
-            contentDefault={emailModalData.content}
-            onSend={handleSendEmail}
-            onClose={() => setShowEmailModal(false)}
-            sending={sending}
-          />
-        )}
-
-
+          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 group cursor-pointer">
+            <div className="flex items-center justify-between mb-6">
+              <div className="w-12 h-12 bg-[#FFA64D]/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+                <svg className="w-6 h-6 text-[#FFA64D]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <svg className="w-5 h-5 text-gray-400 group-hover:text-[#FFA64D] group-hover:translate-x-1 transition-all duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 5l7 7-7 7" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-[#FFA64D] transition-colors duration-200">
+              Plan Roadmap
+            </h3>
+            <p className="text-gray-500 text-sm">
+              Set goals and milestones for your club
+            </p>
+          </div>
+        </div>
       </div>
     </ClubLayout>
-  );
-}
-
-// EmailModal component (copied from history page)
-function EmailModal({ clubName, subjectDefault, contentDefault, onSend, onClose, sending }: {
-  clubName: string;
-  subjectDefault: string;
-  contentDefault: string;
-  onSend: (clubId: string, clubName: string, subject: string, content: string) => void;
-  onClose: () => void;
-  sending: boolean;
-}) {
-  const [subject, setSubject] = useState(subjectDefault || '');
-  const [content, setContent] = useState(contentDefault || '');
-  const handleSend = () => {
-    if (!subject?.trim() || !content?.trim()) return;
-    onSend(emailModalData.clubId, emailModalData.clubName, subject, content);
-  };
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-8">
-          <h3 className="text-2xl font-bold mb-6">Send to Club Members</h3>
-          <div className="space-y-4">
-            <div>
-              <label className="block font-semibold mb-2">Subject</label>
-              <input
-                type="text"
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg"
-              />
-            </div>
-            <div>
-              <label className="block font-semibold mb-2">Message</label>
-              <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg"
-                rows={8}
-              />
-            </div>
-          </div>
-          <div className="flex gap-4 mt-6">
-            <button
-              onClick={handleSend}
-              disabled={!subject?.trim() || !content?.trim() || sending}
-              className="flex-1 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50"
-            >
-              {sending ? 'Sending...' : 'Send Email'}
-            </button>
-            <button
-              onClick={onClose}
-              className="flex-1 px-6 py-3 bg-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-400"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
   );
 } 

@@ -1,88 +1,106 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '../../../../../utils/supabaseServer';
 
+// GET roadmap data for a club
 export async function GET(
   request: NextRequest,
   { params }: { params: { clubId: string } }
 ) {
   try {
-    const { clubId } = await params;
-
-    if (!clubId) {
-      return NextResponse.json({ error: 'Club ID is required' }, { status: 400 });
-    }
-
-    // Fetch roadmap data from Supabase
+    const { clubId } = params;
+    
     const { data, error } = await supabaseServer
       .from('roadmaps')
       .select('*')
       .eq('club_id', clubId)
       .single();
 
-    if (error) {
-      if (error.code === 'PGRST116') {
-        // No roadmap found
-        return NextResponse.json({ roadmap: null });
-      }
+    if (error && error.code !== 'PGRST116') { // PGRST116 is "not found"
       console.error('Error fetching roadmap:', error);
-      return NextResponse.json({ error: 'Failed to fetch roadmap' }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to fetch roadmap data' }, { status: 500 });
     }
 
-    return NextResponse.json({ roadmap: data });
-
+    return NextResponse.json({ 
+      success: true, 
+      data: data || { data: { config: null, events: [] } }
+    });
   } catch (error) {
-    console.error('Error in roadmap GET:', error);
+    console.error('Roadmap GET error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
+// POST new roadmap data
 export async function POST(
   request: NextRequest,
   { params }: { params: { clubId: string } }
 ) {
   try {
-    const { clubId } = await params;
+    const { clubId } = params;
     const body = await request.json();
+    const { config, events } = body;
 
-    if (!clubId) {
-      return NextResponse.json({ error: 'Club ID is required' }, { status: 400 });
-    }
-
-    if (!body.roadmap) {
-      return NextResponse.json({ error: 'Roadmap data is required' }, { status: 400 });
-    }
-
-    // Upsert roadmap data to Supabase
+    const now = new Date().toISOString();
+    
     const { data, error } = await supabaseServer
       .from('roadmaps')
-      .upsert({
+      .upsert([{
         club_id: clubId,
-        data: body.roadmap,
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'club_id'
-      })
+        data: {
+          config: config,
+          events: events
+        },
+        created_at: now,
+        updated_at: now
+      }])
       .select()
       .single();
 
     if (error) {
       console.error('Error saving roadmap:', error);
-      console.error('Error details:', {
-        code: error.code,
-        message: error.message,
-        details: error.details,
-        hint: error.hint
-      });
-      return NextResponse.json({ 
-        error: 'Failed to save roadmap', 
-        details: error.message 
-      }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to save roadmap data' }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, roadmap: data });
-
+    return NextResponse.json({ success: true, data });
   } catch (error) {
-    console.error('Error in roadmap POST:', error);
+    console.error('Roadmap POST error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+// PATCH update roadmap data
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { clubId: string } }
+) {
+  try {
+    const { clubId } = params;
+    const body = await request.json();
+    const { config, events } = body;
+
+    const now = new Date().toISOString();
+    
+    const { data, error } = await supabaseServer
+      .from('roadmaps')
+      .update({
+        data: {
+          config: config,
+          events: events
+        },
+        updated_at: now
+      })
+      .eq('club_id', clubId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating roadmap:', error);
+      return NextResponse.json({ error: 'Failed to update roadmap data' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, data });
+  } catch (error) {
+    console.error('Roadmap PATCH error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 } 

@@ -75,18 +75,29 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
   }
 
   return (
-    <div className="space-y-6">
-      {/* Welcome Card */}
-      <div className="bg-[#FF5F1F] rounded-2xl overflow-hidden">
-        <div className="flex items-center justify-between p-8">
-          <div>
-            <h1 className="text-4xl font-bold text-white mb-2">Welcome</h1>
-            <h2 className="text-2xl font-semibold text-white/90 mb-2">{clubName}</h2>
-            <p className="text-white/80">
+    <div className="space-y-10">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#FF5F1F] via-[#FF7F1F] to-[#FF9F1F] shadow-xl mb-4">
+        {/* Subtle Pattern Overlay */}
+        <div className="absolute inset-0 bg-[url('/background-section2.png')] bg-cover opacity-10" />
+        <div className="absolute inset-0 bg-black/10" />
+        <div className="relative z-10 px-10 py-12 flex flex-col md:flex-row items-center justify-between gap-8">
+          <div className="max-w-2xl">
+            <h1 className="text-4xl font-bold text-white mb-2 drop-shadow-lg">Welcome</h1>
+            <h2 className="text-2xl font-semibold text-white/90 mb-2 drop-shadow">{clubName}</h2>
+            <p className="text-white/80 mb-6 text-lg">
               Manage your club activities and stay organized with Clubly.
             </p>
+            <div className="flex items-center space-x-4">
+              <button className="px-6 py-3 bg-white text-[#FF5F1F] rounded-xl font-medium hover:bg-white/90 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105">
+                Create Presentation
+              </button>
+              <button className="px-6 py-3 bg-white/10 text-white rounded-xl font-medium hover:bg-white/20 transition-all duration-200 backdrop-blur-sm ring-2 ring-white/20">
+                View Roadmap
+              </button>
           </div>
-          <div className="w-48 h-48">
+          </div>
+          <div className="w-56 h-56 flex-shrink-0">
             <img 
               src="/lovable-uploads/5663820f-6c97-4492-9210-9eaa1a8dc415.png"
               alt="Clubly Platform"
@@ -97,45 +108,103 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
       </div>
 
       {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl p-6 flex items-center gap-4 hover:shadow-lg transition-shadow">
-          <div className="w-12 h-12 bg-[#FF5F1F]/10 rounded-xl flex items-center justify-center">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+        <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 group">
+          <div className="flex items-center">
+            <div className="w-12 h-12 bg-[#FF5F1F]/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
             <svg className="w-6 h-6 text-[#FF5F1F]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                <rect x="7" y="8" width="10" height="8"></rect>
+                <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
             </div>
-            <div>
-            <p className="text-2xl font-bold text-[#FF5F1F]">{history.length}</p>
-            <p className="text-sm text-gray-600">Presentations</p>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500">Presentations</p>
+              <p className="text-2xl font-semibold text-gray-900">{history.length}</p>
+          </div>
+        </div>
+        </div>
+        <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 group">
+          <div className="flex items-center">
+            <div className="w-12 h-12 bg-[#FF8C33]/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+              <svg className="w-6 h-6 text-[#FF8C33]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500">Meeting Notes</p>
+              <p className="text-2xl font-semibold text-gray-900">{meetingNotes.length}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 group">
+          <div className="flex items-center">
+            <div className="w-12 h-12 bg-[#FFA64D]/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+              <svg className="w-6 h-6 text-[#FFA64D]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              </svg>
+            </div>
+            <div className="ml-4">
+              <p className="text-sm font-medium text-gray-500">Tasks</p>
+              <p className="text-2xl font-semibold text-gray-900">5</p>
+            </div>
+          </div>
           </div>
         </div>
         
-        <div className="bg-white rounded-xl p-6 flex items-center gap-4 hover:shadow-lg transition-shadow">
-          <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center">
-            <svg className="w-6 h-6 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 group cursor-pointer">
+          <div className="flex items-center justify-between mb-6">
+            <div className="w-12 h-12 bg-[#FF5F1F]/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+              <svg className="w-6 h-6 text-[#FF5F1F]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16" />
               </svg>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-green-500">{meetingNotes.length}</p>
-            <p className="text-sm text-gray-600">Meeting Notes</p>
+            <svg className="w-5 h-5 text-gray-400 group-hover:text-[#FF5F1F] group-hover:translate-x-1 transition-all duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 5l7 7-7 7" />
+            </svg>
           </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-[#FF5F1F] transition-colors duration-200">
+            Create Presentation
+          </h3>
+          <p className="text-gray-500 text-sm">
+            Generate a new presentation for your next meeting
+          </p>
         </div>
-        
-        <div className="bg-white rounded-xl p-6 flex items-center gap-4 hover:shadow-lg transition-shadow">
-          <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center">
-            <svg className="w-6 h-6 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 2a10 10 0 1 0 10 10 4 4 0 1 1-4-4"></path>
-                <path d="M12 8a4 4 0 1 0 4 4"></path>
-                <circle cx="12" cy="12" r="1"></circle>
+        <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 group cursor-pointer">
+          <div className="flex items-center justify-between mb-6">
+            <div className="w-12 h-12 bg-[#FF8C33]/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+              <svg className="w-6 h-6 text-[#FF8C33]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
               </svg>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-blue-500">Active</p>
-            <p className="text-sm text-gray-600">Club Status</p>
+            <svg className="w-5 h-5 text-gray-400 group-hover:text-[#FF8C33] group-hover:translate-x-1 transition-all duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 5l7 7-7 7" />
+            </svg>
           </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-[#FF8C33] transition-colors duration-200">
+            Record Meeting Notes
+          </h3>
+          <p className="text-gray-500 text-sm">
+            Take notes and track attendance for your meetings
+          </p>
+        </div>
+        <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 group cursor-pointer">
+          <div className="flex items-center justify-between mb-6">
+            <div className="w-12 h-12 bg-[#FFA64D]/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
+              <svg className="w-6 h-6 text-[#FFA64D]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <svg className="w-5 h-5 text-gray-400 group-hover:text-[#FFA64D] group-hover:translate-x-1 transition-all duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-[#FFA64D] transition-colors duration-200">
+            Plan Roadmap
+          </h3>
+          <p className="text-gray-500 text-sm">
+            Set goals and milestones for your club
+          </p>
         </div>
       </div>
     </div>
@@ -1701,195 +1770,602 @@ const US_HOLIDAYS: Holiday[] = [
 ];
 
 function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any }) {
+  const { user } = useUser();
+  const [showSetup, setShowSetup] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [events, setEvents] = useState<any[]>([]);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [currentEvent, setCurrentEvent] = useState<any>(null);
+  const [eventTitle, setEventTitle] = useState('');
+  const [eventDescription, setEventDescription] = useState('');
+  const [eventColor, setEventColor] = useState('bg-purple-500');
   const [formData, setFormData] = useState({
-    topic: '',
-    startDate: '',
-    endDate: '',
-    frequency: 'weekly',
+    clubTopic: '',
+    schoolYearStart: '',
+    schoolYearEnd: '',
+    meetingFrequency: 'weekly',
     meetingDays: ['monday'],
     meetingTime: '15:00',
-    meetingDuration: 60,
+    goals: ''
   });
 
-  const [meetings, setMeetings] = useState<any[]>([]);
-  const [selectedMeeting, setSelectedMeeting] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showMeetingModal, setShowMeetingModal] = useState(false);
+  // US Federal Holidays and School Breaks
+  const holidays = [
+    // 2024 holidays
+    { date: '2024-01-01', name: 'New Year\'s Day', type: 'federal' },
+    { date: '2024-01-15', name: 'Martin Luther King Jr. Day', type: 'federal' },
+    { date: '2024-02-19', name: 'Presidents\' Day', type: 'federal' },
+    { date: '2024-05-27', name: 'Memorial Day', type: 'federal' },
+    { date: '2024-07-04', name: 'Independence Day', type: 'federal' },
+    { date: '2024-09-02', name: 'Labor Day', type: 'federal' },
+    { date: '2024-10-14', name: 'Columbus Day', type: 'federal' },
+    { date: '2024-11-11', name: 'Veterans Day', type: 'federal' },
+    { date: '2024-11-28', name: 'Thanksgiving', type: 'federal' },
+    { date: '2024-11-29', name: 'Black Friday', type: 'school' },
+    { date: '2024-12-25', name: 'Christmas Day', type: 'federal' },
+    // 2024 School breaks
+    { date: '2024-11-25', name: 'Thanksgiving Break', type: 'school' },
+    { date: '2024-11-26', name: 'Thanksgiving Break', type: 'school' },
+    { date: '2024-11-27', name: 'Thanksgiving Break', type: 'school' },
+    { date: '2024-12-23', name: 'Winter Break Start', type: 'school' },
+    { date: '2024-12-24', name: 'Winter Break', type: 'school' },
+    { date: '2024-12-26', name: 'Winter Break', type: 'school' },
+    { date: '2024-12-27', name: 'Winter Break', type: 'school' },
+    { date: '2024-12-30', name: 'Winter Break', type: 'school' },
+    { date: '2024-12-31', name: 'Winter Break', type: 'school' },
+    
+    // 2025 holidays
+    { date: '2025-01-01', name: 'New Year\'s Day', type: 'federal' },
+    { date: '2025-01-02', name: 'Winter Break', type: 'school' },
+    { date: '2025-01-03', name: 'Winter Break', type: 'school' },
+    { date: '2025-01-20', name: 'Martin Luther King Jr. Day', type: 'federal' },
+    { date: '2025-02-17', name: 'Presidents\' Day', type: 'federal' },
+    { date: '2025-03-10', name: 'Spring Break', type: 'school' },
+    { date: '2025-03-11', name: 'Spring Break', type: 'school' },
+    { date: '2025-03-12', name: 'Spring Break', type: 'school' },
+    { date: '2025-03-13', name: 'Spring Break', type: 'school' },
+    { date: '2025-03-14', name: 'Spring Break', type: 'school' },
+    { date: '2025-05-26', name: 'Memorial Day', type: 'federal' },
+    { date: '2025-07-04', name: 'Independence Day', type: 'federal' },
+    { date: '2025-09-01', name: 'Labor Day', type: 'federal' },
+    { date: '2025-10-13', name: 'Columbus Day', type: 'federal' },
+    { date: '2025-11-11', name: 'Veterans Day', type: 'federal' },
+    { date: '2025-11-27', name: 'Thanksgiving', type: 'federal' },
+    { date: '2025-11-28', name: 'Black Friday', type: 'school' },
+    { date: '2025-12-25', name: 'Christmas Day', type: 'federal' }
+  ];
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const isHoliday = (date: Date) => {
+    const dateStr = date.toISOString().split('T')[0];
+    return holidays.find(h => h.date === dateStr);
   };
 
-  const handleDayToggle = (day: string) => {
-    setFormData(prev => ({
-      ...prev,
-      meetingDays: prev.meetingDays.includes(day)
-        ? prev.meetingDays.filter(d => d !== day)
-        : [...prev.meetingDays, day]
-    }));
+  const generateSmartTopics = (clubTopic: string, count: number) => {
+    const topicLower = clubTopic.toLowerCase();
+    let topics = [];
+    
+    if (topicLower.includes('programming') || topicLower.includes('coding') || topicLower.includes('computer science')) {
+      topics = [
+        'Welcome & Setup Your Development Environment',
+        'Variables, Data Types & Your First Program',
+        'Control Structures: Making Decisions in Code',
+        'Functions: Building Reusable Code Blocks',
+        'Debugging Workshop: Finding & Fixing Bugs',
+        'Data Structures: Arrays, Lists & Objects',
+        'File Input/Output & Working with Data',
+        'Web Development Basics: HTML & CSS',
+        'Interactive Programming: Event Handling',
+        'Database Fundamentals & SQL',
+        'APIs & External Data Sources',
+        'Version Control with Git & GitHub',
+        'Team Project Planning Session',
+        'Code Review & Best Practices',
+        'Testing Your Code: Unit Tests',
+        'Project Showcase & Presentations'
+      ];
+    } else if (topicLower.includes('robot') || topicLower.includes('engineering')) {
+      topics = [
+        'Welcome & Introduction to Robotics',
+        'Robot Components: Sensors, Motors & Controllers',
+        'Building Your First Robot Chassis',
+        'Programming Movement: Forward, Backward, Turn',
+        'Sensor Integration: Touch, Light & Distance',
+        'Autonomous Navigation Challenges',
+        'Robot Vision: Cameras & Image Processing',
+        'Gripper & Manipulation Systems',
+        'Wireless Control & Communication',
+        'Competition Robot Design Workshop',
+        'Advanced Programming: AI & Machine Learning',
+        'Troubleshooting & Repair Techniques',
+        'Robot Competition Preparation',
+        'Final Robot Showcase',
+        'Reflection & Future Projects'
+      ];
+    } else if (topicLower.includes('math') || topicLower.includes('calculus') || topicLower.includes('algebra')) {
+      topics = [
+        'Welcome & Math Games Icebreaker',
+        'Problem Solving Strategies & Techniques',
+        'Real World Math: Practical Applications',
+        'Mathematical Modeling Workshop',
+        'Puzzle Solving & Logic Games',
+        'Statistics & Data Analysis Project',
+        'Geometry in Art & Architecture',
+        'Calculus Concepts Through Visualization',
+        'Math Competition Preparation',
+        'Creating Math Teaching Materials',
+        'Technology in Mathematics',
+        'Mathematical Research Projects',
+        'Peer Teaching & Presentations',
+        'Math Fair Preparation',
+        'Celebration & Awards Ceremony'
+      ];
+    } else if (topicLower.includes('art') || topicLower.includes('creative') || topicLower.includes('design')) {
+      topics = [
+        'Welcome & Art Style Exploration',
+        'Fundamentals: Color Theory & Composition',
+        'Drawing Techniques & Skill Building',
+        'Digital Art Tools & Software',
+        'Portrait & Figure Drawing Workshop',
+        'Landscape & Environmental Art',
+        'Character Design & Storytelling',
+        'Mixed Media & Experimental Techniques',
+        'Art History & Master Studies',
+        'Collaborative Mural Project',
+        'Portfolio Development Workshop',
+        'Art Critique & Feedback Sessions',
+        'Exhibition Planning & Curation',
+        'Community Art Project',
+        'Final Gallery Opening & Celebration'
+      ];
+    } else if (topicLower.includes('business') || topicLower.includes('entrepreneur')) {
+      topics = [
+        'Welcome & Entrepreneurship Mindset',
+        'Idea Generation & Opportunity Recognition',
+        'Market Research & Customer Validation',
+        'Business Model Canvas Workshop',
+        'Financial Planning & Budgeting',
+        'Marketing & Brand Development',
+        'Sales Techniques & Customer Relations',
+        'Digital Marketing & Social Media',
+        'Legal Basics for Business',
+        'Pitch Development & Presentation Skills',
+        'Investor Relations & Fundraising',
+        'Operations & Supply Chain Basics',
+        'Business Plan Competition',
+        'Mock Shark Tank Presentations',
+        'Networking & Industry Connections'
+      ];
+    } else {
+      // Generic topics for any club
+      topics = [
+        `Welcome to ${clubTopic} Club!`,
+        `${clubTopic} Fundamentals & Basics`,
+        'Hands-on Workshop & Practice Session',
+        'Guest Speaker from Industry',
+        'Skill Building & Technique Development',
+        'Creative Project Planning',
+        'Team Building & Collaboration',
+        'Problem Solving Workshop',
+        'Advanced Concepts & Applications',
+        'Community Service Project',
+        'Competition or Challenge Event',
+        'Peer Teaching & Knowledge Sharing',
+        'Innovation & Creative Thinking',
+        'Final Project Presentations',
+        'Celebration & Recognition Ceremony'
+      ];
+    }
+    
+    return topics.slice(0, count);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (formData.meetingDays.length === 0) {
-      setError('Please select at least one meeting day');
+  // Load/Save roadmap data using Supabase
+  useEffect(() => {
+    if (!clubName || !user) return;
+    
+    const loadRoadmapData = async () => {
+      try {
+        // Get club ID from club name
+        const { data: clubData, error: clubError } = await supabase
+          .from('clubs')
+          .select('id')
+          .eq('name', clubName)
+          .single();
+        
+        if (clubError) {
+          console.error('Error fetching club ID:', clubError);
       return;
     }
-    setIsLoading(true);
-    setError(null);
 
+        const clubId = clubData.id;
+        
+        // Fetch roadmap data from API
+        const response = await fetch(`/api/clubs/${clubId}/roadmap`);
+        if (response.ok) {
+          const result = await response.json();
+          if (result.data && result.data.data) {
+            const roadmapData = result.data.data;
+            if (roadmapData.config) {
+              setFormData(roadmapData.config);
+              setShowSetup(false);
+            }
+            if (roadmapData.events) {
+              setEvents(roadmapData.events.map((event: any) => ({
+                ...event,
+                date: new Date(event.date)
+              })));
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error loading roadmap data:', error);
+      }
+    };
+
+    loadRoadmapData();
+  }, [clubName, user]);
+
+  const saveRoadmapData = async (data: any) => {
+    if (!clubName || !user) return;
+    
     try {
-      const response = await fetch(`/api/clubs/${clubName}/generate-topics`, {
+      // Get club ID from club name
+      const { data: clubData, error: clubError } = await supabase
+        .from('clubs')
+        .select('id')
+        .eq('name', clubName)
+        .single();
+      
+      if (clubError) {
+        console.error('Error fetching club ID:', clubError);
+        return;
+      }
+
+      const clubId = clubData.id;
+      
+      // Save roadmap data to API
+      const response = await fetch(`/api/clubs/${clubId}/roadmap`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...formData,
-          clubName,
-          clubInfo
+          config: formData,
+          events: data.map((e: any) => ({ ...e, date: e.date.toISOString() }))
         })
       });
 
-      if (!response.ok) throw new Error('Failed to generate roadmap');
-      const data = await response.json();
-      setMeetings(data.meetings);
-
-      // Save roadmap to Supabase
-      // Compose roadmap object
-      const roadmap = {
-        meetings: data.meetings,
-        settings: formData
-      };
-      // Try to get clubId from clubInfo, fallback to clubName
-      const clubId = clubInfo?.clubId || clubName;
-      await fetch(`/api/clubs/${clubId}/roadmap`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ roadmap })
-      });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to generate roadmap');
-    } finally {
-      setIsLoading(false);
+      if (!response.ok) {
+        console.error('Error saving roadmap data');
+      }
+    } catch (error) {
+      console.error('Error saving roadmap data:', error);
     }
   };
 
-  const handleMeetingClick = (meeting: any) => {
-    setSelectedMeeting(meeting);
-    setShowMeetingModal(true);
+  const generateRoadmap = async () => {
+    if (!formData.clubTopic || !formData.goals || !formData.schoolYearStart) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Calculate meeting count
+      const startDate = new Date(formData.schoolYearStart);
+      const endDate = new Date(formData.schoolYearEnd);
+      const weeksDuration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 7));
+      
+      let meetingCount;
+      if (formData.meetingFrequency === 'weekly') {
+        meetingCount = Math.min(weeksDuration, 30);
+      } else if (formData.meetingFrequency === 'biweekly') {
+        meetingCount = Math.min(Math.floor(weeksDuration / 2), 15);
+      } else {
+        meetingCount = Math.min(Math.floor(weeksDuration / 4), 8);
+      }
+
+      const response = await fetch(`/api/clubs/generate-topics`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clubTopic: formData.clubTopic,
+          clubGoals: formData.goals,
+          meetingCount: meetingCount
+        })
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        // Use fallback topics if API returns empty
+        const topics = data.topics && data.topics.length > 0 ? data.topics : 
+          generateSmartTopics(formData.clubTopic, meetingCount);
+        const specialEvents = data.specialEvents || [];
+        
+        const generatedEvents = generateCalendarEvents(topics, specialEvents);
+        setEvents(generatedEvents);
+        saveRoadmapData(generatedEvents);
+        setShowSetup(false);
+      } else {
+        throw new Error('API request failed');
+      }
+          } catch (error) {
+        console.error('Error generating roadmap:', error);
+        // Use fallback generation
+        const fallbackTopics = generateSmartTopics(formData.clubTopic, 12);
+        const fallbackSpecialEvents = [
+          { title: 'Mid-Semester Showcase', description: 'Present your progress to the community' },
+          { title: 'Guest Speaker Event', description: 'Industry professional shares insights' },
+          { title: 'End of Year Competition', description: 'Friendly competition to test skills' }
+        ];
+        
+        const generatedEvents = generateCalendarEvents(fallbackTopics, fallbackSpecialEvents);
+        setEvents(generatedEvents);
+        saveRoadmapData(generatedEvents);
+        setShowSetup(false);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const generatePresentation = async (meeting: any) => {
-    window.location.href = `/clubs/${clubName}/presentations?topic=${encodeURIComponent(meeting.topic)}`;
+  const generateCalendarEvents = (topics: string[], specialEvents: any[] = []) => {
+    const events = [];
+    const startDate = new Date(formData.schoolYearStart);
+    const endDate = new Date(formData.schoolYearEnd);
+    let currentDate = new Date(startDate);
+    
+    // Day mapping
+    const dayMap = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
+    const targetDays = formData.meetingDays.map(day => dayMap[day as keyof typeof dayMap]);
+    
+    let topicIndex = 0;
+    let dayOfWeekIndex = 0;
+    
+    // Generate meetings for multiple days per week
+    while (currentDate <= endDate && topicIndex < topics.length) {
+      // For each week, schedule meetings on all selected days
+      const weekStart = new Date(currentDate);
+      
+      // Find the start of this week (adjust to Monday as start)
+      const dayOfWeek = weekStart.getDay();
+      const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Handle Sunday as day 0
+      weekStart.setDate(weekStart.getDate() + mondayOffset);
+      
+      // Schedule meetings for each selected day in this week
+      for (const targetDay of targetDays) {
+        if (topicIndex >= topics.length) break;
+        
+        const meetingDate = new Date(weekStart);
+        meetingDate.setDate(weekStart.getDate() + (targetDay === 0 ? 6 : targetDay - 1)); // Adjust for Sunday
+        
+        // Only schedule if within semester bounds
+        if (meetingDate >= new Date(formData.schoolYearStart) && meetingDate <= endDate) {
+          // Skip holidays
+          const holiday = isHoliday(meetingDate);
+          if (!holiday) {
+            events.push({
+              id: `meeting-${topicIndex}`,
+              title: topics[topicIndex],
+              description: `Club meeting: ${topics[topicIndex]}`,
+              date: new Date(meetingDate),
+              time: formData.meetingTime,
+              type: 'meeting',
+              color: 'bg-blue-500'
+            });
+            topicIndex++;
+          }
+        }
+      }
+      
+      // Move to next week/period based on frequency
+      const daysToAdd = formData.meetingFrequency === 'weekly' ? 7 : 
+                       formData.meetingFrequency === 'biweekly' ? 14 : 28;
+      currentDate.setDate(currentDate.getDate() + daysToAdd);
+    }
+    
+    // Add special events spread throughout the semester
+    if (specialEvents.length > 0) {
+      const semesterDuration = endDate.getTime() - startDate.getTime();
+      specialEvents.forEach((event, index) => {
+        const eventDate = new Date(startDate.getTime() + (semesterDuration / (specialEvents.length + 1)) * (index + 1));
+        
+        // Make sure it's on a school day and not a holiday
+        while (eventDate.getDay() === 0 || eventDate.getDay() === 6 || isHoliday(eventDate)) {
+          eventDate.setDate(eventDate.getDate() + 1);
+        }
+        
+        events.push({
+          id: `special-${index}`,
+          title: event.title,
+          description: event.description,
+          date: eventDate,
+          type: 'custom',
+          color: 'bg-purple-500'
+        });
+      });
+    }
+    
+    // Add holiday events
+    holidays.forEach(holiday => {
+      const holidayDate = new Date(holiday.date);
+      if (holidayDate >= startDate && holidayDate <= endDate) {
+        events.push({
+          id: `holiday-${holiday.date}`,
+          title: holiday.name,
+          description: holiday.type === 'federal' ? 'Federal Holiday' : 'School Break',
+          date: holidayDate,
+          type: 'holiday',
+          color: holiday.type === 'federal' ? 'bg-red-500' : 'bg-orange-400'
+        });
+      }
+    });
+    
+    return events.sort((a, b) => a.date.getTime() - b.date.getTime());
   };
 
-  const generateNotes = async (meeting: any) => {
-    window.location.href = `/clubs/${clubName}/attendance-notes?topic=${encodeURIComponent(meeting.topic)}`;
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    
+    const days = [];
+    for (let i = 0; i < 42; i++) {
+      days.push(new Date(startDate));
+      startDate.setDate(startDate.getDate() + 1);
+    }
+    return days;
   };
 
-  const days = [
-    { value: 'monday', label: 'Monday' },
-    { value: 'tuesday', label: 'Tuesday' },
-    { value: 'wednesday', label: 'Wednesday' },
-    { value: 'thursday', label: 'Thursday' },
-    { value: 'friday', label: 'Friday' },
-    { value: 'saturday', label: 'Saturday' },
-    { value: 'sunday', label: 'Sunday' }
-  ];
+  const saveEvent = () => {
+    if (!eventTitle.trim()) return;
+    
+    const newEvent = {
+      id: currentEvent ? currentEvent.id : `event-${Date.now()}`,
+      title: eventTitle,
+      description: eventDescription,
+      date: selectedDate,
+      type: 'custom',
+      color: eventColor
+    };
 
+    const updatedEvents = currentEvent 
+      ? events.map(e => e.id === currentEvent.id ? newEvent : e)
+      : [...events, newEvent];
+    
+    setEvents(updatedEvents);
+    saveRoadmapData(updatedEvents);
+    setShowEventModal(false);
+    setEventTitle('');
+    setEventDescription('');
+    setCurrentEvent(null);
+  };
+
+  const deleteEvent = () => {
+    if (currentEvent) {
+      const updatedEvents = events.filter(e => e.id !== currentEvent.id);
+      setEvents(updatedEvents);
+      saveRoadmapData(updatedEvents);
+      setShowEventModal(false);
+      setCurrentEvent(null);
+    }
+  };
+
+  const openEventModal = (date: Date, event?: any) => {
+    setSelectedDate(date);
+    if (event) {
+      setCurrentEvent(event);
+      setEventTitle(event.title);
+      setEventDescription(event.description || '');
+      setEventColor(event.color || 'bg-purple-500');
+    } else {
+      setCurrentEvent(null);
+      setEventTitle('');
+      setEventDescription('');
+      setEventColor('bg-purple-500');
+    }
+    setShowEventModal(true);
+  };
+
+    if (showSetup) {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-orange-50/30">
-      <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
+      <div className="min-h-screen bg-white p-4 md:p-8">
+        <div className="max-w-3xl mx-auto">
         {/* Header */}
-        <div className="bg-gradient-to-r from-orange-500/10 to-orange-600/10 rounded-xl p-8 shadow-sm border border-orange-100/20">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Semester Roadmap</h2>
-          <p className="text-gray-600">Plan your club's semester schedule and generate AI-powered meeting topics.</p>
+          <div className="mb-8">
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Club Roadmap Setup</h1>
+            <p className="text-gray-600">Let's plan your {clubName} activities for the year</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Form Section */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 sticky top-8">
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Club Topic/Focus
-                  </label>
+          {/* Form */}
+          <div className="space-y-6">
+            {/* Club Topic */}
+            <div className="bg-gray-50 rounded-xl p-6">
+              <label className="block text-sm font-medium text-gray-700 mb-3">Club Focus</label>
                   <input
                     type="text"
-                    name="topic"
-                    value={formData.topic}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    placeholder="e.g., Web Development, Machine Learning, etc."
-                    required
+                value={formData.clubTopic}
+                onChange={(e) => setFormData({...formData, clubTopic: e.target.value})}
+                className="w-full p-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+                placeholder="e.g. Programming, Robotics, Math"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+            {/* Date Range */}
+            <div className="bg-gray-50 rounded-xl p-6">
+              <label className="block text-sm font-medium text-gray-700 mb-3">Academic Year</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Start Date
-                    </label>
                     <input
                       type="date"
-                      name="startDate"
-                      value={formData.startDate}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      required
-                    />
+                    value={formData.schoolYearStart}
+                    onChange={(e) => setFormData({...formData, schoolYearStart: e.target.value})}
+                    className="w-full p-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Start date</p>
                   </div>
-
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      End Date
-                    </label>
                     <input
                       type="date"
-                      name="endDate"
-                      value={formData.endDate}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      required
-                    />
+                    value={formData.schoolYearEnd}
+                    onChange={(e) => setFormData({...formData, schoolYearEnd: e.target.value})}
+                    className="w-full p-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">End date</p>
+                </div>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Meeting Frequency
-                  </label>
+            {/* Meeting Schedule */}
+            <div className="bg-gray-50 rounded-xl p-6">
+              <label className="block text-sm font-medium text-gray-700 mb-3">Meeting Schedule</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <select
-                    name="frequency"
-                    value={formData.frequency}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  value={formData.meetingFrequency}
+                  onChange={(e) => setFormData({...formData, meetingFrequency: e.target.value})}
+                  className="w-full p-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
                   >
                     <option value="weekly">Weekly</option>
                     <option value="biweekly">Bi-weekly</option>
                     <option value="monthly">Monthly</option>
                   </select>
+                <input
+                  type="time"
+                  value={formData.meetingTime}
+                  onChange={(e) => setFormData({...formData, meetingTime: e.target.value})}
+                  className="w-full p-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
+                />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Meeting Days
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {days.map(day => (
+              {/* Day Selector */}
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { value: 'monday', label: 'Mon' },
+                  { value: 'tuesday', label: 'Tue' },
+                  { value: 'wednesday', label: 'Wed' },
+                  { value: 'thursday', label: 'Thu' },
+                  { value: 'friday', label: 'Fri' },
+                  { value: 'saturday', label: 'Sat' },
+                  { value: 'sunday', label: 'Sun' }
+                ].map(day => (
                       <button
                         key={day.value}
                         type="button"
-                        onClick={() => handleDayToggle(day.value)}
-                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                          formData.meetingDays.includes(day.value)
+                    onClick={() => {
+                      const currentDays = formData.meetingDays || [];
+                      const isSelected = currentDays.includes(day.value);
+                      if (isSelected) {
+                        setFormData({...formData, meetingDays: currentDays.filter(d => d !== day.value)});
+                      } else {
+                        setFormData({...formData, meetingDays: [...currentDays, day.value]});
+                      }
+                    }}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      (formData.meetingDays || []).includes(day.value)
                             ? 'bg-orange-500 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-white text-gray-700 border border-gray-300 hover:border-orange-300'
                         }`}
                       >
                         {day.label}
@@ -1898,172 +2374,544 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Meeting Time
-                    </label>
-                    <input
-                      type="time"
-                      name="meetingTime"
-                      value={formData.meetingTime}
-                      onChange={handleInputChange}
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      required
+            {/* Goals */}
+            <div className="bg-gray-50 rounded-xl p-6">
+              <label className="block text-sm font-medium text-gray-700 mb-3">Goals & Objectives</label>
+              <textarea
+                value={formData.goals}
+                onChange={(e) => setFormData({...formData, goals: e.target.value})}
+                className="w-full p-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all h-24 resize-none"
+                placeholder="What do you want to achieve this year?"
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Duration (mins)
-                    </label>
-                    <input
-                      type="number"
-                      name="meetingDuration"
-                      value={formData.meetingDuration}
-                      onChange={handleInputChange}
-                      min="30"
-                      max="180"
-                      step="15"
-                      className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                      required
-                    />
-                  </div>
-                </div>
-
+            {/* Generate Button */}
                 <button
-                  type="submit"
-                  disabled={isLoading || formData.meetingDays.length === 0}
-                  className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-medium py-2 px-4 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-[1.02] active:scale-[0.98] shadow-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-                >
-                  {isLoading ? (
-                    <div className="flex items-center justify-center">
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
-                      Generating Roadmap...
+              onClick={generateRoadmap}
+              disabled={loading || !formData.clubTopic || !formData.goals || !(formData.meetingDays && formData.meetingDays.length > 0)}
+              className="w-full bg-orange-500 text-white py-3 px-6 rounded-lg font-medium hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <div className="flex items-center justify-center gap-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  Generating...
                     </div>
                   ) : (
                     'Generate Roadmap'
                   )}
                 </button>
-              </form>
             </div>
           </div>
+      </div>
+    );
+  }
 
-          {/* Calendar Section */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-              {error ? (
-                <div className="text-red-500 p-4 bg-red-50 rounded-lg border border-red-100">
-                  {error}
+  const monthYear = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const days = getDaysInMonth(currentMonth);
+
+  // Calculate progress stats
+  const totalMeetings = events.filter(e => e.type === 'meeting').length;
+  const completedMeetings = events.filter(e => e.type === 'meeting' && e.date < new Date()).length;
+  const upcomingMeetings = totalMeetings - completedMeetings;
+  const progressPercentage = totalMeetings > 0 ? Math.round((completedMeetings / totalMeetings) * 100) : 0;
+
+  return (
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Club Roadmap</h1>
+          <p className="text-gray-600">{clubName} • {formData.meetingFrequency} meetings</p>
                 </div>
-              ) : meetings.length > 0 ? (
-                <div className="space-y-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Club Schedule
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      {new Date(formData.startDate).toLocaleDateString()} - {new Date(formData.endDate).toLocaleDateString()}
-                    </p>
+        <button
+          onClick={() => setShowSetup(true)}
+          className="bg-orange-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-600 transition-colors text-sm"
+        >
+          Edit Setup
+        </button>
                   </div>
 
-                  {/* Calendar Grid */}
-                  <div className="grid gap-4">
-                    {meetings.map((meeting, index) => (
+      {/* Progress Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="text-2xl font-bold text-gray-900">{totalMeetings}</div>
+          <div className="text-sm text-gray-600">Total Meetings</div>
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="text-2xl font-bold text-green-600">{completedMeetings}</div>
+          <div className="text-sm text-gray-600">Completed</div>
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="text-2xl font-bold text-blue-600">{upcomingMeetings}</div>
+          <div className="text-sm text-gray-600">Upcoming</div>
+        </div>
+        <div className="bg-white rounded-lg border border-gray-200 p-4">
+          <div className="text-2xl font-bold text-orange-600">{progressPercentage}%</div>
+          <div className="text-sm text-gray-600">Progress</div>
+          <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+            <div 
+              className="bg-orange-500 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${progressPercentage}%` }}
+            ></div>
+          </div>
+        </div>
+      </div>
+
+      {/* Calendar Navigation */}
+      <div className="flex items-center justify-between mb-6">
+        <button
+          onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
+          className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+        >
+          ← Previous
+        </button>
+        <h2 className="text-2xl font-bold text-gray-800">{monthYear}</h2>
+        <button
+          onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
+          className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+        >
+          Next →
+        </button>
+      </div>
+
+      {/* Enhanced Calendar */}
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        {/* Day Headers */}
+        <div className="grid grid-cols-7 bg-gray-50 border-b">
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+            <div key={day} className="p-3 text-center font-medium text-gray-700 border-r last:border-r-0 text-sm">
+              {day}
+            </div>
+          ))}
+        </div>
+        
+        {/* Calendar Days */}
+        <div className="grid grid-cols-7">
+          {days.map((day, index) => {
+            const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
+            const isToday = day.toDateString() === new Date().toDateString();
+            const isPast = day < new Date() && !isToday;
+            const dayEvents = events.filter(event => 
+              event.date.toDateString() === day.toDateString()
+            );
+            const meetingEvents = dayEvents.filter(e => e.type === 'meeting');
+            const holidayEvents = dayEvents.filter(e => e.type === 'holiday');
+            const customEvents = dayEvents.filter(e => e.type === 'custom');
+            
+            return (
                       <div
                         key={index}
-                        className="p-4 rounded-lg border border-orange-100 hover:border-orange-200 cursor-pointer transition-colors"
-                        onClick={() => handleMeetingClick(meeting)}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <p className="font-medium text-gray-900">{meeting.topic}</p>
-                            <p className="text-sm text-gray-500 mt-1">
-                              {new Date(meeting.date).toLocaleDateString()} at {meeting.time}
-                            </p>
+                className={`min-h-[100px] p-2 border-r border-b last:border-r-0 cursor-pointer hover:bg-gray-25 transition-colors ${
+                  !isCurrentMonth ? 'bg-gray-50 text-gray-400' : 'bg-white'
+                } ${isToday ? 'bg-blue-50' : ''} ${isPast && isCurrentMonth ? 'opacity-75' : ''}`}
+                onClick={() => openEventModal(day)}
+              >
+                <div className={`text-sm mb-2 flex items-center justify-between ${
+                  isToday ? 'text-blue-600 font-semibold' : isPast ? 'text-gray-500' : 'text-gray-900'
+                }`}>
+                  <span>{day.getDate()}</span>
+                  {isToday && <span className="text-xs bg-blue-500 text-white px-1 py-0.5 rounded">Today</span>}
                           </div>
-                          <div className="flex gap-2">
-                            <button
+                
+                <div className="space-y-1">
+                  {/* Meetings */}
+                  {meetingEvents.map(event => (
+                    <div
+                      key={event.id}
+                      className={`text-xs p-1.5 rounded cursor-pointer transition-all ${
+                        isPast ? 'bg-gray-400 text-white' : 'bg-blue-500 text-white hover:bg-blue-600'
+                      }`}
                               onClick={(e) => {
                                 e.stopPropagation();
-                                generatePresentation(meeting);
-                              }}
-                              className="px-3 py-1 text-sm bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200"
-                            >
-                              Generate Presentation
-                            </button>
-                            <button
+                        openEventModal(day, event);
+                      }}
+                      title={event.title}
+                    >
+                      <div className="font-medium truncate">{event.title}</div>
+                      {event.time && <div className="opacity-90 text-xs">{event.time}</div>}
+                      {isPast && <div className="text-xs opacity-75">✓ Completed</div>}
+                    </div>
+                  ))}
+                  
+                  {/* Holidays */}
+                  {holidayEvents.map(event => (
+                    <div
+                      key={event.id}
+                      className={`text-xs p-1.5 rounded ${event.color} text-white`}
+                      title={event.title}
+                    >
+                      <div className="font-medium truncate">{event.title}</div>
+                    </div>
+                  ))}
+                  
+                  {/* Custom Events */}
+                  {customEvents.map(event => (
+                    <div
+                      key={event.id}
+                      className="text-xs p-1.5 rounded bg-purple-500 text-white cursor-pointer hover:bg-purple-600 transition-all"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                generateNotes(meeting);
+                        openEventModal(day, event);
                               }}
-                              className="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
+                      title={event.title}
                             >
-                              Meeting Notes
-                            </button>
+                      <div className="font-medium truncate">{event.title}</div>
                           </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Legend */}
+      <div className="mt-6 flex flex-wrap gap-4 text-sm">
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 bg-blue-500 rounded"></div>
+          <span>Club Meetings</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 bg-purple-500 rounded"></div>
+          <span>Special Events</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 bg-red-500 rounded"></div>
+          <span>Federal Holidays</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 bg-orange-400 rounded"></div>
+          <span>School Breaks</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3 h-3 bg-gray-400 rounded"></div>
+          <span>Completed</span>
+        </div>
+      </div>
+
+      {/* Modern Semester Progress Timeline */}
+      <div className="mt-12">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h2 className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-blue-600 bg-clip-text text-transparent">
+              Semester Journey
+            </h2>
+            <p className="text-gray-600 mt-1">Track your club's progress through the academic year</p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+              <span className="text-sm text-gray-600">Completed</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+              <span className="text-sm text-gray-600">Current</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
+              <span className="text-sm text-gray-600">Upcoming</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-white via-orange-50/30 to-blue-50/30 rounded-3xl border border-gray-100 p-8 shadow-xl">
+          <div className="max-w-4xl mx-auto">
+            {/* Progress Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-green-100 to-green-200 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Completed</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {(() => {
+                        const pastEvents = events.filter(event => 
+                          new Date(event.date) < new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+                        );
+                        return pastEvents.length;
+                      })()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">This Month</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {(() => {
+                        const currentMonthEvents = events.filter(event => 
+                          event.date.getMonth() === new Date().getMonth() && 
+                          event.date.getFullYear() === new Date().getFullYear()
+                        );
+                        return currentMonthEvents.length;
+                      })()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-600">Remaining</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {(() => {
+                        const futureEvents = events.filter(event => 
+                          new Date(event.date) > new Date()
+                        );
+                        return futureEvents.length;
+                      })()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Enhanced Timeline */}
+            <div className="relative">
+              {/* Curved Timeline Path */}
+              <div className="absolute left-8 top-0 bottom-0 w-1">
+                <div className="w-full h-full bg-gradient-to-b from-green-400 via-orange-400 to-blue-400 rounded-full relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-b from-green-400 via-orange-400 to-blue-400 animate-pulse opacity-20"></div>
+                </div>
+              </div>
+
+              {/* Timeline Items */}
+              <div className="space-y-8">
+                {(() => {
+                  const timelineItems = [];
+                  const startDate = new Date(formData.schoolYearStart);
+                  const endDate = new Date(formData.schoolYearEnd);
+                  const currentDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+                  
+                  while (currentDate <= endDate) {
+                    const monthName = currentDate.toLocaleDateString('en-US', { month: 'long' });
+                    const monthShort = currentDate.toLocaleDateString('en-US', { month: 'short' });
+                    const monthEvents = events.filter(event => 
+                      event.date.getMonth() === currentDate.getMonth() && 
+                      event.date.getFullYear() === currentDate.getFullYear()
+                    );
+                    const meetingCount = monthEvents.filter(e => e.type === 'meeting').length;
+                    const specialCount = monthEvents.filter(e => e.type === 'custom').length;
+                    const isCurrentMonth = currentDate.getMonth() === new Date().getMonth() && 
+                                          currentDate.getFullYear() === new Date().getFullYear();
+                    const isPastMonth = currentDate < new Date(new Date().getFullYear(), new Date().getMonth(), 1);
+                    
+                    timelineItems.push(
+                      <div key={`${currentDate.getFullYear()}-${currentDate.getMonth()}`} className="flex items-start space-x-6">
+                        {/* Enhanced Timeline Node */}
+                        <div className="relative z-10">
+                          <div className={`flex items-center justify-center w-20 h-20 rounded-full border-4 transition-all duration-500 hover:scale-110 ${
+                            isCurrentMonth 
+                              ? 'bg-gradient-to-br from-orange-400 to-orange-600 border-orange-300 text-white shadow-2xl shadow-orange-200 animate-pulse' 
+                              : isPastMonth
+                              ? 'bg-gradient-to-br from-green-400 to-green-600 border-green-300 text-white shadow-xl shadow-green-200'
+                              : 'bg-gradient-to-br from-gray-100 to-gray-200 border-gray-300 text-gray-600 shadow-lg'
+                          }`}>
+                            {isPastMonth ? (
+                              <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            ) : (
+                              <span className="font-bold text-lg">{monthShort}</span>
+                            )}
+                          </div>
+                          
+                          {/* Status indicator */}
+                          <div className="absolute -top-2 -right-2">
+                            <div className={`w-6 h-6 rounded-full border-2 border-white ${
+                              isCurrentMonth ? 'bg-orange-500' : 
+                              isPastMonth ? 'bg-green-500' : 'bg-gray-400'
+                            }`}></div>
+                          </div>
+                        </div>
+                        
+                        {/* Enhanced Content Card */}
+                        <div className="flex-1 min-w-0">
+                          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-lg hover:shadow-xl transition-all duration-300">
+                            <div className="flex items-center justify-between mb-4">
+                              <div>
+                                <h3 className="text-xl font-bold text-gray-900">{monthName}</h3>
+                                <p className="text-sm text-gray-500">{currentDate.getFullYear()}</p>
+                              </div>
+                              <div className="flex items-center space-x-3">
+                                {meetingCount > 0 && (
+                                  <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-1">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                                    </svg>
+                                    <span>{meetingCount}</span>
+                                  </div>
+                                )}
+                                {specialCount > 0 && (
+                                  <div className="bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-1">
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                                    </svg>
+                                    <span>{specialCount}</span>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {monthEvents.length > 0 ? (
+                                <div className="space-y-3">
+                                  {monthEvents.slice(0, 4).map((event, idx) => (
+                                    <div 
+                                      key={event.id}
+                                      className={`text-sm p-3 rounded-xl text-white ${event.color} flex items-center space-x-3 shadow-sm hover:shadow-md transition-all duration-200`}
+                                    >
+                                      <div className="w-2 h-2 bg-white/40 rounded-full flex-shrink-0"></div>
+                                      <span className="truncate font-medium">{event.title}</span>
+                                      <div className="text-xs bg-white/20 px-2 py-1 rounded-full flex-shrink-0">
+                                        {event.date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
                         </div>
                       </div>
                     ))}
+                                  {monthEvents.length > 4 && (
+                                    <div className="text-sm text-gray-500 bg-gray-50 rounded-lg p-3 text-center">
+                                      +{monthEvents.length - 4} more events
                   </div>
+                                  )}
                 </div>
               ) : (
-                <div className="text-center py-12 text-gray-500">
-                  Fill out the form to generate your semester roadmap
+                                <div className="text-center py-8">
+                                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                  </div>
+                                  <p className="text-gray-500 text-sm">No events scheduled</p>
                 </div>
               )}
             </div>
           </div>
         </div>
       </div>
+                    );
+                    
+                    currentDate.setMonth(currentDate.getMonth() + 1);
+                  }
+                  
+                  return timelineItems;
+                })()}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      {/* Meeting Details Modal */}
-      {showMeetingModal && selectedMeeting && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-xl max-w-2xl w-full p-6 relative">
+      {/* Event Modal */}
+      {showEventModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-lg w-full shadow-lg">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {currentEvent ? 'Edit Event' : 'Add Event'}
+                </h2>
             <button
-              onClick={() => setShowMeetingModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                  onClick={() => setShowEventModal(false)}
+                  className="text-gray-400 hover:text-gray-600 text-xl"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
+                  ✕
             </button>
+              </div>
+              <p className="text-sm text-gray-600 mt-1">
+                {selectedDate?.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+              </p>
+            </div>
 
-            <div className="space-y-4">
-              <h3 className="text-xl font-bold text-gray-900">{selectedMeeting.topic}</h3>
-              
+            <div className="p-6 space-y-4">
               <div>
-                <p className="text-sm font-medium text-gray-500">Date & Time</p>
-                <p className="text-gray-900">
-                  {new Date(selectedMeeting.date).toLocaleDateString()} at {selectedMeeting.time}
-                </p>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Event Title</label>
+                <input
+                  type="text"
+                  value={eventTitle}
+                  onChange={(e) => setEventTitle(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
+                  placeholder="Enter event title"
+                  autoFocus
+                />
               </div>
 
               <div>
-                <p className="text-sm font-medium text-gray-500">Description</p>
-                <p className="text-gray-900">{selectedMeeting.description}</p>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <textarea
+                  value={eventDescription}
+                  onChange={(e) => setEventDescription(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none h-20 resize-none"
+                  placeholder="Add details about this event"
+                />
               </div>
 
-              {selectedMeeting.prerequisites && (
+              {/* Color Picker */}
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Prerequisites</p>
-                  <p className="text-gray-900">{selectedMeeting.prerequisites}</p>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Event Color</label>
+                <div className="flex gap-2 flex-wrap">
+                  {[
+                    { color: 'bg-purple-500', label: 'Purple' },
+                    { color: 'bg-blue-500', label: 'Blue' },
+                    { color: 'bg-green-500', label: 'Green' },
+                    { color: 'bg-yellow-500', label: 'Yellow' },
+                    { color: 'bg-red-500', label: 'Red' },
+                    { color: 'bg-pink-500', label: 'Pink' },
+                    { color: 'bg-indigo-500', label: 'Indigo' },
+                    { color: 'bg-teal-500', label: 'Teal' }
+                  ].map(({ color, label }) => (
+                    <button
+                      key={color}
+                      type="button"
+                      onClick={() => setEventColor(color)}
+                      className={`w-8 h-8 rounded-full ${color} border-2 transition-all ${
+                        eventColor === color ? 'border-gray-800 scale-110' : 'border-gray-300 hover:scale-105'
+                      }`}
+                      title={label}
+                    />
+                  ))}
                 </div>
-              )}
+              </div>
 
-              <div className="flex gap-3 mt-6">
+
+              
+              <div className="flex gap-3 pt-2">
                 <button
-                  onClick={() => generatePresentation(selectedMeeting)}
-                  className="flex-1 bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600"
+                  onClick={saveEvent}
+                  disabled={!eventTitle.trim()}
+                  className="flex-1 bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
-                  Generate Presentation
+                  Save Event
                 </button>
+                
+                {currentEvent && (
                 <button
-                  onClick={() => generateNotes(selectedMeeting)}
-                  className="flex-1 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600"
+                    onClick={deleteEvent}
+                    className="px-4 py-3 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
+                  >
+                    Delete
+                  </button>
+                )}
+                
+                <button 
+                  onClick={() => setShowEventModal(false)}
+                  className="px-4 py-3 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
                 >
-                  Meeting Notes
+                  Cancel
                 </button>
               </div>
             </div>
@@ -2722,6 +3570,8 @@ function SummariesPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
   );
 }
 
+
+
 const panels = {
   Dashboard: DashboardPanel,
   ClubSpace: DashboardPanel,
@@ -2775,109 +3625,66 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
 
   // Move featureList here so clubName is defined
   const featureList = [
-    { 
-      key: 'Dashboard', 
-      icon: (
+    { key: 'Dashboard', icon: (
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <rect x="3" y="3" width="7" height="7" rx="2" />
           <rect x="14" y="3" width="7" height="7" rx="2" />
           <rect x="14" y="14" width="7" height="7" rx="2" />
           <rect x="3" y="14" width="7" height="7" rx="2" />
         </svg>
-      ),
-      label: 'Dashboard'
-    },
-    { 
-      key: 'ClubSpace', 
-      icon: (
+    ), label: 'Dashboard' },
+    { key: 'ClubSpace', icon: (
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
         </svg>
-      ),
-      label: 'Club Space'
-    },
-    { 
-      key: 'Presentations', 
-      icon: (
+    ), label: 'Club Space' },
+    { key: 'Presentations', icon: (
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16" />
         </svg>
-      ),
-      label: 'Presentations'
-    },
-    { 
-      key: 'Roadmap', 
-      icon: (
+    ), label: 'Presentations' },
+    { key: 'Roadmap', icon: (
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L16 4m0 13V4m0 0L9 7" />
         </svg>
-      ),
-      label: 'Roadmap'
-    },
-    { 
-      key: 'Attendance', 
-      icon: (
+    ), label: 'Roadmap' },
+
+    { key: 'Attendance', icon: (
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
         </svg>
-      ),
-      label: 'Attendance'
-    },
-    { 
-      key: 'Advisor', 
-      icon: (
+    ), label: 'Meeting Notes' },
+    { key: 'Advisor', icon: (
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
         </svg>
-      ),
-      label: 'Advisor'
-    },
-    { 
-      key: 'Tasks', 
-      icon: (
+    ), label: 'AI Advisor' },
+    { key: 'Tasks', icon: (
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
         </svg>
-      ),
-      label: 'Tasks'
-    },
-    { 
-      key: 'Email', 
-      icon: (
+    ), label: 'Quick Tasks' },
+    { key: 'Email', icon: (
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
         </svg>
-      ),
-      label: 'Email'
-    },
-    { 
-      key: 'History', 
-      icon: (
+    ), label: 'Send Emails' },
+    { key: 'History', icon: (
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-      ),
-      label: 'Past Presentations'
-    },
-    { 
-      key: 'Summaries', 
-      icon: (
+    ), label: 'Past Presentations' },
+    { key: 'Summaries', icon: (
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-      ),
-      label: 'Past Summaries'
-    },
-    { 
-      key: 'Settings', 
-      icon: (
+    ), label: 'Past Summaries' },
+    { key: 'Settings', icon: (
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
           <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
-      ),
-      label: 'Settings'
-    },
+    ), label: 'Settings' },
   ];
 
   return (

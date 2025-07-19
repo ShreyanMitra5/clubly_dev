@@ -3,8 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { supabase } from '../../../../utils/supabaseClient';
-import Modal from 'react-modal';
 import ClubLayout from '../../../components/ClubLayout';
+import EmailModal from '../../../components/EmailModal';
 
 export default function PresentationHistoryPage() {
   const params = useParams();
@@ -13,13 +13,30 @@ export default function PresentationHistoryPage() {
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showEmailModal, setShowEmailModal] = useState(false);
-  const [emailModalData, setEmailModalData] = useState<any>(null);
-  const [sending, setSending] = useState(false);
-  const [emailSuccess, setEmailSuccess] = useState('');
-  const [emailError, setEmailError] = useState('');
+  const [selectedPresentation, setSelectedPresentation] = useState<any>(null);
+  const [clubId, setClubId] = useState<string>('');
 
   useEffect(() => {
     if (!user || !clubName) return;
+    
+    // Get club ID first
+    const getClubId = async () => {
+      try {
+        const { data: clubData, error } = await supabase
+          .from('clubs')
+          .select('id')
+          .eq('name', clubName)
+          .single();
+        
+        if (!error && clubData) {
+          setClubId(clubData.id);
+        }
+      } catch (error) {
+        console.error('Error fetching club ID:', error);
+      }
+    };
+    
+    getClubId();
     
     // Fetch presentation history for this user, then filter for this club
     fetch(`/api/presentations/history?userId=${user.id}`)
@@ -36,35 +53,9 @@ export default function PresentationHistoryPage() {
       });
   }, [user, clubName]);
 
-  const handleSendEmail = async (clubId: string, clubName: string, subject: string, content: string) => {
-    if (!user) return;
-    setSending(true);
-    setEmailError('');
-    setEmailSuccess('');
-    try {
-      const response = await fetch('/api/clubs/emails/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clubId,
-          clubName,
-          senderName: user.fullName || user.firstName || user.username || 'A Club Member',
-          subject,
-          content
-        }),
-      });
-      if (response.ok) {
-        setEmailSuccess('Sent to club mailing list!');
-        setShowEmailModal(false);
-      } else {
-        const errorData = await response.json();
-        setEmailError(errorData.error || 'Failed to send email');
-      }
-    } catch (err) {
-      setEmailError('Failed to send email');
-    } finally {
-      setSending(false);
-    }
+  const handleSendEmail = (presentation: any) => {
+    setSelectedPresentation(presentation);
+    setShowEmailModal(true);
   };
 
   return (
@@ -99,7 +90,10 @@ export default function PresentationHistoryPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
             {history.map((item, idx) => (
               <div key={idx} className="glass-card bg-white/90 border border-pulse-100 rounded-2xl shadow-lg p-5 flex flex-col">
-                <div className="font-bold text-lg mb-2 truncate text-pulse-500">{item.description || "Untitled"}</div>
+                <div className="font-bold text-lg mb-2 truncate text-pulse-500">
+                  {item.description || "Untitled"}
+                </div>
+                
                 <div className="w-full h-32 bg-pulse-50 rounded mb-2 flex items-center justify-center overflow-hidden">
                   <img
                     src={item.thumbnailUrl || "/logo.png"}
@@ -107,38 +101,49 @@ export default function PresentationHistoryPage() {
                     className="object-contain h-full"
                   />
                 </div>
-                <div className="text-gray-500 text-xs mb-2">{item.generatedAt && new Date(item.generatedAt).toLocaleString()}</div>
-                <div className="flex-1 mb-2 text-gray-700 truncate">{item.description}</div>
+                
+                <div className="text-gray-500 text-xs mb-2">
+                  {item.generatedAt && new Date(item.generatedAt).toLocaleString()}
+                </div>
+                
+                <div className="flex-1 mb-2 text-gray-700 truncate">
+                  {item.description}
+                </div>
+                
                 <div className="flex gap-2 mt-auto">
                   <a
                     href={item.viewerUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="button-primary bg-pulse-500 hover:bg-pulse-600 text-white px-3 py-1 rounded-full text-sm shadow"
+                    className="button-primary bg-pulse-500 hover:bg-pulse-600 text-white px-3 py-1 rounded-full text-sm shadow flex items-center space-x-1"
                   >
-                    View Online
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    <span>View Online</span>
                   </a>
+                  
                   <a
                     href={item.s3Url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="button-secondary bg-white border border-pulse-200 text-pulse-500 px-3 py-1 rounded-full text-sm shadow hover:bg-orange-50"
+                    className="button-secondary bg-white border border-pulse-200 text-pulse-500 px-3 py-1 rounded-full text-sm shadow hover:bg-orange-50 flex items-center space-x-1"
                   >
-                    Download
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>Download</span>
                   </a>
+                  
                   <button
-                    className="button-secondary bg-white border border-pulse-200 text-pulse-500 px-3 py-1 rounded-full text-sm shadow hover:bg-orange-50"
-                    onClick={() => {
-                      setEmailModalData({
-                        clubId: item.clubId,
-                        clubName: item.clubName || clubName,
-                        subject: `[${item.clubName || clubName}] New Presentation Available`,
-                        content: `Dear club members,\n\nA new presentation has been created for our club: \"${item.description}\".\n\nYou can view and download the presentation here: ${item.viewerUrl ? item.viewerUrl : '[Link not available]'}\n\nBest regards,\n${item.clubName || clubName} Team`
-                      });
-                      setShowEmailModal(true);
-                    }}
+                    onClick={() => handleSendEmail(item)}
+                    className="button-secondary bg-white border border-pulse-200 text-pulse-500 px-3 py-1 rounded-full text-sm shadow hover:bg-orange-50 flex items-center space-x-1"
                   >
-                    📧 Send to Club Members
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <span>Send Email</span>
                   </button>
                 </div>
               </div>
@@ -147,93 +152,19 @@ export default function PresentationHistoryPage() {
         )}
 
         {/* Email Modal */}
-        {showEmailModal && emailModalData && (
+        {showEmailModal && selectedPresentation && (
           <EmailModal
-            clubName={emailModalData.clubName}
-            subjectDefault={emailModalData.subject}
-            contentDefault={emailModalData.content}
-            onSend={handleSendEmail}
+            isOpen={showEmailModal}
             onClose={() => setShowEmailModal(false)}
-            sending={sending}
+            clubName={clubName}
+            clubId={clubId}
+            type="presentation"
+            content={selectedPresentation.description || "Untitled Presentation"}
+            presentationUrl={selectedPresentation.viewerUrl}
+            title={selectedPresentation.description || "Untitled"}
           />
         )}
       </div>
     </ClubLayout>
-  );
-}
-
-// Email Modal Component
-function EmailModal({ clubName, subjectDefault, contentDefault, onSend, onClose, sending }: {
-  clubName: string;
-  subjectDefault: string;
-  contentDefault: string;
-  onSend: (clubId: string, clubName: string, subject: string, content: string) => void;
-  onClose: () => void;
-  sending: boolean;
-}) {
-  const [subject, setSubject] = useState(subjectDefault);
-  const [content, setContent] = useState(contentDefault);
-
-  const handleSend = () => {
-    if (!subject?.trim() || !content?.trim()) return;
-    onSend('', clubName, subject, content);
-  };
-
-  return (
-    <Modal
-      isOpen={true}
-      onRequestClose={onClose}
-      className="fixed inset-0 flex items-center justify-center p-4 z-50"
-      overlayClassName="fixed inset-0 bg-black/50 backdrop-blur-sm"
-    >
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[80vh] overflow-y-auto">
-        <div className="p-6 border-b border-gray-100">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-pulse-500">Send Email to Club Members</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 text-2xl"
-            >
-              ×
-            </button>
-          </div>
-        </div>
-        <div className="p-6 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
-            <input
-              type="text"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pulse-500 focus:border-transparent"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
-            <textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={8}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pulse-500 focus:border-transparent"
-            />
-          </div>
-          <div className="flex gap-3 pt-4">
-            <button
-              onClick={handleSend}
-              disabled={sending || !subject?.trim() || !content?.trim()}
-              className="button-primary bg-pulse-500 hover:bg-pulse-600 text-white px-6 py-2 rounded-full disabled:opacity-50"
-            >
-              {sending ? 'Sending...' : 'Send Email'}
-            </button>
-            <button
-              onClick={onClose}
-              className="button-secondary bg-white border border-pulse-200 text-pulse-500 px-6 py-2 rounded-full hover:bg-orange-50"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      </div>
-    </Modal>
   );
 } 

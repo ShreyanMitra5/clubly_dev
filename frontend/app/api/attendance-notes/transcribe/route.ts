@@ -45,7 +45,7 @@ async function startTranscription(audioUrl: string) {
   return data.id;
 }
 
-async function pollTranscription(transcriptId: string, timeoutMs = 60000) {
+async function pollTranscription(transcriptId: string, timeoutMs = 300000) { // Increased to 5 minutes
   const url = `${ASSEMBLYAI_TRANSCRIBE_URL}/${transcriptId}`;
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
@@ -56,9 +56,9 @@ async function pollTranscription(transcriptId: string, timeoutMs = 60000) {
     const data = await res.json();
     if (data.status === 'completed') return { transcript: data.text, summary: data.summary };
     if (data.status === 'error') throw new Error(data.error || 'Transcription failed');
-    await new Promise(r => setTimeout(r, 2000));
+    await new Promise(r => setTimeout(r, 3000)); // Increased polling interval
   }
-  throw new Error('Transcription timed out');
+  throw new Error('Transcription timed out after 5 minutes');
 }
 
 export async function POST(req: NextRequest) {
