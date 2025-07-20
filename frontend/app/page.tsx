@@ -28,6 +28,14 @@ export default function HomePage() {
     // Check user status immediately
     async function checkUserStatus() {
       if (isSignedIn && user && sessionId) {
+        // Check if this is an explicit navigation to home (via logo click)
+        const isExplicitHomeNavigation = sessionStorage.getItem('explicitHomeNavigation');
+        if (isExplicitHomeNavigation) {
+          sessionStorage.removeItem('explicitHomeNavigation');
+          setIsLoading(false);
+          return;
+        }
+
         // Check if user exists in database
         const { data, error } = await supabase
           .from('memberships')
@@ -35,16 +43,18 @@ export default function HomePage() {
           .eq('user_id', user.id);
         
         if (!data || data.length === 0) {
-          // New user - redirect to onboarding
-          router.push('/onboarding');
+          // New user - check if coming from sign-up
+          const fromSignUp = sessionStorage.getItem('fromSignUp');
+          if (fromSignUp) {
+            sessionStorage.removeItem('fromSignUp');
+            router.push('/onboarding');
+          }
         } else {
-          // Existing user - redirect to dashboard
+          // Existing user - redirect to dashboard unless explicitly navigating to home
           router.push('/dashboard');
         }
-      } else {
-        // Not signed in - show landing page
-        setIsLoading(false);
       }
+      setIsLoading(false);
     }
     
     checkUserStatus();
@@ -59,7 +69,6 @@ export default function HomePage() {
     return <LoadingScreen />;
   }
 
-  // Only render landing page for non-authenticated users
   return (
     <ErrorBoundary>
       <main className="min-h-screen space-y-4 sm:space-y-8">

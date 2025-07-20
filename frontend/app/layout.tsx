@@ -75,9 +75,13 @@ export default function RootLayout({
                 <div className="absolute inset-0 bg-gradient-to-r from-orange-50/30 via-transparent to-orange-50/30 opacity-50" />
                 
                 <div className="relative flex justify-between items-center">
-                  {/* Logo */}
+                  {/* Logo - Always links to home */}
                   <div className="flex items-center justify-start">
-                    <Link href="/" className="flex items-center space-x-4 group">
+                    <Link 
+                      href="/" 
+                      className="flex items-center space-x-4 group"
+                      onClick={() => sessionStorage.setItem('explicitHomeNavigation', 'true')}
+                    >
                       <div className="relative">
                         <img 
                           src="/new_logo.png" 
@@ -127,7 +131,10 @@ export default function RootLayout({
                         </button>
                       </SignInButton>
                       <SignUpButton mode="modal">
-                        <button className="relative overflow-hidden bg-black text-white font-light px-8 py-3.5 rounded-xl hover:bg-black/90 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-black/20 group ml-2">
+                        <button 
+                          className="relative overflow-hidden bg-black text-white font-light px-8 py-3.5 rounded-xl hover:bg-black/90 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-black/20 group ml-2"
+                          onClick={() => sessionStorage.setItem('fromSignUp', 'true')}
+                        >
                           <span className="relative z-10">Get Started</span>
                           <div className="absolute inset-0 bg-gradient-to-r from-orange-600 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                           <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
@@ -198,7 +205,10 @@ export default function RootLayout({
                             <SignUpButton mode="modal">
                               <button 
                                 className="block w-full text-left px-6 py-4 bg-black hover:bg-black/90 text-white font-light rounded-xl mx-2 my-2 transition-all duration-300" 
-                                onClick={() => setMobileMenuOpen(false)}
+                                onClick={() => {
+                                  sessionStorage.setItem('fromSignUp', 'true');
+                                  setMobileMenuOpen(false);
+                                }}
                               >
                                 Get Started
                               </button>
