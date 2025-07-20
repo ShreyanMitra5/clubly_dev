@@ -3,8 +3,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { useUser } from '@clerk/nextjs';
-import { XIcon } from '@heroicons/react/outline';
-import { ChatAlt2Icon, PaperAirplaneIcon, MicrophoneIcon, EmojiHappyIcon } from '@heroicons/react/solid';
+import { XMarkIcon } from '@heroicons/react/24/outline';
+import { ChatBubbleLeftEllipsisIcon, PaperAirplaneIcon, MicrophoneIcon, FaceSmileIcon } from '@heroicons/react/24/solid';
 import ClubLayout from '../../../components/ClubLayout';
 
 interface Message {
@@ -206,7 +206,7 @@ export default function ClubAdvisorPage() {
                 type="button" 
                 className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200 text-gray-400 hover:text-gray-600"
               >
-                <EmojiHappyIcon className="w-6 h-6" />
+                <FaceSmileIcon className="w-6 h-6" />
               </button>
               <div className="flex-1 relative">
                 <input

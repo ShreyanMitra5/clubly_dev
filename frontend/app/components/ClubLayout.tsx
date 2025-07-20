@@ -11,6 +11,35 @@ import saveAs from 'file-saver';
 import Link from 'next/link';
 import { cn } from '../lib/utils';
 import { UserButton } from '@clerk/nextjs';
+import { motion, useInView } from 'framer-motion';
+import { 
+  Users, 
+  Presentation, 
+  Clock, 
+  CheckSquare, 
+  ArrowRight, 
+  Sparkles, 
+  Brain, 
+  Target, 
+  BarChart3,
+  Calendar,
+  Mail,
+  Settings,
+  Home,
+  Plus,
+  TrendingUp,
+  Mic,
+  FileText,
+  Square,
+  Play,
+  Pause,
+  CheckCircle,
+  AlertCircle,
+  Download,
+  X,
+  Activity,
+  Star
+} from 'lucide-react';
 
 interface ClubLayoutProps {
   children?: React.ReactNode;
@@ -21,7 +50,9 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
   const { user } = useUser();
   const [history, setHistory] = useState<any[]>([]);
   const [meetingNotes, setMeetingNotes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
 
   useEffect(() => {
     if (!user) return;
@@ -54,158 +85,300 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
     fetchData();
   }, [user, clubInfo, clubName]);
 
+  const stats = [
+    { icon: Presentation, value: history.length, label: "Presentations Created", color: "from-orange-500 to-orange-600" },
+    { icon: Clock, value: meetingNotes.length, label: "Meeting Notes", color: "from-blue-500 to-blue-600" },
+    { icon: Users, value: 15, label: "Active Members", color: "from-green-500 to-green-600" },
+    { icon: TrendingUp, value: 85, label: "Engagement Rate", suffix: "%", color: "from-purple-500 to-purple-600" }
+  ];
+
+  const quickActions = [
+    {
+      icon: Brain,
+      title: "AI Presentation",
+      description: "Generate professional slides with AI assistance",
+      color: "orange",
+      gradient: "from-orange-500 to-orange-600"
+    },
+    {
+      icon: CheckSquare,
+      title: "Meeting Notes",
+      description: "Record and transcribe your club meetings",
+      color: "blue", 
+      gradient: "from-blue-500 to-blue-600"
+    },
+    {
+      icon: Calendar,
+      title: "Semester Planning",
+      description: "AI-powered roadmap for your club's success",
+      color: "green",
+      gradient: "from-green-500 to-green-600"
+    },
+    {
+      icon: Mail,
+      title: "Email Campaign",
+      description: "Send personalized emails to your members",
+      color: "purple",
+      gradient: "from-purple-500 to-purple-600"
+    },
+    {
+      icon: Target,
+      title: "AI Advisor",
+      description: "Get strategic advice for your organization",
+      color: "pink",
+      gradient: "from-pink-500 to-pink-600"
+    },
+    {
+      icon: BarChart3,
+      title: "Analytics",
+      description: "Track your club's growth and engagement",
+      color: "indigo",
+      gradient: "from-indigo-500 to-indigo-600"
+    }
+  ];
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4">
-            <lottie-player
-              src="/DataSphere.json"
-              background="transparent"
-              speed="1"
-              style={{ width: '100%', height: '100%' }}
-              loop
-              autoplay
-            />
-          </div>
-          <p className="text-pulse-500 font-medium">Loading club information...</p>
+          <motion.div
+            className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          >
+            <Sparkles className="w-8 h-8 text-white" />
+          </motion.div>
+          <p className="text-gray-600 font-extralight">Loading club information...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-10">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#FF5F1F] via-[#FF7F1F] to-[#FF9F1F] shadow-xl mb-4">
-        {/* Subtle Pattern Overlay */}
-        <div className="absolute inset-0 bg-[url('/background-section2.png')] bg-cover opacity-10" />
-        <div className="absolute inset-0 bg-black/10" />
-        <div className="relative z-10 px-10 py-12 flex flex-col md:flex-row items-center justify-between gap-8">
-          <div className="max-w-2xl">
-            <h1 className="text-4xl font-bold text-white mb-2 drop-shadow-lg">Welcome</h1>
-            <h2 className="text-2xl font-semibold text-white/90 mb-2 drop-shadow">{clubName}</h2>
-            <p className="text-white/80 mb-6 text-lg">
-              Manage your club activities and stay organized with Clubly.
-            </p>
-            <div className="flex items-center space-x-4">
-              <button className="px-6 py-3 bg-white text-[#FF5F1F] rounded-xl font-medium hover:bg-white/90 transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-105">
-                Create Presentation
-              </button>
-              <button className="px-6 py-3 bg-white/10 text-white rounded-xl font-medium hover:bg-white/20 transition-all duration-200 backdrop-blur-sm ring-2 ring-white/20">
-                View Roadmap
-              </button>
-          </div>
-          </div>
-          <div className="w-56 h-56 flex-shrink-0">
-            <img 
-              src="/lovable-uploads/5663820f-6c97-4492-9210-9eaa1a8dc415.png"
-              alt="Clubly Platform"
-              className="w-full h-full object-contain"
-            />
-          </div>
-        </div>
+    <div ref={ref} className="space-y-8">
+      {/* Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-10 right-10 w-72 h-72 bg-gradient-to-r from-orange-500/5 to-orange-400/3 rounded-full blur-3xl"
+          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute bottom-10 left-10 w-64 h-64 bg-gradient-to-r from-blue-500/3 to-purple-500/3 rounded-full blur-3xl"
+          animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.4, 0.2] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+        />
       </div>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
-        <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 group">
-          <div className="flex items-center">
-            <div className="w-12 h-12 bg-[#FF5F1F]/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-            <svg className="w-6 h-6 text-[#FF5F1F]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
+      <div className="relative z-10 space-y-8">
+        {/* Hero Section */}
+        <motion.div
+          className="relative overflow-hidden bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-3xl shadow-2xl"
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          transition={{ duration: 0.8 }}
+        >
+          {/* Subtle Pattern Overlay */}
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]" />
+          
+          <div className="relative z-10 p-8 lg:p-12 flex flex-col lg:flex-row items-center justify-between gap-8">
+            <div className="flex-1 max-w-2xl">
+              <motion.div
+                className="inline-flex items-center space-x-2 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full px-4 py-2 mb-6"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                <Star className="w-4 h-4 text-orange-500 fill-orange-500" />
+                <span className="text-sm font-extralight text-white">AI-Powered Management</span>
+              </motion.div>
+
+              <motion.h1 
+                className="text-4xl lg:text-5xl font-extralight text-white mb-4 leading-tight"
+                initial={{ opacity: 0, y: 20 }}
+                animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+              >
+                Welcome to
+                <br />
+                <span className="text-orange-500 font-light">{clubName}</span>
+              </motion.h1>
+
+              <motion.p 
+                className="text-xl text-gray-300 font-extralight mb-8 leading-relaxed"
+                initial={{ opacity: 0, y: 20 }}
+                animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+              >
+                Streamline your organization with AI-powered tools designed to amplify your impact and engage your community.
+              </motion.p>
+
+              <motion.div 
+                className="flex flex-col sm:flex-row gap-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                transition={{ duration: 0.8, delay: 0.5 }}
+              >
+                <motion.button 
+                  className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-xl font-light text-lg flex items-center justify-center space-x-3 hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg group"
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Brain className="w-5 h-5" />
+                  <span>Create AI Presentation</span>
+                </motion.button>
+                
+                <motion.button 
+                  className="border border-white/20 text-white px-8 py-4 rounded-xl font-light text-lg hover:bg-white/5 transition-all duration-300 flex items-center justify-center space-x-3 group"
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Calendar className="w-5 h-5" />
+                  <span>View Roadmap</span>
+                </motion.button>
+              </motion.div>
             </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Presentations</p>
-              <p className="text-2xl font-semibold text-gray-900">{history.length}</p>
+
+            <motion.div 
+              className="w-80 h-80 flex-shrink-0"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+            >
+              <div className="relative w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl overflow-hidden shadow-xl">
+                <img 
+                  src="/lovable-uploads/5663820f-6c97-4492-9210-9eaa1a8dc415.png"
+                  alt="Clubly Platform"
+                  className="w-full h-full object-contain p-8"
+                />
+              </div>
+            </motion.div>
           </div>
-        </div>
-        </div>
-        <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 group">
-          <div className="flex items-center">
-            <div className="w-12 h-12 bg-[#FF8C33]/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <svg className="w-6 h-6 text-[#FF8C33]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Meeting Notes</p>
-              <p className="text-2xl font-semibold text-gray-900">{meetingNotes.length}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 group">
-          <div className="flex items-center">
-            <div className="w-12 h-12 bg-[#FFA64D]/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <svg className="w-6 h-6 text-[#FFA64D]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-              </svg>
-            </div>
-            <div className="ml-4">
-              <p className="text-sm font-medium text-gray-500">Tasks</p>
-              <p className="text-2xl font-semibold text-gray-900">5</p>
-            </div>
-          </div>
-          </div>
-        </div>
-        
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 group cursor-pointer">
+        </motion.div>
+
+        {/* Stats Grid */}
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          transition={{ duration: 0.8, delay: 0.7 }}
+        >
+          {stats.map((stat, index) => (
+            <motion.div
+              key={stat.label}
+              className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group"
+              initial={{ opacity: 0, y: 20 }}
+              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ delay: 0.9 + index * 0.1, duration: 0.6 }}
+              whileHover={{ y: -5, scale: 1.02 }}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className={`w-12 h-12 bg-gradient-to-r ${stat.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                  <stat.icon className="w-6 h-6 text-white" />
+                </div>
+                <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all duration-300" />
+              </div>
+              
+              <div className="text-3xl font-light text-gray-900 mb-1">
+                {stat.value}{stat.suffix || ''}
+              </div>
+              <div className="text-sm text-gray-600 font-extralight">{stat.label}</div>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* Quick Actions */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          transition={{ duration: 0.8, delay: 1.0 }}
+        >
           <div className="flex items-center justify-between mb-6">
-            <div className="w-12 h-12 bg-[#FF5F1F]/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <svg className="w-6 h-6 text-[#FF5F1F]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16" />
-              </svg>
-            </div>
-            <svg className="w-5 h-5 text-gray-400 group-hover:text-[#FF5F1F] group-hover:translate-x-1 transition-all duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M9 5l7 7-7 7" />
-            </svg>
+            <h2 className="text-3xl font-light text-gray-900">Quick Actions</h2>
+            <span className="text-sm text-gray-500 font-extralight">Powered by AI</span>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-[#FF5F1F] transition-colors duration-200">
-            Create Presentation
-          </h3>
-          <p className="text-gray-500 text-sm">
-            Generate a new presentation for your next meeting
-          </p>
-        </div>
-        <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 group cursor-pointer">
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {quickActions.map((action, index) => (
+              <motion.div
+                key={action.title}
+                className="group bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
+                initial={{ opacity: 0, y: 20 }}
+                animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                transition={{ delay: 1.2 + index * 0.1, duration: 0.6 }}
+                whileHover={{ y: -5, scale: 1.02 }}
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <motion.div 
+                    className={`w-16 h-16 bg-gradient-to-r ${action.gradient} rounded-2xl flex items-center justify-center`}
+                    whileHover={{ rotate: 360, scale: 1.1 }}
+                    transition={{ duration: 0.6, ease: "easeInOut" }}
+                  >
+                    <action.icon className="w-8 h-8 text-white" />
+                  </motion.div>
+                  <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all duration-300" />
+                </div>
+                
+                <h3 className="text-xl font-light text-gray-900 mb-2 group-hover:text-gray-700 transition-colors duration-300">
+                  {action.title}
+                </h3>
+                <p className="text-gray-600 font-extralight leading-relaxed">
+                  {action.description}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Recent Activity */}
+        <motion.div
+          className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl p-8 shadow-lg"
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          transition={{ duration: 0.8, delay: 1.4 }}
+        >
           <div className="flex items-center justify-between mb-6">
-            <div className="w-12 h-12 bg-[#FF8C33]/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <svg className="w-6 h-6 text-[#FF8C33]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-              </svg>
-            </div>
-            <svg className="w-5 h-5 text-gray-400 group-hover:text-[#FF8C33] group-hover:translate-x-1 transition-all duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M9 5l7 7-7 7" />
-            </svg>
+            <h2 className="text-2xl font-light text-gray-900">Recent Activity</h2>
+            <motion.button 
+              className="text-orange-500 font-light hover:text-orange-600 transition-colors duration-300 flex items-center space-x-2"
+              whileHover={{ x: 5 }}
+            >
+              <span>View All</span>
+              <ArrowRight className="w-4 h-4" />
+            </motion.button>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-[#FF8C33] transition-colors duration-200">
-            Record Meeting Notes
-          </h3>
-          <p className="text-gray-500 text-sm">
-            Take notes and track attendance for your meetings
-          </p>
-        </div>
-        <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 group cursor-pointer">
-          <div className="flex items-center justify-between mb-6">
-            <div className="w-12 h-12 bg-[#FFA64D]/10 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-200">
-              <svg className="w-6 h-6 text-[#FFA64D]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+
+          {history.length > 0 || meetingNotes.length > 0 ? (
+            <div className="space-y-4">
+              {history.slice(0, 3).map((item, index) => (
+                <motion.div
+                  key={index}
+                  className="flex items-center space-x-4 p-4 bg-gray-50/50 rounded-xl hover:bg-gray-100/50 transition-colors duration-300"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={inView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+                  transition={{ delay: 1.6 + index * 0.1, duration: 0.6 }}
+                >
+                  <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
+                    <Presentation className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-light text-gray-900">Presentation Created</h4>
+                    <p className="text-sm text-gray-600 font-extralight">{item.topic || 'New presentation'}</p>
+                  </div>
+                  <span className="text-xs text-gray-500 font-extralight">2h ago</span>
+                </motion.div>
+              ))}
             </div>
-            <svg className="w-5 h-5 text-gray-400 group-hover:text-[#FFA64D] group-hover:translate-x-1 transition-all duration-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M9 5l7 7-7 7" />
-            </svg>
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-[#FFA64D] transition-colors duration-200">
-            Plan Roadmap
-          </h3>
-          <p className="text-gray-500 text-sm">
-            Set goals and milestones for your club
-          </p>
-        </div>
+          ) : (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 bg-gradient-to-r from-gray-400 to-gray-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Activity className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-lg font-light text-gray-900 mb-2">No recent activity</h3>
+              <p className="text-gray-600 font-extralight">Start creating presentations and taking notes to see your activity here.</p>
+            </div>
+          )}
+        </motion.div>
       </div>
     </div>
   );
@@ -230,6 +403,8 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
   const [sending, setSending] = useState(false);
   const [emailSuccess, setEmailSuccess] = useState('');
   const [emailError, setEmailError] = useState('');
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
 
   useEffect(() => {
     if (user) {
@@ -399,70 +574,156 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
   };
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-pulse-500 mb-2">Generate Presentation</h1>
-        <p className="text-gray-600">Create professional presentations tailored to your club</p>
+    <div ref={ref} className="space-y-8">
+      {/* Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-10 right-10 w-72 h-72 bg-gradient-to-r from-orange-500/5 to-orange-400/3 rounded-full blur-3xl"
+          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute bottom-10 left-10 w-64 h-64 bg-gradient-to-r from-blue-500/3 to-purple-500/3 rounded-full blur-3xl"
+          animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.4, 0.2] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+        />
       </div>
 
-      <div className="glass-card bg-white/90 border border-pulse-100 rounded-2xl p-8 shadow-lg">
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l6.58 11.36c.75 1.334-.213 2.984-1.742 2.984H3.419c-1.53 0-2.492-1.65-1.742-2.984l6.58-11.36zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-yellow-800">Using Onboarding Information for {selectedClub?.clubName || clubName}</h3>
-              <div className="mt-2 text-sm text-yellow-700">
-                <p>
-                  This presentation will be generated using the onboarding information for <span className="font-semibold">{selectedClub?.clubName || clubName}</span>.<br />
-                  You can update your club's details in <span className="font-semibold">Settings</span> for the best results.
+      <div className="relative z-10 space-y-8">
+        {/* Header Section */}
+        <motion.div
+          className="text-center"
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          transition={{ duration: 0.8 }}
+        >
+          <motion.div
+            className="inline-flex items-center space-x-2 bg-white/80 backdrop-blur-xl border border-orange-200/50 rounded-full px-4 py-2 mb-6"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <Brain className="w-4 h-4 text-orange-500" />
+            <span className="text-sm font-extralight text-gray-700">AI-Powered Content Creation</span>
+          </motion.div>
+
+          <motion.h1 
+            className="text-4xl lg:text-5xl font-extralight text-gray-900 mb-4 leading-tight"
+            initial={{ opacity: 0, y: 20 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+          >
+            Create AI
+            <span className="text-orange-500 font-light"> Presentations</span>
+          </motion.h1>
+
+          <motion.p 
+            className="text-xl text-gray-600 font-extralight max-w-2xl mx-auto leading-relaxed"
+            initial={{ opacity: 0, y: 20 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+          >
+            Generate professional presentations for your club with AI assistance. Simply describe your topic and let our intelligent system create engaging slides.
+          </motion.p>
+        </motion.div>
+
+        {/* Main Content */}
+        <motion.div
+          className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-3xl p-8 shadow-xl"
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+        >
+          {/* Club Info Banner */}
+          <motion.div 
+            className="bg-gradient-to-r from-orange-50 to-orange-100/50 border border-orange-200/50 rounded-2xl p-6 mb-8"
+            initial={{ opacity: 0, x: -20 }}
+            animate={inView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+            transition={{ duration: 0.6, delay: 0.8 }}
+          >
+            <div className="flex items-start space-x-4">
+              <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Sparkles className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-light text-gray-900 mb-2">
+                  Powered by {selectedClub?.clubName || clubName} Data
+                </h3>
+                <p className="text-gray-600 font-extralight leading-relaxed">
+                  Your presentations will be personalized using your club's mission, goals, and audience information. 
+                  Update your club details in <span className="font-medium text-orange-600">Settings</span> for optimal results.
                 </p>
               </div>
             </div>
-          </div>
-        </div>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <h3 className="text-xl font-semibold text-pulse-500 mb-4">Presentation Details</h3>
-            <div className="space-y-4">
+          </motion.div>
+                  {/* Form Section */}
+          <motion.form 
+            onSubmit={handleSubmit} 
+            className="space-y-8"
+            initial={{ opacity: 0, y: 20 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.6, delay: 1.0 }}
+          >
+            <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Topic Description</label>
+                <label className="block text-lg font-light text-gray-900 mb-4">
+                  What's your presentation about?
+                </label>
                 <textarea
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
-                  placeholder="Describe what you want your presentation to be about..."
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pulse-500 focus:border-transparent resize-none"
-                  rows={4}
+                  placeholder="Describe the topic, key points, or specific focus for your presentation..."
+                  className="w-full px-6 py-4 bg-white/50 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none font-extralight text-lg placeholder-gray-400 backdrop-blur-sm"
+                  rows={6}
                   required
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Week Number</label>
-                <input
-                  type="number"
-                  name="week"
-                  value={formData.week}
-                  onChange={handleInputChange}
-                  min="1"
-                  className="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pulse-500 focus:border-transparent"
-                />
+              
+              <div className="grid md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-lg font-light text-gray-900 mb-4">
+                    Week Number <span className="text-sm text-gray-500 font-extralight">(optional)</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="week"
+                    value={formData.week}
+                    onChange={handleInputChange}
+                    min="1"
+                    placeholder="1"
+                    className="w-full px-6 py-4 bg-white/50 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-extralight text-lg placeholder-gray-400 backdrop-blur-sm"
+                  />
+                </div>
+                
+                <div className="flex items-end">
+                  <motion.button
+                    type="submit"
+                    disabled={isLoading || !formData.description.trim()}
+                    className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-2xl font-light text-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3"
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {isLoading ? (
+                      <>
+                        <motion.div
+                          className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        />
+                        <span>Generating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Brain className="w-5 h-5" />
+                        <span>Generate with AI</span>
+                      </>
+                    )}
+                  </motion.button>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="pt-4">
-            <button
-              type="submit"
-              disabled={isLoading || !formData.description.trim()}
-              className="button-primary bg-pulse-500 hover:bg-pulse-600 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? 'Generating...' : 'Generate Presentation'}
-            </button>
-          </div>
-        </form>
+          </motion.form>
 
         {error && (
           <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
@@ -521,18 +782,29 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
           </div>
         )}
 
-        {/* Email Success/Error Messages */}
-        {emailSuccess && (
-          <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
-            {emailSuccess}
-          </div>
-        )}
-        
-        {emailError && (
-          <div className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-            {emailError}
-          </div>
-        )}
+          {/* Email Success/Error Messages */}
+          {emailSuccess && (
+            <motion.div 
+              className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {emailSuccess}
+            </motion.div>
+          )}
+          
+          {emailError && (
+            <motion.div 
+              className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {emailError}
+            </motion.div>
+          )}
+        </motion.div>
       </div>
 
       {/* Email Modal */}
@@ -798,17 +1070,14 @@ function TasksPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4">
-            <lottie-player
-              src="/DataSphere.json"
-              background="transparent"
-              speed="1"
-              style={{ width: '100%', height: '100%' }}
-              loop
-              autoplay
-            />
-          </div>
-          <p className="text-pulse-500 font-medium">Loading tasks...</p>
+          <motion.div
+            className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          >
+            <Sparkles className="w-8 h-8 text-white" />
+          </motion.div>
+          <p className="text-gray-600 font-extralight">Loading tasks...</p>
         </div>
       </div>
     );
@@ -1017,21 +1286,26 @@ function TasksPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
   );
 }
 
-// Advisor Component
-function AdvisorPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any }) {
+// AI Advisor Component - Modern Chat Interface
+function AdvisorPanel({ clubName, clubInfo, onNavigation }: { 
+  clubName: string; 
+  clubInfo: any; 
+  onNavigation?: (item: any) => void;
+}) {
   const { user } = useUser();
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      content: `Hello! I'm your AI Club Advisor for ${clubName}. I'm here to help you plan exciting events, manage your club activities, and provide guidance on running a successful club. What would you like to discuss today?`,
-      isUser: false,
-      timestamp: new Date()
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [chatHistories, setChatHistories] = useState<any[]>([]);
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+  const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState<string>('');
+  const [showDropdownId, setShowDropdownId] = useState<string | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -1041,26 +1315,290 @@ function AdvisorPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
     scrollToBottom();
   }, [messages]);
 
-  // Load chat history from localStorage
+  // Close dropdown when clicking outside
   useEffect(() => {
-    if (!user) return;
-    const key = `advisorChatHistory_${user.id}_${clubName}`;
-    const saved = localStorage.getItem(key);
-    if (saved) {
-      setMessages(JSON.parse(saved).map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })));
+    const handleClickOutside = () => {
+      setShowDropdownId(null);
+    };
+    
+    if (showDropdownId) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
     }
-  }, [user, clubName]);
+  }, [showDropdownId]);
 
-  // Save chat history to localStorage
+  // Load chat histories from Supabase
   useEffect(() => {
-    if (!user) return;
-    const key = `advisorChatHistory_${user.id}_${clubName}`;
-    localStorage.setItem(key, JSON.stringify(messages));
-  }, [messages, user, clubName]);
+    if (!user?.id || !clubInfo?.id) return;
+    loadChatHistories();
+  }, [user?.id, clubInfo?.id]);
+
+  // Load current chat messages
+  useEffect(() => {
+    if (currentChatId) {
+      loadChatMessages(currentChatId);
+    } else {
+      // Start with welcome message if no chat selected
+      setMessages([{
+        id: '1',
+        content: `Hello! I'm your AI Club Advisor for ${clubName}. I'm here to help you plan exciting events, manage your club activities, and provide strategic guidance. What would you like to discuss today?`,
+        isUser: false,
+        timestamp: new Date()
+      }]);
+    }
+  }, [currentChatId, clubName]);
+
+  const loadChatHistories = async () => {
+    try {
+      const clubId = clubInfo?.id || clubInfo?.clubId || clubInfo?.club_id;
+      console.log('Loading chat histories for:', { user_id: user?.id, club_id: clubId });
+      
+      if (!user?.id || !clubId) {
+        console.log('Missing user ID or club ID for loading histories');
+        return;
+      }
+      
+      const { data, error } = await supabase
+        .from('advisor_chats')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('club_id', clubId)
+        .order('updated_at', { ascending: false });
+
+      console.log('Chat histories response:', { data, error });
+
+      if (error) throw error;
+      setChatHistories(data || []);
+      console.log('Chat histories loaded:', data?.length || 0, 'chats');
+    } catch (error) {
+      console.error('Error loading chat histories:', JSON.stringify(error, null, 2));
+    }
+  };
+
+  const loadChatMessages = async (chatId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('advisor_messages')
+        .select('*')
+        .eq('chat_id', chatId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      
+      const formattedMessages = data?.map(msg => ({
+        id: msg.id,
+        content: msg.content,
+        isUser: msg.is_user,
+        timestamp: new Date(msg.created_at)
+      })) || [];
+
+      setMessages(formattedMessages);
+    } catch (error) {
+      console.error('Error loading chat messages:', error);
+    }
+  };
+
+  const createNewChat = async () => {
+    try {
+      console.log('Debug - User ID:', user?.id);
+      console.log('Debug - Club Info:', clubInfo);
+      console.log('Debug - Club ID:', clubInfo?.id);
+      
+      if (!user?.id) {
+        console.error('Missing user ID');
+        return;
+      }
+
+      // Try different possible club ID fields
+      const clubId = clubInfo?.id || clubInfo?.clubId || clubInfo?.club_id;
+      
+      if (!clubId) {
+        console.error('Missing club ID. ClubInfo:', clubInfo);
+        return;
+      }
+
+      console.log('Attempting to create chat with:', {
+        user_id: user.id,
+        club_id: clubId,
+        title: 'New Chat'
+      });
+
+      const { data, error } = await supabase
+        .from('advisor_chats')
+        .insert({
+          user_id: user.id,
+          club_id: clubId,
+          title: 'New Chat'
+        })
+        .select()
+        .single();
+
+      console.log('Supabase response:', { data, error });
+
+      if (error) {
+        console.error('Supabase error details:', JSON.stringify(error, null, 2));
+        throw error;
+      }
+      
+      console.log('Chat created successfully:', data);
+      setCurrentChatId(data.id);
+      
+      const welcomeMessage = `Hello! I'm your AI Club Advisor for ${clubName}. I'm here to help you plan exciting events, manage your club activities, and provide strategic guidance. What would you like to discuss today?`;
+      
+      setMessages([{
+        id: '1',
+        content: welcomeMessage,
+        isUser: false,
+        timestamp: new Date()
+      }]);
+      
+      // Save welcome message to database
+      await saveChatMessage(data.id, welcomeMessage, false);
+      
+      loadChatHistories();
+    } catch (error) {
+      console.error('Error creating new chat:', JSON.stringify(error, null, 2));
+    }
+  };
+
+  const saveChatMessage = async (chatId: string, content: string, isUser: boolean) => {
+    try {
+      await supabase
+        .from('advisor_messages')
+        .insert({
+          chat_id: chatId,
+          content,
+          is_user: isUser,
+          created_at: new Date().toISOString()
+        });
+
+      // Update chat timestamp
+      await supabase
+        .from('advisor_chats')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', chatId);
+    } catch (error) {
+      console.error('Error saving chat message:', error);
+    }
+  };
+
+  const generateChatTitle = async (firstMessage: string) => {
+    try {
+      const response = await fetch('/api/clubs/advisor', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: `Summarize this message in 1-3 words for a chat title: "${firstMessage}"`,
+          clubName: clubName,
+          generateTitleOnly: true
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.response || firstMessage.substring(0, 30);
+      }
+    } catch (error) {
+      console.error('Error generating chat title:', error);
+    }
+    return firstMessage.substring(0, 30);
+  };
+
+  const updateChatTitle = async (chatId: string, title: string) => {
+    try {
+      await supabase
+        .from('advisor_chats')
+        .update({ title, updated_at: new Date().toISOString() })
+        .eq('id', chatId);
+      
+      loadChatHistories();
+    } catch (error) {
+      console.error('Error updating chat title:', error);
+    }
+  };
+
+  const deleteChat = async (chatId: string) => {
+    try {
+      await supabase
+        .from('advisor_chats')
+        .delete()
+        .eq('id', chatId);
+      
+      if (currentChatId === chatId) {
+        setCurrentChatId(null);
+        setMessages([]);
+      }
+      
+      loadChatHistories();
+    } catch (error) {
+      console.error('Error deleting chat:', error);
+    }
+  };
+
+  const handleRenameChat = async (chatId: string, newTitle: string) => {
+    if (newTitle.trim()) {
+      await updateChatTitle(chatId, newTitle.trim());
+    }
+    setEditingChatId(null);
+    setEditingTitle('');
+  };
+
+  const startEditing = (chatId: string, currentTitle: string) => {
+    setEditingChatId(chatId);
+    setEditingTitle(currentTitle);
+    setShowDropdownId(null);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue.trim() || isLoading) return;
+
+    // Create new chat if none selected
+    let chatId = currentChatId;
+    if (!chatId) {
+      // Create chat immediately and wait for it
+      try {
+        const clubId = clubInfo?.id || clubInfo?.clubId || clubInfo?.club_id;
+        
+        if (!user?.id || !clubId) {
+          console.error('Missing user ID or club ID');
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from('advisor_chats')
+          .insert({
+            user_id: user.id,
+            club_id: clubId,
+            title: 'New Chat'
+          })
+          .select()
+          .single();
+
+        if (error) {
+          console.error('Error creating chat for message:', error);
+          return;
+        }
+
+        chatId = data.id;
+        setCurrentChatId(chatId);
+        
+        // Add welcome message to the new chat
+        setMessages([{
+          id: '1',
+          content: `Hello! I'm your AI Club Advisor for ${clubName}. I'm here to help you plan exciting events, manage your club activities, and provide strategic guidance. What would you like to discuss today?`,
+          isUser: false,
+          timestamp: new Date()
+        }]);
+        
+        loadChatHistories();
+      } catch (error) {
+        console.error('Error creating new chat for message:', error);
+        return;
+      }
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -1070,6 +1608,20 @@ function AdvisorPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
     };
 
     setMessages(prev => [...prev, userMessage]);
+    
+    // Save user message to Supabase
+    if (chatId) {
+      await saveChatMessage(chatId, inputValue, true);
+      
+      // Update chat title if this is the first user message
+      const isFirstMessage = messages.filter(m => m.isUser).length === 0;
+      if (isFirstMessage) {
+        const generatedTitle = await generateChatTitle(inputValue);
+        await updateChatTitle(chatId, generatedTitle);
+      }
+    }
+
+    const messageToSend = inputValue;
     setInputValue('');
     setIsLoading(true);
 
@@ -1080,8 +1632,9 @@ function AdvisorPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          message: inputValue,
-          clubName: clubName
+          message: messageToSend,
+          clubName: clubName,
+          chatHistory: messages.map(m => ({ role: m.isUser ? 'user' : 'assistant', content: m.content }))
         }),
       });
 
@@ -1099,6 +1652,11 @@ function AdvisorPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
       };
 
       setMessages(prev => [...prev, aiMessage]);
+      
+      // Save AI message to Supabase
+      if (chatId) {
+        await saveChatMessage(chatId, aiMessage.content, false);
+      }
     } catch (error) {
       console.error('Error:', error);
       const errorMessage: Message = {
@@ -1122,125 +1680,312 @@ function AdvisorPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
     }).toLowerCase();
   };
 
-  return (
-    <div className="p-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-pulse-500 mb-2">AI Club Advisor</h1>
-        <p className="text-gray-600">Get AI-powered guidance for your club activities</p>
-      </div>
+  const formatMarkdown = (text: string) => {
+    // Simple markdown formatting for AI responses
+    return text
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g, '<em>$1</em>')
+      .replace(/`(.*?)`/g, '<code class="bg-gray-100 px-1 py-0.5 rounded text-sm">$1</code>')
+      .replace(/\n\n/g, '</p><p class="mb-4">')
+      .replace(/\n/g, '<br/>');
+  };
 
-      {/* Rest of the existing content with updated styling */}
-      <div className="max-w-4xl mx-auto">
-        {/* Chat Area */}
-        <div 
-          className="flex-1 overflow-y-auto px-6 py-8 space-y-6 bg-gradient-to-b from-gray-50 to-white" 
-          style={{scrollBehavior: 'smooth'}}
-        >
-          {messages.map((message, idx) => (
-            <div 
-              key={message.id} 
-              className={`flex ${message.isUser ? 'justify-end' : 'justify-start'} w-full animate-fade-in`}
+
+
+  return (
+    <div ref={ref} className="h-screen flex bg-gradient-to-br from-gray-50 via-white to-orange-50/30 overflow-hidden">
+      {/* Split Sidebar */}
+      <div className="w-80 bg-white/80 backdrop-blur-xl border-r border-gray-200/50 flex flex-col shadow-xl">
+        {/* Sidebar Header */}
+        <div className="p-6 border-b border-gray-200/50">
+          <motion.div
+            className="flex items-center space-x-3 mb-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
+              <Brain className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h3 className="font-light text-gray-900 text-lg">AI Advisor</h3>
+              <p className="text-sm text-gray-600 font-extralight">{clubName}</p>
+            </div>
+          </motion.div>
+
+          {/* Header Title */}
+          <div className="text-center">
+            <h4 className="text-lg font-light text-gray-900">Chat History</h4>
+            <p className="text-sm text-gray-600 font-extralight">Your conversations</p>
+          </div>
+        </div>
+
+        {/* Sidebar Content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4 space-y-3">
+            <motion.button
+              className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 transition-all duration-200"
+              onClick={createNewChat}
+              initial={{ opacity: 0, y: 20 }}
+              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
             >
-              {message.system ? (
-                <div className="bg-gray-100 text-gray-500 text-xs px-4 py-2 rounded-lg max-w-[80%] shadow-sm">
-                  {message.content}
-                  <div className="text-[10px] text-gray-400 mt-1">{formatTime(message.timestamp)}</div>
-                </div>
-              ) : message.isUser ? (
-                <div className="flex flex-col items-end max-w-[80%]">
-                  <div className="bg-gradient-to-br from-indigo-500 to-purple-500 text-white px-5 py-3 rounded-2xl rounded-br-sm shadow-sm text-sm">
-                    {message.content}
-                  </div>
-                  <div className="text-[10px] text-gray-400 mt-1 pr-1">{formatTime(message.timestamp)}</div>
-                </div>
-              ) : (
-                <div className="flex items-end max-w-[80%] group">
-                  <div className="relative flex-shrink-0">
-                    <Image 
-                      src="/logo-rounded.png" 
-                      alt="Clubly Logo" 
-                      width={32} 
-                      height={32} 
-                      className="rounded-full border-2 border-indigo-100 bg-white mr-3 transition-transform duration-200 group-hover:scale-110" 
+              <Plus className="w-5 h-5" />
+              <span className="font-light">New Chat</span>
+            </motion.button>
+
+            {chatHistories.map((chat, index) => (
+              <motion.div
+                key={chat.id}
+                className={`relative rounded-xl transition-all duration-200 group ${
+                  currentChatId === chat.id
+                    ? 'bg-orange-100/80 border border-orange-200/50'
+                    : 'hover:bg-gray-100/80'
+                }`}
+                initial={{ opacity: 0, y: 20 }}
+                animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                transition={{ duration: 0.4, delay: 0.2 + index * 0.05 }}
+              >
+                {editingChatId === chat.id ? (
+                  <div className="p-4">
+                    <input
+                      type="text"
+                      value={editingTitle}
+                      onChange={(e) => setEditingTitle(e.target.value)}
+                      onBlur={() => handleRenameChat(chat.id, editingTitle)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleRenameChat(chat.id, editingTitle);
+                        } else if (e.key === 'Escape') {
+                          setEditingChatId(null);
+                          setEditingTitle('');
+                        }
+                      }}
+                      className="w-full px-2 py-1 text-sm bg-white border border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      autoFocus
                     />
                   </div>
-                  <div className="flex flex-col">
-                    <div className="bg-white border border-gray-100 text-gray-900 px-5 py-3 rounded-2xl rounded-bl-sm shadow-sm text-sm">
-                      {message.content}
+                ) : (
+                  <>
+                    <button
+                      className="w-full text-left px-4 py-3 rounded-xl"
+                      onClick={() => setCurrentChatId(chat.id)}
+                    >
+                      <div className="font-light text-gray-900 text-sm mb-1 truncate">
+                        {chat.title}
+                      </div>
+                      <div className="text-xs text-gray-500 font-extralight">
+                        {new Date(chat.updated_at).toLocaleDateString()}
+                      </div>
+                    </button>
+                    
+                    {/* Three dots menu */}
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowDropdownId(showDropdownId === chat.id ? null : chat.id);
+                        }}
+                        className="p-1 rounded-full hover:bg-white/80 transition-colors duration-200"
+                      >
+                        <svg className="w-4 h-4 text-gray-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                        </svg>
+                      </button>
+                      
+                      {showDropdownId === chat.id && (
+                        <div className="absolute right-0 top-full mt-1 w-32 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              startEditing(chat.id, chat.title);
+                            }}
+                            className="w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center space-x-2"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                            <span>Rename</span>
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm('Are you sure you want to delete this chat?')) {
+                                deleteChat(chat.id);
+                              }
+                              setShowDropdownId(null);
+                            }}
+                            className="w-full px-3 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center space-x-2"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            <span>Delete</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    <div className="text-[10px] text-gray-400 mt-1 pl-1">{formatTime(message.timestamp)}</div>
+                  </>
+                )}
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Main Chat Area */}
+      <div className="flex-1 flex flex-col">
+        {/* Chat Header */}
+        <motion.div 
+          className="px-8 py-6 bg-white/60 backdrop-blur-xl border-b border-gray-200/50"
+          initial={{ opacity: 0, y: -20 }}
+          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-extralight text-gray-900 mb-1">
+                AI <span className="text-orange-500 font-light">Advisor</span>
+              </h1>
+              <p className="text-gray-600 font-extralight">
+                Strategic guidance powered by artificial intelligence
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              <motion.div
+                className="w-3 h-3 bg-green-500 rounded-full"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+              <span className="text-sm text-gray-600 font-extralight">Online</span>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+          {messages.map((message, idx) => (
+            <motion.div 
+              key={message.id} 
+              className={`flex ${message.isUser ? 'justify-end' : 'justify-start'} w-full`}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: idx * 0.1 }}
+            >
+              {message.isUser ? (
+                <div className="flex flex-col items-end max-w-[80%]">
+                  <div className="bg-gradient-to-br from-orange-500 to-orange-600 text-white px-6 py-4 rounded-3xl rounded-br-lg shadow-lg">
+                    <div className="font-light text-[15px] leading-relaxed">{message.content}</div>
+                  </div>
+                  <div className="text-xs text-gray-500 mt-2 pr-2 font-extralight">
+                    {formatTime(message.timestamp)}
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start max-w-[85%] group">
+                  <motion.div 
+                    className="relative flex-shrink-0 mr-4"
+                    whileHover={{ scale: 1.05 }}
+                  >
+                    <div className="w-12 h-12 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center border-2 border-white shadow-md">
+                      <Brain className="w-6 h-6 text-gray-600" />
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
+                  </motion.div>
+                  <div className="flex flex-col">
+                    <div className="bg-white/80 backdrop-blur-xl border border-gray-200/50 text-gray-900 px-6 py-4 rounded-3xl rounded-bl-lg shadow-lg">
+                      <div 
+                        className="font-extralight text-[15px] leading-relaxed"
+                        dangerouslySetInnerHTML={{ 
+                          __html: `<p class="mb-4">${formatMarkdown(message.content)}</p>` 
+                        }}
+                      />
+                    </div>
+                    <div className="text-xs text-gray-500 mt-2 pl-2 font-extralight">
+                      AI Assistant • {formatTime(message.timestamp)}
+                    </div>
                   </div>
                 </div>
               )}
-            </div>
+            </motion.div>
           ))}
+          
           {isLoading && (
-            <div className="flex justify-start w-full animate-fade-in">
-              <div className="relative flex-shrink-0">
-                <Image 
-                  src="/logo-rounded.png" 
-                  alt="Clubly Logo" 
-                  width={32} 
-                  height={32} 
-                  className="rounded-full border-2 border-indigo-100 bg-white mr-3" 
-                />
-              </div>
-              <div className="bg-white border border-gray-100 px-6 py-4 rounded-2xl rounded-bl-sm shadow-sm">
-                <div className="flex items-center gap-1">
-                  <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce"></div>
-                  <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                  <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+            <motion.div 
+              className="flex justify-start w-full"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <div className="flex items-start max-w-[85%]">
+                <div className="w-12 h-12 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center border-2 border-white shadow-md mr-4">
+                  <Brain className="w-6 h-6 text-gray-600" />
+                </div>
+                <div className="bg-white/80 backdrop-blur-xl border border-gray-200/50 px-6 py-4 rounded-3xl rounded-bl-lg shadow-lg">
+                  <div className="flex items-center space-x-2">
+                    <motion.div 
+                      className="w-2 h-2 bg-orange-500 rounded-full"
+                      animate={{ scale: [1, 1.5, 1] }}
+                      transition={{ duration: 1, repeat: Infinity, delay: 0 }}
+                    />
+                    <motion.div 
+                      className="w-2 h-2 bg-orange-500 rounded-full"
+                      animate={{ scale: [1, 1.5, 1] }}
+                      transition={{ duration: 1, repeat: Infinity, delay: 0.2 }}
+                    />
+                    <motion.div 
+                      className="w-2 h-2 bg-orange-500 rounded-full"
+                      animate={{ scale: [1, 1.5, 1] }}
+                      transition={{ duration: 1, repeat: Infinity, delay: 0.4 }}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           )}
           <div ref={messagesEndRef} />
         </div>
 
         {/* Input Area */}
-        <div className="border-t border-gray-100 bg-white px-6 py-4">
-          <form onSubmit={handleSubmit} className="flex items-center gap-4">
-            <button 
-              type="button" 
-              className="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200 text-gray-400 hover:text-gray-600"
-            >
-              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 100-2 1 1 0 000 2zm7-1a1 1 0 11-2 0 1 1 0 012 0zm-7.536 5.879a1 1 0 001.415 0 3 3 0 014.242 0 1 1 0 001.415-1.415 5 5 0 00-7.072 0 1 1 0 000 1.415zM9 12a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
-              </svg>
-            </button>
+        <motion.div 
+          className="px-8 py-6 bg-white/60 backdrop-blur-xl border-t border-gray-200/50"
+          initial={{ opacity: 0, y: 20 }}
+          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
+          <form onSubmit={handleSubmit} className="flex items-end space-x-4">
             <div className="flex-1 relative">
-              <input
+              <textarea
                 ref={inputRef}
-                type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder="Type your message..."
-                className="w-full px-5 py-3 bg-gray-50 rounded-full pr-12 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 transition-shadow duration-200"
+                placeholder="Ask me anything about managing your club..."
+                className="w-full px-6 py-4 bg-white/80 backdrop-blur-xl border border-gray-200/50 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-transparent transition-all duration-300 font-extralight text-[15px] leading-relaxed max-h-32"
                 disabled={isLoading}
-                style={{ fontFamily: 'Inter, sans-serif' }}
-                onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { handleSubmit(e); } }}
+                rows={1}
+                style={{ minHeight: '56px' }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSubmit(e);
+                  }
+                }}
               />
-              <button 
-                type="button" 
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 p-2 rounded-full hover:bg-gray-200 transition-colors duration-200 text-gray-400 hover:text-gray-600"
-              >
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M7 4a3 3 0 016 0v4a3 3 0 11-6 0V4zm4 10.93A7.001 7.001 0 0017 8a1 1 0 10-2 0A5 5 0 015 8a1 1 0 00-2 0 7.001 7.001 0 006 6.93V17H6a1 1 0 100 2h8a1 1 0 100-2h-3v-2.07z" clipRule="evenodd" />
-                </svg>
-              </button>
             </div>
-            <button
+            <motion.button
               type="submit"
               disabled={!inputValue.trim() || isLoading}
-              className="p-3 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 transition-all duration-200 text-white shadow-lg shadow-indigo-500/25 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none transform hover:scale-105 active:scale-95"
+              className="p-4 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 transition-all duration-300 text-white shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              <svg className="w-6 h-6 rotate-90" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-6 h-6 rotate-45" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
               </svg>
-            </button>
+            </motion.button>
           </form>
-        </div>
+        </motion.div>
       </div>
     </div>
   );
@@ -1411,17 +2156,14 @@ function EmailPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4">
-            <lottie-player
-              src="/DataSphere.json"
-              background="transparent"
-              speed="1"
-              style={{ width: '100%', height: '100%' }}
-              loop
-              autoplay
-            />
-          </div>
-          <p className="text-pulse-500 font-medium">Loading email manager...</p>
+          <motion.div
+            className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          >
+            <Sparkles className="w-8 h-8 text-white" />
+          </motion.div>
+          <p className="text-gray-600 font-extralight">Loading email manager...</p>
         </div>
       </div>
     );
@@ -1771,8 +2513,10 @@ const US_HOLIDAYS: Holiday[] = [
 
 function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any }) {
   const { user } = useUser();
-  const [showSetup, setShowSetup] = useState(true);
+  const [showSetup, setShowSetup] = useState(false);
   const [loading, setLoading] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [events, setEvents] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -2011,32 +2755,21 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
     if (!clubName || !user) return;
     
     try {
-      // Get club ID from club name
-      const { data: clubData, error: clubError } = await supabase
-        .from('clubs')
-        .select('id')
-        .eq('name', clubName)
-        .single();
-      
-      if (clubError) {
-        console.error('Error fetching club ID:', clubError);
-        return;
-      }
-
-      const clubId = clubData.id;
-      
-      // Save roadmap data to API
-      const response = await fetch(`/api/clubs/${clubId}/roadmap`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      // Save roadmap data directly to Supabase
+      const { data: savedData, error } = await supabase
+        .from('roadmaps')
+        .upsert({
+          club_name: clubName,
+          user_id: user.id,
           config: formData,
-          events: data.map((e: any) => ({ ...e, date: e.date.toISOString() }))
-        })
-      });
+          events: data.map((e: any) => ({ ...e, date: e.date.toISOString() })),
+          updated_at: new Date().toISOString()
+        });
 
-      if (!response.ok) {
-        console.error('Error saving roadmap data');
+      if (error) {
+        console.error('Error saving roadmap data:', error);
+      } else {
+        console.log('Roadmap saved successfully');
       }
     } catch (error) {
       console.error('Error saving roadmap data:', error);
@@ -2270,102 +3003,134 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
   };
 
     if (showSetup) {
-  return (
-      <div className="min-h-screen bg-white p-4 md:p-8">
-        <div className="max-w-3xl mx-auto">
-        {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Club Roadmap Setup</h1>
-            <p className="text-gray-600">Let's plan your {clubName} activities for the year</p>
-        </div>
+      return (
+        <div ref={ref} className="space-y-8">
+          {/* Background Elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <motion.div
+              className="absolute top-10 right-10 w-72 h-72 bg-gradient-to-r from-orange-500/5 to-orange-400/3 rounded-full blur-3xl"
+              animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+              transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+            />
+          </div>
 
-          {/* Form */}
-          <div className="space-y-6">
-            {/* Club Topic */}
-            <div className="bg-gray-50 rounded-xl p-6">
-              <label className="block text-sm font-medium text-gray-700 mb-3">Club Focus</label>
+          <div className="relative z-10 max-w-3xl mx-auto">
+            <motion.div
+              className="text-center mb-12"
+              initial={{ opacity: 0, y: 30 }}
+              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              transition={{ duration: 0.8 }}
+            >
+              <motion.div
+                className="inline-flex items-center space-x-2 bg-white/80 backdrop-blur-xl border border-orange-200/50 rounded-full px-4 py-2 mb-6"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                <Target className="w-4 h-4 text-orange-500" />
+                <span className="text-sm font-extralight text-gray-700">Smart Planning Setup</span>
+              </motion.div>
+
+              <h1 className="text-4xl lg:text-5xl font-extralight text-gray-900 mb-4 leading-tight">
+                Plan Your
+                <span className="text-orange-500 font-light"> Semester</span>
+              </h1>
+              
+              <p className="text-xl text-gray-600 font-extralight leading-relaxed">
+                Let's create an intelligent roadmap for {clubName} activities throughout the year.
+              </p>
+            </motion.div>
+
+            <motion.div
+              className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-3xl p-8 shadow-xl"
+              initial={{ opacity: 0, y: 30 }}
+              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+            >
+              <div className="space-y-8">
+                {/* Club Topic */}
+                <div>
+                  <label className="block text-lg font-light text-gray-900 mb-4">Club Focus</label>
                   <input
                     type="text"
-                value={formData.clubTopic}
-                onChange={(e) => setFormData({...formData, clubTopic: e.target.value})}
-                className="w-full p-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
-                placeholder="e.g. Programming, Robotics, Math"
+                    value={formData.clubTopic}
+                    onChange={(e) => setFormData({...formData, clubTopic: e.target.value})}
+                    className="w-full px-6 py-4 bg-white/50 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-extralight text-lg placeholder-gray-400"
+                    placeholder="e.g., Programming, Robotics, Soccer, Math"
                   />
                 </div>
 
-            {/* Date Range */}
-            <div className="bg-gray-50 rounded-xl p-6">
-              <label className="block text-sm font-medium text-gray-700 mb-3">Academic Year</label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Academic Year */}
+                <div className="grid md:grid-cols-2 gap-6">
                   <div>
+                    <label className="block text-lg font-light text-gray-900 mb-4">Academic Year Start</label>
                     <input
                       type="date"
-                    value={formData.schoolYearStart}
-                    onChange={(e) => setFormData({...formData, schoolYearStart: e.target.value})}
-                    className="w-full p-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Start date</p>
+                      value={formData.schoolYearStart}
+                      onChange={(e) => setFormData({...formData, schoolYearStart: e.target.value})}
+                      className="w-full px-6 py-4 bg-white/50 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-extralight text-lg"
+                    />
                   </div>
+                  
                   <div>
+                    <label className="block text-lg font-light text-gray-900 mb-4">Academic Year End</label>
                     <input
                       type="date"
-                    value={formData.schoolYearEnd}
-                    onChange={(e) => setFormData({...formData, schoolYearEnd: e.target.value})}
-                    className="w-full p-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">End date</p>
-                </div>
+                      value={formData.schoolYearEnd}
+                      onChange={(e) => setFormData({...formData, schoolYearEnd: e.target.value})}
+                      className="w-full px-6 py-4 bg-white/50 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-extralight text-lg"
+                    />
                   </div>
                 </div>
 
-            {/* Meeting Schedule */}
-            <div className="bg-gray-50 rounded-xl p-6">
-              <label className="block text-sm font-medium text-gray-700 mb-3">Meeting Schedule</label>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                  <select
-                  value={formData.meetingFrequency}
-                  onChange={(e) => setFormData({...formData, meetingFrequency: e.target.value})}
-                  className="w-full p-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
-                  >
-                    <option value="weekly">Weekly</option>
-                    <option value="biweekly">Bi-weekly</option>
-                    <option value="monthly">Monthly</option>
-                  </select>
-                <input
-                  type="time"
-                  value={formData.meetingTime}
-                  onChange={(e) => setFormData({...formData, meetingTime: e.target.value})}
-                  className="w-full p-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all"
-                />
-                </div>
+                {/* Meeting Schedule */}
+                <div>
+                  <label className="block text-lg font-light text-gray-900 mb-4">Meeting Schedule</label>
+                  <div className="grid md:grid-cols-2 gap-6 mb-6">
+                    <select
+                      value={formData.meetingFrequency}
+                      onChange={(e) => setFormData({...formData, meetingFrequency: e.target.value})}
+                      className="w-full px-6 py-4 bg-white/50 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-extralight text-lg"
+                    >
+                      <option value="weekly">Weekly</option>
+                      <option value="biweekly">Bi-weekly</option>
+                      <option value="monthly">Monthly</option>
+                    </select>
+                    <input
+                      type="time"
+                      value={formData.meetingTime}
+                      onChange={(e) => setFormData({...formData, meetingTime: e.target.value})}
+                      className="w-full px-6 py-4 bg-white/50 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-extralight text-lg"
+                    />
+                  </div>
 
-              {/* Day Selector */}
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { value: 'monday', label: 'Mon' },
-                  { value: 'tuesday', label: 'Tue' },
-                  { value: 'wednesday', label: 'Wed' },
-                  { value: 'thursday', label: 'Thu' },
-                  { value: 'friday', label: 'Fri' },
-                  { value: 'saturday', label: 'Sat' },
-                  { value: 'sunday', label: 'Sun' }
-                ].map(day => (
+                  {/* Day Selector */}
+                  <div className="flex flex-wrap gap-3">
+                    {[
+                      { value: 'monday', label: 'Mon' },
+                      { value: 'tuesday', label: 'Tue' },
+                      { value: 'wednesday', label: 'Wed' },
+                      { value: 'thursday', label: 'Thu' },
+                      { value: 'friday', label: 'Fri' },
+                      { value: 'saturday', label: 'Sat' },
+                      { value: 'sunday', label: 'Sun' }
+                    ].map(day => (
                       <button
                         key={day.value}
                         type="button"
-                    onClick={() => {
-                      const currentDays = formData.meetingDays || [];
-                      const isSelected = currentDays.includes(day.value);
-                      if (isSelected) {
-                        setFormData({...formData, meetingDays: currentDays.filter(d => d !== day.value)});
-                      } else {
-                        setFormData({...formData, meetingDays: [...currentDays, day.value]});
-                      }
-                    }}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                      (formData.meetingDays || []).includes(day.value)
-                            ? 'bg-orange-500 text-white'
-                        : 'bg-white text-gray-700 border border-gray-300 hover:border-orange-300'
+                        onClick={() => {
+                          const currentDays = formData.meetingDays || [];
+                          const isSelected = currentDays.includes(day.value);
+                          if (isSelected) {
+                            setFormData({...formData, meetingDays: currentDays.filter(d => d !== day.value)});
+                          } else {
+                            setFormData({...formData, meetingDays: [...currentDays, day.value]});
+                          }
+                        }}
+                        className={`px-6 py-3 rounded-2xl font-light text-sm transition-all ${
+                          (formData.meetingDays || []).includes(day.value)
+                            ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg'
+                            : 'bg-white/70 text-gray-700 border border-gray-200/50 hover:border-orange-300 hover:bg-white/90'
                         }`}
                       >
                         {day.label}
@@ -2374,36 +3139,47 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
                   </div>
                 </div>
 
-            {/* Goals */}
-            <div className="bg-gray-50 rounded-xl p-6">
-              <label className="block text-sm font-medium text-gray-700 mb-3">Goals & Objectives</label>
-              <textarea
-                value={formData.goals}
-                onChange={(e) => setFormData({...formData, goals: e.target.value})}
-                className="w-full p-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition-all h-24 resize-none"
-                placeholder="What do you want to achieve this year?"
-                    />
-                  </div>
+                {/* Goals */}
+                <div>
+                  <label className="block text-lg font-light text-gray-900 mb-4">Club Goals</label>
+                  <textarea
+                    value={formData.goals}
+                    onChange={(e) => setFormData({...formData, goals: e.target.value})}
+                    className="w-full px-6 py-4 bg-white/50 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-extralight text-lg placeholder-gray-400 resize-none"
+                    rows={4}
+                    placeholder="What do you want to achieve this semester?"
+                  />
+                </div>
 
-            {/* Generate Button */}
-                <button
-              onClick={generateRoadmap}
-              disabled={loading || !formData.clubTopic || !formData.goals || !(formData.meetingDays && formData.meetingDays.length > 0)}
-              className="w-full bg-orange-500 text-white py-3 px-6 rounded-lg font-medium hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <div className="flex items-center justify-center gap-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  Generating...
-                    </div>
+                {/* Generate Button */}
+                <motion.button
+                  onClick={generateRoadmap}
+                  disabled={loading || !formData.clubTopic || !formData.goals || !(formData.meetingDays && formData.meetingDays.length > 0)}
+                  className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-2xl font-light text-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3"
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {loading ? (
+                    <>
+                      <motion.div
+                        className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      />
+                      <span>Generating Roadmap...</span>
+                    </>
                   ) : (
-                    'Generate Roadmap'
+                    <>
+                      <Sparkles className="w-5 h-5" />
+                      <span>Generate Smart Roadmap</span>
+                    </>
                   )}
-                </button>
-            </div>
+                </motion.button>
+              </div>
+            </motion.div>
           </div>
-      </div>
-    );
+        </div>
+      );
   }
 
   const monthYear = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
@@ -2416,66 +3192,118 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
   const progressPercentage = totalMeetings > 0 ? Math.round((completedMeetings / totalMeetings) * 100) : 0;
 
   return (
-    <div className="p-4 md:p-8 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Club Roadmap</h1>
-          <p className="text-gray-600">{clubName} • {formData.meetingFrequency} meetings</p>
-                </div>
-        <button
-          onClick={() => setShowSetup(true)}
-          className="bg-orange-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-orange-600 transition-colors text-sm"
-        >
-          Edit Setup
-        </button>
-                  </div>
-
-      {/* Progress Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="text-2xl font-bold text-gray-900">{totalMeetings}</div>
-          <div className="text-sm text-gray-600">Total Meetings</div>
-        </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="text-2xl font-bold text-green-600">{completedMeetings}</div>
-          <div className="text-sm text-gray-600">Completed</div>
-        </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="text-2xl font-bold text-blue-600">{upcomingMeetings}</div>
-          <div className="text-sm text-gray-600">Upcoming</div>
-        </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-4">
-          <div className="text-2xl font-bold text-orange-600">{progressPercentage}%</div>
-          <div className="text-sm text-gray-600">Progress</div>
-          <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-            <div 
-              className="bg-orange-500 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${progressPercentage}%` }}
-            ></div>
-          </div>
-        </div>
+    <div ref={ref} className="space-y-8">
+      {/* Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-10 right-10 w-72 h-72 bg-gradient-to-r from-orange-500/5 to-orange-400/3 rounded-full blur-3xl"
+          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute bottom-10 left-10 w-64 h-64 bg-gradient-to-r from-blue-500/3 to-purple-500/3 rounded-full blur-3xl"
+          animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.4, 0.2] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+        />
       </div>
 
-      {/* Calendar Navigation */}
-      <div className="flex items-center justify-between mb-6">
-        <button
-          onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
-          className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+      <div className="relative z-10 space-y-8">
+        {/* Header Section */}
+        <motion.div
+          className="text-center"
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          transition={{ duration: 0.8 }}
         >
-          ← Previous
-        </button>
-        <h2 className="text-2xl font-bold text-gray-800">{monthYear}</h2>
-        <button
-          onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
-          className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
-        >
-          Next →
-        </button>
-      </div>
+          <motion.div
+            className="inline-flex items-center space-x-2 bg-white/80 backdrop-blur-xl border border-orange-200/50 rounded-full px-4 py-2 mb-6"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <Calendar className="w-4 h-4 text-orange-500" />
+            <span className="text-sm font-extralight text-gray-700">Smart Planning</span>
+          </motion.div>
 
-      {/* Enhanced Calendar */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+          <motion.h1 
+            className="text-4xl lg:text-5xl font-extralight text-gray-900 mb-4 leading-tight"
+            initial={{ opacity: 0, y: 20 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+          >
+            Semester
+            <span className="text-orange-500 font-light"> Roadmap</span>
+          </motion.h1>
+
+          <motion.div
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 text-gray-600 font-extralight"
+            initial={{ opacity: 0, y: 20 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+          >
+            <span className="flex items-center space-x-2">
+              <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+              <span>{clubName}</span>
+            </span>
+            <span className="hidden sm:block">•</span>
+            <span>{formData.meetingFrequency} meetings</span>
+            <motion.button
+              onClick={() => setShowSetup(true)}
+              className="ml-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-2 rounded-xl font-light text-sm hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg"
+              whileHover={{ scale: 1.05, y: -1 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Settings className="w-4 h-4 inline mr-2" />
+              Setup
+            </motion.button>
+          </motion.div>
+                  </motion.div>
+
+                    {/* Calendar Navigation */}
+          <motion.div 
+            className="flex items-center justify-between"
+            initial={{ opacity: 0, y: 20 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+          >
+            <motion.button
+              onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
+              className="flex items-center space-x-2 bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-xl px-4 py-3 font-light text-gray-700 hover:bg-white/90 hover:shadow-lg transition-all duration-300"
+              whileHover={{ scale: 1.05, x: -5 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <ArrowRight className="w-4 h-4 rotate-180" />
+              <span>Previous</span>
+            </motion.button>
+            
+            <motion.h2 
+              className="text-2xl font-light text-gray-800"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.6, delay: 0.7 }}
+            >
+              {monthYear}
+            </motion.h2>
+            
+            <motion.button
+              onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
+              className="flex items-center space-x-2 bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-xl px-4 py-3 font-light text-gray-700 hover:bg-white/90 hover:shadow-lg transition-all duration-300"
+              whileHover={{ scale: 1.05, x: 5 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <span>Next</span>
+              <ArrowRight className="w-4 h-4" />
+            </motion.button>
+          </motion.div>
+
+          {/* Enhanced Calendar */}
+          <motion.div
+            className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-3xl overflow-hidden shadow-xl"
+            initial={{ opacity: 0, y: 30 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+          >
+          </motion.div>
         {/* Day Headers */}
         <div className="grid grid-cols-7 bg-gray-50 border-b">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
@@ -2562,8 +3390,8 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
               </div>
             );
           })}
-        </div>
-      </div>
+        </div> {/* <-- This closes the grid for calendar days */}
+      </div> {/* <-- This closes the motion.div for the calendar */}
 
       {/* Legend */}
       <div className="mt-6 flex flex-wrap gap-4 text-sm">
@@ -2589,7 +3417,7 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
         </div>
       </div>
 
-      {/* Modern Semester Progress Timeline */}
+          {/* Progress Stats - Moved Below Calendar */}
       <div className="mt-12">
         <div className="flex items-center justify-between mb-8">
           <div>
@@ -2918,11 +3746,205 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
           </div>
         </div>
       )}
-    </div>
+
+          {/* Enhanced Analytics Dashboard */}
+          <motion.div 
+            className="mt-16 relative"
+            initial={{ opacity: 0, y: 40 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+          >
+            {/* Background Decorations */}
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <motion.div
+                className="absolute -top-4 -right-4 w-32 h-32 bg-gradient-to-br from-orange-500/10 to-orange-400/5 rounded-full blur-2xl"
+                animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
+                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+              />
+              <motion.div
+                className="absolute -bottom-4 -left-4 w-24 h-24 bg-gradient-to-br from-blue-500/10 to-blue-400/5 rounded-full blur-2xl"
+                animate={{ scale: [1.2, 1, 1.2], opacity: [0.3, 0.6, 0.3] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+              />
+            </div>
+
+            <div className="relative">
+              {/* Header Section */}
+              <motion.div 
+                className="text-center mb-12"
+                initial={{ opacity: 0, y: 20 }}
+                animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                transition={{ duration: 0.6, delay: 0.9 }}
+              >
+                <motion.div
+                  className="inline-flex items-center space-x-2 bg-white/80 backdrop-blur-xl border border-orange-200/50 rounded-full px-4 py-2 mb-6"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.6, delay: 1.0 }}
+                >
+                  <TrendingUp className="w-4 h-4 text-orange-500" />
+                  <span className="text-sm font-extralight text-gray-700">Performance Analytics</span>
+                </motion.div>
+
+                <h2 className="text-4xl font-extralight text-gray-900 mb-4 leading-tight">
+                  Club
+                  <span className="text-orange-500 font-light"> Insights</span>
+                </h2>
+                <p className="text-xl text-gray-600 font-extralight leading-relaxed max-w-2xl mx-auto">
+                  Real-time analytics and progress tracking for your club's success journey
+                </p>
+              </motion.div>
+
+              {/* Progress Overview with Visual Enhancement */}
+              <motion.div 
+                className="bg-white/40 backdrop-blur-3xl border border-white/20 rounded-3xl p-8 mb-8 shadow-2xl"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.8, delay: 1.1 }}
+              >
+                <div className="text-center mb-8">
+                  <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full mb-4 shadow-lg">
+                    <span className="text-3xl font-light text-white">{progressPercentage}%</span>
+                  </div>
+                  <h3 className="text-2xl font-light text-gray-900 mb-2">Semester Progress</h3>
+                  <p className="text-gray-600 font-extralight">You're making great progress this semester!</p>
+                </div>
+
+                {/* Animated Progress Bar */}
+                <div className="relative h-3 bg-gray-200/50 rounded-full overflow-hidden mb-8">
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-600 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progressPercentage}%` }}
+                    transition={{ duration: 2, delay: 1.5, ease: "easeOut" }}
+                  />
+                  <motion.div
+                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-full"
+                    animate={{ x: ['-100%', '100%'] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
+                  />
+                </div>
+
+                {/* Enhanced Stats Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {[
+                    { 
+                      value: completedMeetings, 
+                      label: "Meetings Completed", 
+                      sublabel: "This semester",
+                      icon: CheckSquare, 
+                      color: "from-green-500 to-green-600",
+                      bgColor: "from-green-50 to-green-100",
+                      trend: "+12% from last month"
+                    },
+                    { 
+                      value: events.filter(e => e.date.getMonth() === new Date().getMonth()).length, 
+                      label: "This Month", 
+                      sublabel: "Active events",
+                      icon: Calendar, 
+                      color: "from-blue-500 to-blue-600",
+                      bgColor: "from-blue-50 to-blue-100",
+                      trend: "On track"
+                    },
+                    { 
+                      value: upcomingMeetings, 
+                      label: "Upcoming Events", 
+                      sublabel: "Next 30 days",
+                      icon: Clock, 
+                      color: "from-purple-500 to-purple-600",
+                      bgColor: "from-purple-50 to-purple-100",
+                      trend: "Well planned"
+                    }
+                  ].map((stat, index) => (
+                    <motion.div
+                      key={stat.label}
+                      className="relative group"
+                      initial={{ opacity: 0, y: 30 }}
+                      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+                      transition={{ delay: 1.3 + index * 0.15, duration: 0.6 }}
+                      whileHover={{ y: -8 }}
+                    >
+                      <div className={`bg-gradient-to-br ${stat.bgColor} border border-white/50 rounded-2xl p-6 relative overflow-hidden transition-all duration-500 group-hover:shadow-2xl`}>
+                        {/* Floating Icon */}
+                        <div className="absolute -top-2 -right-2 opacity-10 group-hover:opacity-20 transition-opacity duration-300">
+                          <stat.icon className="w-16 h-16" />
+                        </div>
+                        
+                        <div className="relative">
+                          <div className={`w-14 h-14 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                            <stat.icon className="w-7 h-7 text-white" />
+                          </div>
+                          
+                          <div className="text-4xl font-extralight text-gray-900 mb-2 group-hover:text-gray-700 transition-colors duration-300">
+                            {stat.value}
+                          </div>
+                          
+                          <div className="text-lg font-light text-gray-800 mb-1">{stat.label}</div>
+                          <div className="text-sm text-gray-600 font-extralight mb-3">{stat.sublabel}</div>
+                          
+                          <div className="flex items-center text-sm text-gray-600">
+                            <TrendingUp className="w-4 h-4 mr-1 text-green-500" />
+                            <span className="font-extralight">{stat.trend}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </motion.div>
+
+              {/* Quick Insights Cards */}
+              <motion.div 
+                className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                initial={{ opacity: 0, y: 30 }}
+                animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+                transition={{ duration: 0.8, delay: 1.5 }}
+              >
+                {/* Engagement Insight */}
+                <motion.div 
+                  className="bg-gradient-to-br from-white/60 to-orange-50/60 backdrop-blur-xl border border-white/30 rounded-2xl p-6 shadow-xl"
+                  whileHover={{ scale: 1.02, y: -5 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className="flex items-start space-x-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
+                      <TrendingUp className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-lg font-light text-gray-900 mb-2">Strong Momentum</h4>
+                      <p className="text-sm text-gray-600 font-extralight leading-relaxed">
+                        Your club is showing excellent engagement patterns. Keep up the consistent meeting schedule for optimal member retention.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+
+                {/* Planning Insight */}
+                <motion.div 
+                  className="bg-gradient-to-br from-white/60 to-blue-50/60 backdrop-blur-xl border border-white/30 rounded-2xl p-6 shadow-xl"
+                  whileHover={{ scale: 1.02, y: -5 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className="flex items-start space-x-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                      <Calendar className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="text-lg font-light text-gray-900 mb-2">Well Organized</h4>
+                      <p className="text-sm text-gray-600 font-extralight leading-relaxed">
+                        Your roadmap shows thoughtful planning ahead. Consider adding more interactive events to boost member engagement.
+                      </p>
+                    </div>
+                  </div>
+                </motion.div>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
   );
 }
 
-// Attendance Component - EXACT ORIGINAL CODE
+// Meeting Notes Component - Modern Redesign
 function AttendancePanel({ clubName, clubInfo }: { clubName: string; clubInfo: any }) {
   const { user } = useUser();
   const [isRecording, setIsRecording] = useState(false);
@@ -2939,14 +3961,18 @@ function AttendancePanel({ clubName, clubInfo }: { clubName: string; clubInfo: a
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [meetingTitle, setMeetingTitle] = useState<string>('');
-  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [emailSubject, setEmailSubject] = useState<string>('');
+  const [isGeneratingSubject, setIsGeneratingSubject] = useState(false);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const animationRef = useRef<number | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
-  const router = useRef<any>(null);
   const volumeRef = useRef(0);
   const lastUpdateRef = useRef(Date.now());
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
 
   // Start countdown then recording
   const handleRecordClick = async () => {
@@ -3157,6 +4183,9 @@ function AttendancePanel({ clubName, clubInfo }: { clubName: string; clubInfo: a
               console.error('Error saving meeting summary:', err);
             }
           }
+
+          // Show the summary modal
+          setShowSummaryModal(true);
         } catch (err: any) {
           setError(err.message || 'Summarization failed');
         } finally {
@@ -3166,201 +4195,494 @@ function AttendancePanel({ clubName, clubInfo }: { clubName: string; clubInfo: a
     }
   }, [transcript, user?.id, clubInfo]);
 
+  // Generate email subject
+  const generateEmailSubject = async () => {
+    if (!summary) return;
+    
+    setIsGeneratingSubject(true);
+    try {
+      const response = await fetch('/api/emails/generate-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: `Generate a professional email subject line for a club meeting summary. The meeting was for "${clubName}" and here's the summary: ${summary.substring(0, 500)}...`,
+          type: 'subject'
+        }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setEmailSubject(data.content || `${clubName} Meeting Summary - ${meetingTitle}`);
+      } else {
+        setEmailSubject(`${clubName} Meeting Summary - ${meetingTitle}`);
+      }
+    } catch (error) {
+      console.error('Error generating email subject:', error);
+      setEmailSubject(`${clubName} Meeting Summary - ${meetingTitle}`);
+    } finally {
+      setIsGeneratingSubject(false);
+    }
+  };
+
+  // Send email
+  const handleSendEmail = async () => {
+    if (!summary || !emailSubject) return;
+    
+    setIsSendingEmail(true);
+    try {
+      const formattedSummary = `
+Meeting Summary: ${meetingTitle}
+Club: ${clubName}
+Date: ${new Date().toLocaleDateString()}
+
+${summary}
+
+---
+This summary was generated automatically by Clubly AI.
+      `.trim();
+
+      const response = await fetch('/api/clubs/emails/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clubName,
+          subject: emailSubject,
+          content: formattedSummary,
+          clubId: clubInfo?.id || clubInfo?.clubId
+        }),
+      });
+
+      if (response.ok) {
+        alert('Email sent successfully!');
+        setShowSummaryModal(false);
+      } else {
+        const error = await response.json();
+        alert(`Failed to send email: ${error.message}`);
+      }
+    } catch (error) {
+      console.error('Error sending email:', error);
+      alert('Failed to send email. Please try again.');
+    } finally {
+      setIsSendingEmail(false);
+    }
+  };
+
+  // Download as DOCX
+  const downloadDocx = async () => {
+    try {
+      const { Document, Packer, Paragraph, TextRun } = await import("docx");
+      const doc = new Document({
+        sections: [
+          {
+            properties: {},
+            children: [
+              new Paragraph({
+                children: [
+                  new TextRun({ text: meetingTitle || "Club Meeting Summary", bold: true, size: 32 }),
+                ],
+                spacing: { after: 300 },
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({ text: `Club: ${clubName}`, size: 24 }),
+                ],
+                spacing: { after: 200 },
+              }),
+              new Paragraph({
+                children: [
+                  new TextRun({ text: `Date: ${new Date().toLocaleDateString()}`, size: 24 }),
+                ],
+                spacing: { after: 400 },
+              }),
+              ...summary!.split("\n").map(
+                (line) =>
+                  new Paragraph({
+                    children: [new TextRun({ text: line, size: 24 })],
+                    spacing: { after: 100 },
+                  })
+              ),
+            ],
+          },
+        ],
+      });
+      const blob = await Packer.toBlob(doc);
+      const { saveAs } = await import("file-saver");
+      saveAs(blob, `${meetingTitle || 'meeting_summary'}.docx`);
+    } catch (err) {
+      console.error('Error generating DOCX:', err);
+      alert('Failed to download DOCX. Please try again.');
+    }
+  };
+
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-pulse-500 mb-2">Attendance & Notes</h1>
-        <p className="text-gray-600">Record meetings and generate AI-powered summaries</p>
+    <div ref={ref} className="space-y-8">
+      {/* Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-10 right-10 w-72 h-72 bg-gradient-to-r from-orange-500/5 to-orange-400/3 rounded-full blur-3xl"
+          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute bottom-10 left-10 w-64 h-64 bg-gradient-to-r from-blue-500/3 to-purple-500/3 rounded-full blur-3xl"
+          animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.4, 0.2] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+        />
       </div>
 
-      <div className="glass-card bg-white/90 border border-pulse-100 rounded-2xl p-8 shadow-lg">
-        <div className="max-w-4xl mx-auto">
+      <div className="relative z-10 space-y-8">
+        {/* Header Section */}
+        <motion.div
+          className="text-center"
+          initial={{ opacity: 0, y: 30 }}
+          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+          transition={{ duration: 0.8 }}
+        >
+          <motion.div
+            className="inline-flex items-center space-x-2 bg-white/80 backdrop-blur-xl border border-orange-200/50 rounded-full px-4 py-2 mb-6"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <Mic className="w-4 h-4 text-orange-500" />
+            <span className="text-sm font-extralight text-gray-700">AI Meeting Notes</span>
+          </motion.div>
+
+          <motion.h1 
+            className="text-4xl lg:text-5xl font-extralight text-gray-900 mb-4 leading-tight"
+            initial={{ opacity: 0, y: 20 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
+          >
+            Meeting
+            <span className="text-orange-500 font-light"> Notes</span>
+          </motion.h1>
+          
+          <motion.p 
+            className="text-xl text-gray-600 font-extralight leading-relaxed max-w-2xl mx-auto"
+            initial={{ opacity: 0 }}
+            animate={inView ? { opacity: 1 } : { opacity: 0 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+          >
+            Record your meetings and let AI create intelligent summaries, transcripts, and action items
+          </motion.p>
+        </motion.div>
+
+        {/* Main Recording Interface */}
+        <motion.div 
+          className="bg-white/40 backdrop-blur-3xl border border-white/20 rounded-3xl p-8 shadow-2xl"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.8, delay: 0.5 }}
+        >
           {/* Countdown overlay */}
           {isCountingDown && (
-            <div className="fixed inset-0 z-40 flex items-center justify-center bg-black bg-opacity-30 backdrop-blur-sm">
-              <div className="text-7xl font-extrabold text-white drop-shadow-lg animate-pulse">
+            <motion.div 
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                className="text-8xl font-extralight text-white drop-shadow-2xl"
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 1, repeat: Infinity }}
+              >
                 {countdown}
-              </div>
-            </div>
+              </motion.div>
+            </motion.div>
           )}
           
-          {/* Loading screens */}
+          {/* Loading states */}
           {isTranscribing && (
-            <div className="text-center py-8">
-              <div className="text-pulse-500 text-xl">Transcribing audio...</div>
-              <div className="text-gray-500">Hang tight! We're turning your words into text.</div>
-            </div>
+            <motion.div 
+              className="text-center py-16"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              <motion.div
+                className="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-6"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              >
+                <FileText className="w-8 h-8 text-white" />
+              </motion.div>
+              <h3 className="text-2xl font-light text-gray-900 mb-2">Transcribing Audio</h3>
+              <p className="text-gray-600 font-extralight">Converting your speech to text with AI precision...</p>
+            </motion.div>
           )}
           
           {!isTranscribing && isSummarizing && (
-            <div className="text-center py-8">
-              <div className="text-pulse-500 text-xl">Summarizing transcript...</div>
-              <div className="text-gray-500">Almost there! Creating a concise summary for you.</div>
-            </div>
+            <motion.div 
+              className="text-center py-16"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              <motion.div
+                className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-6"
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              >
+                <Brain className="w-8 h-8 text-white" />
+              </motion.div>
+              <h3 className="text-2xl font-light text-gray-900 mb-2">Creating Summary</h3>
+              <p className="text-gray-600 font-extralight">AI is analyzing your meeting and generating insights...</p>
+            </motion.div>
           )}
 
           {/* Recording Interface */}
-          {!isTranscribing && !isSummarizing && (
-            <div className="flex flex-col items-center justify-center py-12">
-              <div className="flex flex-row items-center justify-center gap-6 mb-12" style={{ height: 156 }}>
+          {!isTranscribing && !isSummarizing && !summary && (
+            <div className="text-center py-12">
+              {/* Audio Visualizer */}
+              <motion.div 
+                className="flex items-center justify-center gap-3 mb-12"
+                style={{ height: 120 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.6 }}
+              >
                 {getBarHeights().map((h, i) => (
-                  <div
+                  <motion.div
                     key={i}
+                    className="rounded-full"
                     style={{
                       height: h,
-                      width: 38,
-                      borderRadius: 20,
-                      background: isRecording ? '#f97316' : '#6b7280',
-                      transition: 'height 0.18s cubic-bezier(0.4,0.2,0.2,1)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      marginTop: (156 - h) / 2,
-                      marginBottom: (156 - h) / 2,
+                      width: 32,
+                      background: isRecording 
+                        ? 'linear-gradient(135deg, #f97316, #ea580c)' 
+                        : 'linear-gradient(135deg, #6b7280, #4b5563)',
+                      transition: 'height 0.15s cubic-bezier(0.4,0.2,0.2,1)',
                     }}
+                    whileHover={{ scale: 1.05 }}
                   />
                 ))}
-              </div>
+              </motion.div>
               
-              <div className="text-lg text-gray-700 text-center font-medium mb-8">
-                {isRecording ? (isPaused ? 'Paused' : 'Recording...') : 'Click to start recording'}
-              </div>
+              <motion.div 
+                className="mb-8"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.7 }}
+              >
+                <h3 className="text-2xl font-light text-gray-900 mb-2">
+                  {isRecording ? (isPaused ? 'Recording Paused' : 'Recording in Progress') : 'Ready to Record'}
+                </h3>
+                <p className="text-gray-600 font-extralight">
+                  {isRecording 
+                    ? 'Speak clearly into your microphone. Click stop when finished.' 
+                    : 'Click the button below to start recording your meeting'}
+                </p>
+              </motion.div>
 
-              <div className="flex items-center gap-4">
+              {/* Control Buttons */}
+              <motion.div 
+                className="flex items-center justify-center gap-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8 }}
+              >
                 {!isRecording && !isCountingDown && (
-                  <button
-                    className="w-16 h-16 rounded-full bg-pulse-500 shadow-lg flex items-center justify-center hover:bg-pulse-600 transition focus:outline-none"
+                  <motion.button
+                    className="w-20 h-20 rounded-full bg-gradient-to-br from-orange-500 to-orange-600 shadow-2xl flex items-center justify-center hover:shadow-orange-500/25 transition-all duration-300 group"
                     onClick={handleRecordClick}
                     disabled={isTranscribing || isSummarizing}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
                   >
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-                      <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"></path>
-                      <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                      <line x1="12" x2="12" y1="19" y2="23"></line>
-                      <line x1="8" x2="16" y1="23" y2="23"></line>
-                    </svg>
-                  </button>
+                    <Mic className="w-8 h-8 text-white group-hover:scale-110 transition-transform duration-200" />
+                  </motion.button>
                 )}
                 
                 {isRecording && (
                   <>
-                    <button
-                      className="w-16 h-16 rounded-full bg-red-500 shadow-lg flex items-center justify-center hover:bg-red-600 transition focus:outline-none"
+                    <motion.button
+                      className="w-20 h-20 rounded-full bg-gradient-to-br from-red-500 to-red-600 shadow-2xl flex items-center justify-center hover:shadow-red-500/25 transition-all duration-300"
                       onClick={handleStop}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                     >
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
-                        <rect x="6" y="6" width="12" height="12" rx="3" fill="currentColor"/>
-                      </svg>
-                    </button>
-                    <button
-                      className="px-6 py-2 rounded-full bg-gray-500 text-white font-semibold hover:bg-gray-600 transition"
+                      <Square className="w-8 h-8 text-white" />
+                    </motion.button>
+                    
+                    <motion.button
+                      className="px-6 py-3 rounded-full bg-white/80 backdrop-blur-xl border border-white/30 text-gray-700 font-light hover:bg-white transition-all duration-300"
                       onClick={handlePauseResume}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
                     >
-                      {isPaused ? 'Resume' : 'Pause'}
-                    </button>
+                      {isPaused ? (
+                        <>
+                          <Play className="w-4 h-4 inline mr-2" />
+                          Resume
+                        </>
+                      ) : (
+                        <>
+                          <Pause className="w-4 h-4 inline mr-2" />
+                          Pause
+                        </>
+                      )}
+                    </motion.button>
                   </>
                 )}
-              </div>
+              </motion.div>
             </div>
           )}
 
-          {/* Results */}
-          {summary && (
-            <div className="mt-8 p-6 bg-green-50 border border-green-200 rounded-lg">
-              <h3 className="text-lg font-semibold text-green-800 mb-4">Meeting Summary Generated!</h3>
+          {/* Success State */}
+          {summary && !showSummaryModal && (
+            <motion.div 
+              className="text-center py-16"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.6 }}
+            >
+              <motion.div
+                className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              >
+                <CheckCircle className="w-10 h-10 text-white" />
+              </motion.div>
               
-              {/* Meeting Title Input */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Meeting Title</label>
-                <input
-                  type="text"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg"
-                  placeholder="e.g. Project Kickoff, Guest Speaker, etc."
-                  value={meetingTitle}
-                  onChange={(e) => setMeetingTitle(e.target.value)}
-                  maxLength={80}
-                />
-              </div>
+              <h3 className="text-3xl font-light text-gray-900 mb-2">Summary Complete!</h3>
+              <p className="text-gray-600 font-extralight mb-8">
+                Your meeting has been processed and saved successfully.
+              </p>
               
-              <div className="prose max-w-none mb-4">
-                <p className="text-green-700 whitespace-pre-wrap">{summary}</p>
-              </div>
-              
-              {/* Action Buttons */}
-              <div className="flex flex-wrap gap-4 mt-6">
-                <button
-                  onClick={() => setShowDownloadModal(true)}
-                  className="px-6 py-3 rounded-full bg-black text-white font-bold text-lg shadow-xl hover:bg-gray-900 transition-all duration-150 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-black"
-                >
-                  <span className="mr-2">📄</span> Download DOCX
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Download Modal */}
-          {showDownloadModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-              <div className="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-10 relative flex flex-col items-center border border-blue-200">
-                <button
-                  onClick={() => setShowDownloadModal(false)}
-                  className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-3xl font-bold focus:outline-none"
-                  aria-label="Close"
-                >
-                  ×
-                </button>
-                <h3 className="text-3xl font-extrabold mb-6 text-center text-blue-700">Download Meeting Summary</h3>
-                <div className="prose prose-blue max-h-[60vh] overflow-y-auto w-full bg-gray-50 rounded-xl p-6 border border-gray-100 text-lg mb-6">
-                  <p className="whitespace-pre-wrap">{summary}</p>
-                </div>
-                <button
-                  onClick={async () => {
-                    try {
-                      const { Document, Packer, Paragraph, TextRun } = await import("docx");
-                      const doc = new Document({
-                        sections: [
-                          {
-                            properties: {},
-                            children: [
-                              new Paragraph({
-                                children: [
-                                  new TextRun({ text: meetingTitle || "Club Meeting Summary", bold: true, size: 32 }),
-                                ],
-                                spacing: { after: 300 },
-                              }),
-                              ...summary.split("\n").map(
-                                (line) =>
-                                  new Paragraph({
-                                    children: [new TextRun({ text: line, size: 24 })],
-                                    spacing: { after: 100 },
-                                  })
-                              ),
-                            ],
-                          },
-                        ],
-                      });
-                      const blob = await Packer.toBlob(doc);
-                      saveAs(blob, `${meetingTitle || 'meeting_summary'}.docx`);
-                      setShowDownloadModal(false);
-                    } catch (err) {
-                      console.error('Error generating DOCX:', err);
-                    }
-                  }}
-                  className="px-6 py-3 rounded-full bg-black text-white font-bold text-lg shadow-xl hover:bg-gray-900 transition-all duration-150 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-black"
-                >
-                  <span className="mr-2">📄</span> Download DOCX
-                </button>
-              </div>
-            </div>
+              <motion.button
+                className="px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-light rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
+                onClick={() => setShowSummaryModal(true)}
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                View Summary Options
+              </motion.button>
+            </motion.div>
           )}
 
           {/* Error */}
           {error && (
-            <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <div className="text-red-600">{error}</div>
-            </div>
+            <motion.div 
+              className="mt-6 p-6 bg-red-50/80 backdrop-blur-xl border border-red-200/50 rounded-2xl"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+            >
+              <div className="flex items-center text-red-600">
+                <AlertCircle className="w-5 h-5 mr-2" />
+                <span className="font-light">{error}</span>
+              </div>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
       </div>
+
+      {/* Summary Actions Modal */}
+      {showSummaryModal && (
+        <motion.div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+        >
+          <motion.div 
+            className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl max-w-lg w-full p-8 border border-white/20"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+          >
+            <div className="text-center mb-8">
+              <motion.div
+                className="w-16 h-16 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4"
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+              >
+                <FileText className="w-8 h-8 text-white" />
+              </motion.div>
+              
+              <h3 className="text-2xl font-light text-gray-900 mb-2">Meeting Summary Ready</h3>
+              <p className="text-gray-600 font-extralight">Choose how you'd like to save or share your summary</p>
+            </div>
+
+            {/* Title Input */}
+            <div className="mb-6">
+              <label className="block text-sm font-light text-gray-700 mb-2">Meeting Title</label>
+              <input
+                type="text"
+                className="w-full px-4 py-3 bg-white/80 backdrop-blur-xl border border-gray-200/50 rounded-xl font-extralight focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all duration-300"
+                placeholder="e.g. Weekly Planning, Project Update..."
+                value={meetingTitle}
+                onChange={(e) => setMeetingTitle(e.target.value)}
+                maxLength={80}
+              />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              <motion.button
+                className="w-full px-6 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-light rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
+                onClick={downloadDocx}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Download className="w-5 h-5 mr-2" />
+                Download as DOCX
+              </motion.button>
+
+              <motion.button
+                className="w-full px-6 py-4 bg-white border border-gray-200 text-gray-700 font-light rounded-xl hover:bg-gray-50 transition-all duration-300 flex items-center justify-center"
+                onClick={() => {
+                  generateEmailSubject();
+                }}
+                disabled={isSendingEmail || isGeneratingSubject}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Mail className="w-5 h-5 mr-2" />
+                {isGeneratingSubject ? 'Preparing Email...' : 'Send via Email'}
+              </motion.button>
+
+              {emailSubject && (
+                <motion.div
+                  className="p-4 bg-gray-50 rounded-xl"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <label className="block text-sm font-light text-gray-700 mb-2">Email Subject</label>
+                  <input
+                    type="text"
+                    className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg font-extralight text-sm mb-3"
+                    value={emailSubject}
+                    onChange={(e) => setEmailSubject(e.target.value)}
+                  />
+                  <motion.button
+                    className="w-full px-4 py-2 bg-blue-500 text-white font-light rounded-lg hover:bg-blue-600 transition-colors duration-200"
+                    onClick={handleSendEmail}
+                    disabled={isSendingEmail}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {isSendingEmail ? 'Sending...' : 'Send Email'}
+                  </motion.button>
+                </motion.div>
+              )}
+            </div>
+
+            {/* Close Button */}
+            <motion.button
+              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors duration-200"
+              onClick={() => setShowSummaryModal(false)}
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+            >
+              <X className="w-4 h-4 text-gray-600" />
+            </motion.button>
+          </motion.div>
+        </motion.div>
+      )}
     </div>
   );
 }
@@ -3639,14 +4961,10 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
         </svg>
     ), label: 'Club Space' },
     { key: 'Presentations', icon: (
-        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M7 4v16M17 4v16M3 8h4m10 0h4M3 12h18M3 16h4m10 0h4M4 20h16" />
-        </svg>
+        <Brain className="w-5 h-5" />
     ), label: 'Presentations' },
     { key: 'Roadmap', icon: (
-        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L16 4m0 13V4m0 0L9 7" />
-        </svg>
+        <Calendar className="w-5 h-5" />
     ), label: 'Roadmap' },
 
     { key: 'Attendance', icon: (
@@ -3691,77 +5009,130 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
     <div className="min-h-screen flex">
       {/* Sidebar */}
       <aside className={cn(
-        "fixed z-40 inset-y-0 left-0 bg-gradient-to-br from-[#FF5F1F] to-[#FF8F1F] text-white flex flex-col shadow-xl transition-all duration-300 ease-in-out",
+        "fixed z-40 inset-y-0 left-0 flex flex-col shadow-2xl transition-all duration-300 ease-in-out",
+        "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900",
+        "border-r border-gray-700/50",
         sidebarOpen ? "translate-x-0" : "-translate-x-full",
-        sidebarCompressed ? "w-20" : "w-64",
+        sidebarCompressed ? "w-20" : "w-72",
         "lg:translate-x-0 lg:static"
       )}>
+        {/* Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-orange-500/5 to-transparent" />
+          <div className="absolute bottom-0 left-0 w-full h-32 bg-gradient-to-t from-blue-500/3 to-transparent" />
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:50px_50px]" />
+        </div>
+
         {/* Logo Section */}
-        <div className="flex items-center px-4 h-16">
-          <div className="flex items-center gap-3">
-            <img src="/logo.svg" alt="Clubly" className="w-8 h-8" />
-          {!sidebarCompressed && (
-              <span className="font-bold text-xl">Clubly</span>
-          )}
-          </div>
+        <div className="relative z-10 flex items-center px-6 h-20 border-b border-gray-700/30">
+          <motion.div 
+            className="flex items-center gap-4"
+            whileHover={{ scale: 1.02 }}
+            transition={{ duration: 0.2 }}
+          >
+                         <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-lg border border-white/20">
+               <img src="/new_logo.png" alt="Clubly" className="w-6 h-6" />
+             </div>
+            {!sidebarCompressed && (
+              <div>
+                <h1 className="text-xl font-extralight text-white">Clubly</h1>
+                <p className="text-xs text-gray-400 font-extralight">AI-Powered Management</p>
+              </div>
+            )}
+          </motion.div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-2 py-4 space-y-1">
-          {featureList.map(({ key, icon, label, href }) => (
-            <button
+        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+          {featureList.map(({ key, icon, label }) => (
+            <motion.button
               key={key}
-              onClick={() => handleNavigation({ key, icon, label, href })}
+              onClick={() => handleNavigation({ key, icon, label })}
               className={cn(
-                "flex items-center w-full px-4 py-3 text-sm font-medium rounded-lg transition-colors",
-                sidebarCompressed ? "justify-center" : "gap-3",
-                activeTab === key || (href && router.asPath === href)
-                  ? "bg-white/20 text-white"
-                  : "text-white/80 hover:bg-white/10 hover:text-white"
+                "w-full flex items-center px-4 py-3 text-sm font-extralight rounded-xl transition-all duration-300 group relative",
+                sidebarCompressed ? "justify-center" : "gap-4",
+                activeTab === key
+                  ? "bg-white/10 text-white shadow-lg backdrop-blur-sm border border-white/10"
+                  : "text-gray-300 hover:bg-white/5 hover:text-white"
               )}
               title={sidebarCompressed ? label : undefined}
+              whileHover={{ scale: 1.02, x: 2 }}
+              whileTap={{ scale: 0.98 }}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3, delay: featureList.indexOf(featureList.find(f => f.key === key)!) * 0.05 }}
             >
-              <div className="w-5 h-5 flex-shrink-0">{icon}</div>
-              {!sidebarCompressed && <span>{label}</span>}
-            </button>
+              {/* Active indicator */}
+              {activeTab === key && (
+                <motion.div
+                  className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-orange-500 to-orange-600 rounded-r"
+                  layoutId="activeTab"
+                  transition={{ duration: 0.3 }}
+                />
+              )}
+              
+              <div className={cn(
+                "flex-shrink-0 transition-colors duration-300",
+                activeTab === key ? "text-orange-500" : "text-gray-400 group-hover:text-white"
+              )}>
+                {icon}
+              </div>
+              
+              {!sidebarCompressed && (
+                <span className="flex-1 text-left truncate">{label}</span>
+              )}
+              
+              {!sidebarCompressed && activeTab === key && (
+                <motion.div
+                  className="w-2 h-2 bg-orange-500 rounded-full"
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.2 }}
+                />
+              )}
+            </motion.button>
           ))}
         </nav>
 
         {/* User Section */}
-        <div className="p-4 border-t border-white/10">
-        <div className={cn(
-            "flex items-center rounded-lg bg-white/10 p-2",
-            sidebarCompressed ? "justify-center" : "gap-3"
-          )}>
+        <div className="relative z-10 p-4 border-t border-gray-700/30">
+          <motion.div 
+            className={cn(
+              "flex items-center rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-3 transition-all duration-300 hover:bg-white/10",
+              sidebarCompressed ? "justify-center" : "gap-3"
+            )}
+            whileHover={{ scale: 1.02 }}
+          >
             <UserButton afterSignOutUrl="/" />
             {!sidebarCompressed && (
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">
+                <p className="text-sm font-light text-white truncate">
                   {user?.fullName || user?.username || ''}
                 </p>
-                <p className="text-xs text-white/60 truncate">
+                <p className="text-xs text-gray-400 font-extralight truncate">
                   {user?.primaryEmailAddress?.emailAddress || ''}
                 </p>
               </div>
             )}
-          </div>
+          </motion.div>
         </div>
 
         {/* Compress Button */}
-        <button
+        <motion.button
           onClick={() => setSidebarCompressed(!sidebarCompressed)}
-          className="absolute -right-3 top-1/2 transform -translate-y-1/2 w-6 h-6 bg-white rounded-full shadow-lg flex items-center justify-center text-[#FF5F1F] hover:bg-gray-100 transition-colors"
+          className="absolute -right-4 top-20 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full shadow-lg flex items-center justify-center text-gray-700 hover:bg-white transition-all duration-300 border border-gray-200/50"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
         >
-          <svg
-            className={cn("w-4 h-4 transition-transform duration-200", sidebarCompressed && "rotate-180")}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
+          <motion.div
+            animate={{ rotate: sidebarCompressed ? 180 : 0 }}
+            transition={{ duration: 0.3 }}
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-        </button>
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+          </motion.div>
+        </motion.button>
       </aside>
 
       {/* Main Content */}
@@ -3785,9 +5156,9 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
         </header>
 
         {/* Content Area */}
-        <main className="flex-1 overflow-auto">
-          <div className="px-6 py-6">
-              {PanelComponent && <PanelComponent clubName={clubName} clubInfo={clubInfo} />}
+        <main className="flex-1 overflow-auto bg-gradient-to-br from-gray-50 via-white to-orange-50/10">
+          <div className="p-6 min-h-full">
+              {PanelComponent && <PanelComponent clubName={clubName} clubInfo={clubInfo} onNavigation={handleNavigation} />}
           </div>
         </main>
       </div>

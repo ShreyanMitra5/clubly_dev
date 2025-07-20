@@ -6,6 +6,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { supabase } from '../../utils/supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
+import { motion, useInView } from 'framer-motion';
+import { Plus, Users, TrendingUp, Calendar, Brain, Sparkles, ArrowRight, Star, Clock, Target, Zap, BarChart3, Activity } from 'lucide-react';
 
 interface Club {
   id: string;
@@ -68,14 +70,9 @@ export default function DashboardPage() {
     router.push(`/clubs/${encodeURIComponent(club.name)}`);
   };
 
-  const handleAddClub = async () => {
-    if (!user) {
-      setError('User not found. Please sign in again.');
-      return;
-    }
-
-    if (!clubFormData.name || !clubFormData.description || !clubFormData.mission) {
-      setError('Please fill out at least the Club Name, Description, and Mission.');
+  const handleCreateClub = async () => {
+    if (!user || !clubFormData.name.trim()) {
+      setError('Club name is required');
       return;
     }
 
@@ -84,46 +81,33 @@ export default function DashboardPage() {
 
     try {
       const clubId = uuidv4();
-      const now = new Date().toISOString();
-
-      // Insert club
+      
       const { error: clubError } = await supabase
         .from('clubs')
-        .insert([{
+        .insert({
           id: clubId,
           name: clubFormData.name,
           description: clubFormData.description,
           mission: clubFormData.mission,
           goals: clubFormData.goals,
           audience: clubFormData.audience,
-          owner_id: user.id,
-          created_at: now,
-          updated_at: now
-        }]);
+          owner_id: user.id
+        });
 
-      if (clubError) {
-        throw clubError;
-      }
+      if (clubError) throw clubError;
 
-      // Insert membership
       const { error: membershipError } = await supabase
         .from('memberships')
-        .insert([{
-          id: uuidv4(),
+        .insert({
           user_id: user.id,
           club_id: clubId,
-          role: clubFormData.role,
-          created_at: now
-        }]);
+          role: clubFormData.role || 'Member'
+        });
 
-      if (membershipError) {
-        throw membershipError;
-      }
+      if (membershipError) throw membershipError;
 
-      // Refresh clubs list
       await fetchClubs();
-      
-      // Reset form and close modal
+      setShowAddModal(false);
       setClubFormData({
         name: '',
         description: '',
@@ -132,10 +116,8 @@ export default function DashboardPage() {
         audience: '',
         role: ''
       });
-      setShowAddModal(false);
     } catch (err: any) {
-      console.error('Error adding club:', err);
-      setError(err.message || 'Failed to add club. Please try again.');
+      setError(err.message || 'Failed to create club');
     } finally {
       setIsLoading(false);
     }
@@ -145,361 +127,411 @@ export default function DashboardPage() {
     if (!clubToDelete || !user) return;
 
     setIsLoading(true);
-    setError('');
-
     try {
-      // Delete memberships first (foreign key constraint)
-      const { error: membershipError } = await supabase
-        .from('memberships')
-        .delete()
-        .eq('club_id', clubToDelete.id);
-
-      if (membershipError) {
-        throw membershipError;
-      }
-
-      // Delete the club
-      const { error: clubError } = await supabase
-        .from('clubs')
-        .delete()
-        .eq('id', clubToDelete.id);
-
-      if (clubError) {
-        throw clubError;
-      }
-
-      // Refresh clubs list
+      await supabase.from('memberships').delete().eq('club_id', clubToDelete.id).eq('user_id', user.id);
       await fetchClubs();
-      
-      // Close modal
       setShowDeleteModal(false);
       setClubToDelete(null);
     } catch (err: any) {
-      console.error('Error deleting club:', err);
-      setError(err.message || 'Failed to delete club. Please try again.');
+      setError(err.message || 'Failed to delete club');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const openDeleteModal = (club: Club) => {
-    setClubToDelete(club);
-    setShowDeleteModal(true);
-  };
+  const stats = [
+    { icon: Users, value: clubs.length, label: "Active Clubs", color: "from-orange-500 to-orange-600" },
+    { icon: TrendingUp, value: clubs.length * 3, label: "Total Events", color: "from-blue-500 to-blue-600" },
+    { icon: Activity, value: clubs.length * 12, label: "Members Reached", color: "from-green-500 to-green-600" },
+    { icon: BarChart3, value: 98, label: "Success Rate", suffix: "%", color: "from-purple-500 to-purple-600" }
+  ];
+
+  const features = [
+    { icon: Brain, title: "AI Presentations", description: "Generate professional slides instantly", color: "orange" },
+    { icon: Calendar, title: "Smart Planning", description: "AI-powered event scheduling", color: "blue" },
+    { icon: Target, title: "Member Analytics", description: "Track engagement and growth", color: "green" },
+    { icon: Sparkles, title: "Content Creation", description: "Automated social media posts", color: "purple" }
+  ];
 
   return (
-    <div className="min-h-screen bg-[#fafafa] relative">
-      {/* Background Grid Pattern */}
-      <div 
-        className="absolute inset-0 bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:24px_24px]"
-        style={{ maskImage: 'linear-gradient(to bottom, transparent, black 10%, black 90%, transparent)' }}
-      />
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-orange-50/20">
+      {/* Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-20 left-20 w-96 h-96 bg-gradient-to-r from-orange-500/5 to-orange-400/3 rounded-full blur-3xl"
+          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute bottom-20 right-20 w-80 h-80 bg-gradient-to-r from-gray-400/3 to-gray-300/2 rounded-full blur-3xl"
+          animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.4, 0.2] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+        />
+      </div>
 
-      <div className="relative max-w-[1200px] mx-auto px-8 py-12">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-12">
-          <div>
-            <h1 className="text-[32px] font-semibold text-gray-900 mb-1">Welcome back, <span className="text-[#FF5733]">{name}</span></h1>
-            <p className="text-gray-500">Manage your clubs and activities</p>
+      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 pt-32 pb-20">
+        {/* Header Section */}
+        <motion.div
+          className="mb-16"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+        >
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
+            <div>
+              <motion.div
+                className="inline-flex items-center space-x-2 bg-white/80 backdrop-blur-xl border border-orange-200/50 rounded-full px-4 py-2 mb-6"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                <Star className="w-4 h-4 text-orange-500 fill-orange-500" />
+                <span className="text-sm font-extralight text-gray-700">AI-Powered Dashboard</span>
+              </motion.div>
+              
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-extralight text-gray-900 mb-4 leading-tight">
+                Welcome back,
+                <br />
+                <span className="text-orange-500 font-light">{name}</span>
+              </h1>
+              
+              <p className="text-xl text-gray-600 font-extralight max-w-2xl leading-relaxed">
+                Manage your student organizations with AI-powered tools designed to amplify your impact and streamline your workflow.
+              </p>
+            </div>
+
+            <motion.button
+              onClick={() => setShowAddModal(true)}
+              className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-xl font-light text-lg flex items-center space-x-3 hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg group"
+              whileHover={{ scale: 1.02, y: -2 }}
+              whileTap={{ scale: 0.98 }}
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+            >
+              <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
+              <span>Create New Club</span>
+            </motion.button>
           </div>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center px-5 py-2.5 bg-[#FF5733] text-white text-sm font-medium rounded-lg hover:bg-[#E64A2E] transition-all duration-200 shadow-sm hover:shadow group"
-          >
-            <svg className="w-4 h-4 mr-2 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            New Club
-          </button>
-        </div>
+        </motion.div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-100/50">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-[#FF5733]/10 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-[#FF5733]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
+        <motion.div
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+        >
+          {stats.map((stat, index) => (
+            <motion.div
+              key={stat.label}
+              className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.8 + index * 0.1, duration: 0.6 }}
+              whileHover={{ y: -5, scale: 1.02 }}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className={`w-12 h-12 bg-gradient-to-r ${stat.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                  <stat.icon className="w-6 h-6 text-white" />
+                </div>
+                <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all duration-300" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Total Clubs</p>
-                <p className="text-2xl font-semibold text-gray-900">{clubs.length}</p>
+              
+              <div className="text-3xl font-light text-gray-900 mb-1">
+                {stat.value}{stat.suffix || ''}
               </div>
-            </div>
+              <div className="text-sm text-gray-600 font-extralight">{stat.label}</div>
+            </motion.div>
+          ))}
+        </motion.div>
+
+        {/* Main Content */}
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Clubs Section */}
+          <div className="lg:col-span-2">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 1.0 }}
+            >
+              <div className="flex items-center justify-between mb-8">
+                <h2 className="text-3xl font-light text-gray-900">Your Organizations</h2>
+                <span className="text-sm text-gray-500 font-extralight">{clubs.length} active</span>
+              </div>
+
+              {clubs.length === 0 ? (
+                <motion.div
+                  className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-3xl p-12 text-center shadow-lg"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.8, delay: 1.2 }}
+                >
+                  <div className="w-20 h-20 bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <Users className="w-10 h-10 text-white" />
+                  </div>
+                  
+                  <h3 className="text-2xl font-light text-gray-900 mb-3">Start Your Journey</h3>
+                  <p className="text-gray-600 font-extralight mb-8 max-w-md mx-auto leading-relaxed">
+                    Create your first student organization and unlock the power of AI-driven club management.
+                  </p>
+                  
+                  <motion.button
+                    onClick={() => setShowAddModal(true)}
+                    className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-xl font-light flex items-center space-x-3 hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg mx-auto group"
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
+                    <span>Create Your First Club</span>
+                  </motion.button>
+                </motion.div>
+              ) : (
+                <div className="grid md:grid-cols-2 gap-6">
+                  {clubs.map((club, index) => (
+                    <motion.div
+                      key={club.id}
+                      className="group bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
+                      onClick={() => handleClubClick(club)}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 1.2 + index * 0.1, duration: 0.6 }}
+                      whileHover={{ y: -5, scale: 1.02 }}
+                    >
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
+                          <Users className="w-6 h-6 text-white" />
+                        </div>
+                        <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-orange-500 group-hover:translate-x-1 transition-all duration-300" />
+                      </div>
+                      
+                      <h3 className="text-xl font-light text-gray-900 mb-2 group-hover:text-orange-600 transition-colors duration-300">
+                        {club.name}
+                      </h3>
+                      <p className="text-sm text-gray-600 font-extralight">
+                        Manage meetings, create content, and engage members
+                      </p>
+                    </motion.div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
           </div>
 
-          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-100/50">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-[#FF8C33]/10 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-[#FF8C33]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+          {/* AI Features Sidebar */}
+          <div className="lg:col-span-1">
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 1.0 }}
+            >
+              <h2 className="text-2xl font-light text-gray-900 mb-6">AI-Powered Features</h2>
+              
+              <div className="space-y-4">
+                {features.map((feature, index) => (
+                  <motion.div
+                    key={feature.title}
+                    className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 1.2 + index * 0.1, duration: 0.6 }}
+                    whileHover={{ x: 5, scale: 1.02 }}
+                  >
+                    <div className="flex items-start space-x-4">
+                      <div className={`w-10 h-10 bg-gradient-to-r ${
+                        feature.color === 'orange' ? 'from-orange-500 to-orange-600' :
+                        feature.color === 'blue' ? 'from-blue-500 to-blue-600' :
+                        feature.color === 'green' ? 'from-green-500 to-green-600' :
+                        'from-purple-500 to-purple-600'
+                      } rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                        <feature.icon className="w-5 h-5 text-white" />
+                      </div>
+                      
+                      <div className="flex-1">
+                        <h3 className="font-light text-gray-900 mb-1 group-hover:text-gray-700 transition-colors duration-300">
+                          {feature.title}
+                        </h3>
+                        <p className="text-xs text-gray-600 font-extralight leading-relaxed">
+                          {feature.description}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Active Sessions</p>
-                <p className="text-2xl font-semibold text-gray-900">0</p>
-              </div>
-            </div>
-          </div>
 
-          <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-100/50">
-            <div className="flex items-center">
-              <div className="w-12 h-12 bg-[#FFA64D]/10 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-[#FFA64D]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-500">Tasks Completed</p>
-                <p className="text-2xl font-semibold text-gray-900">0</p>
-              </div>
-            </div>
+              {/* Bottom CTA */}
+              <motion.div
+                className="mt-8 bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl p-6 text-white"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, delay: 1.6 }}
+              >
+                <div className="flex items-center space-x-3 mb-4">
+                  <Zap className="w-6 h-6 text-orange-500" />
+                  <h3 className="font-light text-lg">Need Help?</h3>
+                </div>
+                <p className="text-gray-300 text-sm font-extralight mb-4 leading-relaxed">
+                  Get the most out of Clubly with our AI-powered recommendations and expert guidance.
+                </p>
+                <button className="text-orange-500 text-sm font-light hover:text-orange-400 transition-colors duration-300 flex items-center space-x-2">
+                  <span>Learn More</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+              </motion.div>
+            </motion.div>
           </div>
         </div>
+      </div>
 
-        {/* Clubs Section */}
-        <div>
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-xl font-semibold text-gray-900">Your Clubs</h2>
-          </div>
-
-          {clubs.length === 0 ? (
-            <div className="bg-white rounded-xl p-12 shadow-sm border border-gray-100/50 text-center">
-              <div className="w-16 h-16 bg-[#FF5733]/10 rounded-xl flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-[#FF5733]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No clubs yet</h3>
-              <p className="text-gray-500 mb-6 max-w-sm mx-auto">Get started by creating your first club and begin managing your activities</p>
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="inline-flex items-center px-5 py-2.5 bg-[#FF5733] text-white text-sm font-medium rounded-lg hover:bg-[#E64A2E] transition-all duration-200 shadow-sm hover:shadow group"
-              >
-                <svg className="w-4 h-4 mr-2 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Create Your First Club
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {clubs.map(club => (
-            <div
-              key={club.id}
-                  className="group bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer border border-gray-100/50 hover:border-[#FF5733]/20"
-                  onClick={() => handleClubClick(club)}
-                >
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="w-12 h-12 bg-[#FF5733]/10 rounded-lg flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
-                      <span className="text-[#FF5733] font-semibold text-lg">
-                        {club.name.charAt(0).toUpperCase()}
-                      </span>
-              </div>
+      {/* Create Club Modal */}
+      {showAddModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div
+            className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl"
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="p-8">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-light text-gray-900">Create New Organization</h3>
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openDeleteModal(club);
-                  }}
-                      className="opacity-0 group-hover:opacity-100 p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all duration-200"
+                  onClick={() => setShowAddModal(false)}
+                  className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center hover:bg-gray-200 transition-colors duration-200"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
+                  <Plus className="w-5 h-5 text-gray-600 rotate-45" />
                 </button>
               </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-[#FF5733] transition-colors duration-200">
-                    {club.name}
-                  </h3>
-                  <p className="text-gray-500 text-sm mb-4">Click to manage this club</p>
-                  <div className="flex items-center text-[#FF5733] text-sm font-medium">
-                    <span>Manage Club</span>
-                    <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
+
+              {error && (
+                <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-red-600 text-sm font-light">{error}</p>
+                </div>
+              )}
+
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Club Name *</label>
+                  <input
+                    type="text"
+                    value={clubFormData.name}
+                    onChange={(e) => setClubFormData({ ...clubFormData, name: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                    placeholder="e.g., AI Innovation Club"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Your Role</label>
+                  <input
+                    type="text"
+                    value={clubFormData.role}
+                    onChange={(e) => setClubFormData({ ...clubFormData, role: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                    placeholder="e.g., President, Secretary, Member"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                  <textarea
+                    value={clubFormData.description}
+                    onChange={(e) => setClubFormData({ ...clubFormData, description: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light h-24 resize-none"
+                    placeholder="Brief description of your organization..."
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Mission</label>
+                    <textarea
+                      value={clubFormData.mission}
+                      onChange={(e) => setClubFormData({ ...clubFormData, mission: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light h-20 resize-none"
+                      placeholder="Club mission statement..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Goals</label>
+                    <textarea
+                      value={clubFormData.goals}
+                      onChange={(e) => setClubFormData({ ...clubFormData, goals: e.target.value })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light h-20 resize-none"
+                      placeholder="Primary objectives..."
+                    />
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
-        </div>
 
-        {/* Add Club Modal */}
-        {showAddModal && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">Create New Club</h2>
-                <button
-                  onClick={() => setShowAddModal(false)}
-                  className="text-gray-400 hover:text-gray-500 p-1 hover:bg-gray-50 rounded-lg transition-colors"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              
-              {error && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg">
-                  {error}
-                </div>
-              )}
-
-              <div className="space-y-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Club Name *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Target Audience</label>
                   <input
                     type="text"
-                    className="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#FF5733]/20 focus:border-[#FF5733] transition-colors"
-                    value={clubFormData.name}
-                    onChange={(e) => setClubFormData({...clubFormData, name: e.target.value})}
-                    placeholder="Enter club name"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Description *</label>
-                  <textarea
-                    className="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#FF5733]/20 focus:border-[#FF5733] transition-colors"
-                    rows={3}
-                    value={clubFormData.description}
-                    onChange={(e) => setClubFormData({...clubFormData, description: e.target.value})}
-                    placeholder="Describe your club"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Mission Statement *</label>
-                  <textarea
-                    className="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#FF5733]/20 focus:border-[#FF5733] transition-colors"
-                    rows={3}
-                    value={clubFormData.mission}
-                    onChange={(e) => setClubFormData({...clubFormData, mission: e.target.value})}
-                    placeholder="What is your club's mission?"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Goals</label>
-                  <textarea
-                    className="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#FF5733]/20 focus:border-[#FF5733] transition-colors"
-                    rows={3}
-                    value={clubFormData.goals}
-                    onChange={(e) => setClubFormData({...clubFormData, goals: e.target.value})}
-                    placeholder="What are your club's goals?"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Target Audience</label>
-                  <input
-                    type="text"
-                    className="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#FF5733]/20 focus:border-[#FF5733] transition-colors"
                     value={clubFormData.audience}
-                    onChange={(e) => setClubFormData({...clubFormData, audience: e.target.value})}
-                    placeholder="e.g., High school students, Computer science majors"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Your Role</label>
-                  <input
-                    type="text"
-                    className="w-full border border-gray-200 rounded-lg px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#FF5733]/20 focus:border-[#FF5733] transition-colors"
-                    value={clubFormData.role}
-                    onChange={(e) => setClubFormData({...clubFormData, role: e.target.value})}
-                    placeholder="e.g., President, Advisor, Member"
+                    onChange={(e) => setClubFormData({ ...clubFormData, audience: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                    placeholder="Who is this club for?"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 mt-8">
+              <div className="flex gap-4 mt-8">
                 <button
                   onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 border border-gray-200 text-gray-600 font-medium rounded-lg hover:bg-gray-50 transition-colors"
+                  className="flex-1 px-6 py-3 border border-gray-200 text-gray-700 rounded-lg font-light hover:bg-gray-50 transition-colors duration-200"
                   disabled={isLoading}
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={handleAddClub}
-                  className="px-4 py-2 bg-[#FF5733] text-white font-medium rounded-lg hover:bg-[#E64A2E] transition-colors disabled:opacity-50"
-                  disabled={isLoading}
+                  onClick={handleCreateClub}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg font-light hover:from-orange-600 hover:to-orange-700 transition-all duration-200 disabled:opacity-50"
+                  disabled={isLoading || !clubFormData.name.trim()}
                 >
-                  {isLoading ? (
-                    <span className="flex items-center">
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Creating...
-                    </span>
-                  ) : (
-                    'Create Club'
-                  )}
+                  {isLoading ? 'Creating...' : 'Create Club'}
                 </button>
-              </div>
               </div>
             </div>
-          </div>
-        )}
+          </motion.div>
+        </div>
+      )}
 
-        {/* Delete Confirmation Modal */}
-        {showDeleteModal && clubToDelete && (
-        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
-            <div className="p-6">
-              <div className="flex items-center justify-center w-12 h-12 mx-auto mb-4 bg-red-50 rounded-xl">
-                <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                </svg>
-              </div>
-              <h2 className="text-xl font-semibold text-gray-900 text-center mb-2">Delete Club</h2>
-              <p className="text-gray-500 text-center mb-6">
-                Are you sure you want to delete <span className="font-medium text-gray-900">"{clubToDelete.name}"</span>?
-                This action cannot be undone.
-              </p>
-              
-              {error && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 text-sm rounded-lg">
-                  {error}
-                </div>
-              )}
-
-              <div className="flex justify-end gap-3">
-                <button
-                  onClick={() => setShowDeleteModal(false)}
-                  className="px-4 py-2 border border-gray-200 text-gray-600 font-medium rounded-lg hover:bg-gray-50 transition-colors"
-                  disabled={isLoading}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDeleteClub}
-                  className="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <span className="flex items-center">
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Deleting...
-                    </span>
-                  ) : (
-                    'Delete Club'
-                  )}
-                </button>
-              </div>
-              </div>
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && clubToDelete && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div
+            className="bg-white rounded-2xl max-w-md w-full p-8 shadow-2xl"
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <h3 className="text-xl font-light text-gray-900 mb-4">Confirm Deletion</h3>
+            <p className="text-gray-600 font-extralight mb-6 leading-relaxed">
+              Are you sure you want to remove <strong>{clubToDelete.name}</strong> from your dashboard? This action cannot be undone.
+            </p>
+            
+            <div className="flex gap-4">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg font-light hover:bg-gray-50 transition-colors duration-200"
+                disabled={isLoading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteClub}
+                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg font-light hover:bg-red-600 transition-colors duration-200 disabled:opacity-50"
+                disabled={isLoading}
+              >
+                {isLoading ? 'Deleting...' : 'Delete'}
+              </button>
             </div>
-          </div>
-        )}
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 } 

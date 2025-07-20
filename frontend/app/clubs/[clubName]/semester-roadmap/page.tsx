@@ -1,268 +1,514 @@
 "use client";
-console.log("=== ROADMAP PAGE LOADED ===");
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
 import ClubLayout from '../../../components/ClubLayout';
-
-// Types
-interface ClubConfig {
-  topic: string;
-  startDate: string;
-  endDate: string;
-  meetingFrequency: 'weekly' | 'biweekly' | 'monthly';
-  meetingTime: string;
-  meetingDuration: number;
-  meetingDays: string[];
-  clubGoals: string;
-}
-
-interface CalendarEvent {
-  id: string;
-  title: string;
-  date: string;
-  type: 'meeting' | 'holiday' | 'special' | 'exam';
-  description?: string;
-  aiGenerated?: boolean;
-  topics?: string[];
-}
-
-const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-
-const EVENT_COLORS = {
-  meeting: { bg: 'bg-blue-100', border: 'border-blue-500', text: 'text-blue-700' },
-  holiday: { bg: 'bg-red-100', border: 'border-red-500', text: 'text-red-700' },
-  special: { bg: 'bg-purple-100', border: 'border-purple-500', text: 'text-purple-700' },
-  exam: { bg: 'bg-orange-100', border: 'border-orange-500', text: 'text-orange-700' }
-};
+import { useUser } from '@clerk/nextjs';
+import { motion, useInView } from 'framer-motion';
+import { 
+  Calendar, 
+  Clock, 
+  CheckSquare, 
+  TrendingUp, 
+  ArrowRight, 
+  Settings, 
+  Sparkles,
+  Plus,
+  Target,
+  MapPin
+} from 'lucide-react';
 
 export default function SemesterRoadmapPage() {
   const params = useParams();
   const { user } = useUser();
   const clubName = decodeURIComponent(params.clubName as string);
-  
-  console.log("=== ROADMAP COMPONENT RENDERING ===", { clubName, user: !!user });
-  
-  // State
-  const [clubConfig, setClubConfig] = useState<ClubConfig | null>(null);
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<string | null>(null);
-  const [showEventModal, setShowEventModal] = useState(false);
-  const [showSetupModal, setShowSetupModal] = useState(true); // Force show setup modal for testing
-  const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
-  const [loading, setLoading] = useState(false); // Set to false for testing
+  const [showSetupModal, setShowSetupModal] = useState(false);
+  const [hasRoadmap, setHasRoadmap] = useState(true); // Set to true to avoid flashing
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
 
-  // Setup form state
-  const [setupForm, setSetupForm] = useState<ClubConfig>({
+  const [setupForm, setSetupForm] = useState({
     topic: '',
-    startDate: '',
-    endDate: '',
+    schoolYearStart: '',
+    schoolYearEnd: '',
     meetingFrequency: 'weekly',
+    meetingDays: ['monday'],
     meetingTime: '15:00',
-    meetingDuration: 60,
-    meetingDays: [],
-    clubGoals: ''
+    goals: ''
   });
 
-  // Force show setup modal for testing
+  // Mock data for demo - replace with real data loading
   useEffect(() => {
-    console.log("=== ROADMAP EFFECT RUNNING ===");
-    setShowSetupModal(true);
-        setLoading(false);
-  }, []);
+    // Check if roadmap exists for this club
+    const checkRoadmap = async () => {
+      // Simulate API call
+      setTimeout(() => {
+        setHasRoadmap(true); // Set based on actual data
+      }, 500);
+    };
+    checkRoadmap();
+  }, [clubName, user]);
 
-  const handleSetupSubmit = async () => {
-    console.log("=== SETUP SUBMIT ===", setupForm);
-    if (!user || !setupForm.topic || !setupForm.startDate || !setupForm.endDate) {
-      alert("Please fill in all required fields");
-      return;
-    }
-
+  const generateRoadmap = async () => {
+    setLoading(true);
     try {
-      // For testing, just close the modal and show a success message
-      alert("Roadmap would be generated here!");
+      // Simulate roadmap generation
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setHasRoadmap(true);
       setShowSetupModal(false);
-      setClubConfig(setupForm);
     } catch (error) {
-      console.error('Error saving roadmap:', error);
-      alert("Error: " + error);
+      console.error('Error generating roadmap:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  console.log("=== ROADMAP RENDER STATE ===", { loading, showSetupModal, clubConfig: !!clubConfig });
+  // Mock stats
+  const totalMeetings = 24;
+  const completedMeetings = 8;
+  const upcomingMeetings = 16;
+  const progressPercentage = Math.round((completedMeetings / totalMeetings) * 100);
 
-  if (loading) {
+  const monthYear = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  // Generate calendar days
+  const getDaysInMonth = (date: Date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const startDate = new Date(firstDay);
+    startDate.setDate(startDate.getDate() - firstDay.getDay());
+    
+    const days = [];
+    const current = new Date(startDate);
+    
+    while (days.length < 42) {
+      days.push(new Date(current));
+      current.setDate(current.getDate() + 1);
+    }
+    
+    return days;
+  };
+
+  const days = getDaysInMonth(currentMonth);
+
+  if (showSetupModal) {
     return (
       <ClubLayout>
-        <div className="p-8">
-        <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pulse-500 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Loading roadmap...</p>
+        <div ref={ref} className="space-y-8">
+          {/* Background Elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            <motion.div
+              className="absolute top-10 right-10 w-72 h-72 bg-gradient-to-r from-orange-500/5 to-orange-400/3 rounded-full blur-3xl"
+              animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+              transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+            />
+          </div>
+
+          <div className="relative z-10 max-w-3xl mx-auto">
+            <motion.div
+              className="text-center mb-12"
+              initial={{ opacity: 0, y: 30 }}
+              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              transition={{ duration: 0.8 }}
+            >
+              <motion.div
+                className="inline-flex items-center space-x-2 bg-white/80 backdrop-blur-xl border border-orange-200/50 rounded-full px-4 py-2 mb-6"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
+                <Target className="w-4 h-4 text-orange-500" />
+                <span className="text-sm font-extralight text-gray-700">Smart Planning Setup</span>
+              </motion.div>
+
+              <h1 className="text-4xl lg:text-5xl font-extralight text-gray-900 mb-4 leading-tight">
+                Plan Your
+                <span className="text-orange-500 font-light"> Semester</span>
+              </h1>
+              
+              <p className="text-xl text-gray-600 font-extralight leading-relaxed">
+                Let's create an intelligent roadmap for {clubName} activities throughout the year.
+              </p>
+            </motion.div>
+
+            <motion.div
+              className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-3xl p-8 shadow-xl"
+              initial={{ opacity: 0, y: 30 }}
+              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+            >
+              <form onSubmit={(e) => { e.preventDefault(); generateRoadmap(); }} className="space-y-8">
+                <div>
+                  <label className="block text-lg font-light text-gray-900 mb-4">Club Focus</label>
+                  <input
+                    type="text"
+                    value={setupForm.topic}
+                    onChange={(e) => setSetupForm({...setupForm, topic: e.target.value})}
+                    className="w-full px-6 py-4 bg-white/50 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-extralight text-lg placeholder-gray-400"
+                    placeholder="e.g., Programming, Robotics, Soccer, Math"
+                    required
+                  />
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-lg font-light text-gray-900 mb-4">Academic Year Start</label>
+                    <input
+                      type="date"
+                      value={setupForm.schoolYearStart}
+                      onChange={(e) => setSetupForm({...setupForm, schoolYearStart: e.target.value})}
+                      className="w-full px-6 py-4 bg-white/50 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-extralight text-lg"
+                      required
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-lg font-light text-gray-900 mb-4">Academic Year End</label>
+                    <input
+                      type="date"
+                      value={setupForm.schoolYearEnd}
+                      onChange={(e) => setSetupForm({...setupForm, schoolYearEnd: e.target.value})}
+                      className="w-full px-6 py-4 bg-white/50 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-extralight text-lg"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-lg font-light text-gray-900 mb-4">Meeting Frequency</label>
+                  <select
+                    value={setupForm.meetingFrequency}
+                    onChange={(e) => setSetupForm({...setupForm, meetingFrequency: e.target.value})}
+                    className="w-full px-6 py-4 bg-white/50 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-extralight text-lg"
+                  >
+                    <option value="weekly">Weekly</option>
+                    <option value="biweekly">Bi-weekly</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-lg font-light text-gray-900 mb-4">Club Goals</label>
+                  <textarea
+                    value={setupForm.goals}
+                    onChange={(e) => setSetupForm({...setupForm, goals: e.target.value})}
+                    className="w-full px-6 py-4 bg-white/50 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-extralight text-lg placeholder-gray-400 resize-none"
+                    rows={4}
+                    placeholder="What do you want to achieve this semester?"
+                    required
+                  />
+                </div>
+
+                <motion.button
+                  type="submit"
+                  disabled={loading || !setupForm.topic || !setupForm.goals}
+                  className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-2xl font-light text-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3"
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {loading ? (
+                    <>
+                      <motion.div
+                        className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      />
+                      <span>Generating Roadmap...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-5 h-5" />
+                      <span>Generate Smart Roadmap</span>
+                    </>
+                  )}
+                </motion.button>
+              </form>
+            </motion.div>
+          </div>
         </div>
-      </div>
       </ClubLayout>
     );
   }
 
   return (
     <ClubLayout>
-      <div className="p-8">
-        <h1 className="text-4xl font-bold text-pulse-500 mb-2">🚀 NEW ROADMAP PAGE WORKING!</h1>
-        <p className="text-gray-600 mb-8">Club: {clubName}</p>
-        
-        {/* Setup Modal */}
-        {showSetupModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="p-8">
-                <h3 className="text-2xl font-bold mb-6">Set Up Your Club Roadmap</h3>
+      <div ref={ref} className="space-y-8">
+        {/* Background Elements */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <motion.div
+            className="absolute top-10 right-10 w-72 h-72 bg-gradient-to-r from-orange-500/5 to-orange-400/3 rounded-full blur-3xl"
+            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div
+            className="absolute bottom-10 left-10 w-64 h-64 bg-gradient-to-r from-blue-500/3 to-purple-500/3 rounded-full blur-3xl"
+            animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.4, 0.2] }}
+            transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+          />
+        </div>
 
-            <div className="space-y-6">
-              {/* Club Topic */}
-              <div>
-                    <label className="block text-sm font-medium mb-2">Club Topic/Focus</label>
-                <input
-                  type="text"
-                      value={setupForm.topic}
-                      onChange={(e) => setSetupForm({ ...setupForm, topic: e.target.value })}
-                      placeholder="e.g., Web Development, Machine Learning, Soccer"
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pulse-500"
-                />
-              </div>
+        <div className="relative z-10 space-y-8">
+          {/* Header Section */}
+          <motion.div
+            className="text-center"
+            initial={{ opacity: 0, y: 30 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ duration: 0.8 }}
+          >
+            <motion.div
+              className="inline-flex items-center space-x-2 bg-white/80 backdrop-blur-xl border border-orange-200/50 rounded-full px-4 py-2 mb-6"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+            >
+              <Calendar className="w-4 h-4 text-orange-500" />
+              <span className="text-sm font-extralight text-gray-700">Smart Planning</span>
+            </motion.div>
 
-                  {/* School Year Dates */}
-                  <div className="grid grid-cols-2 gap-4">
-                <div>
-                      <label className="block text-sm font-medium mb-2">School Year Start</label>
-                      <input
-                        type="date"
-                        value={setupForm.startDate}
-                        onChange={(e) => setSetupForm({ ...setupForm, startDate: e.target.value })}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pulse-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-2">School Year End</label>
-                      <input
-                        type="date"
-                        value={setupForm.endDate}
-                        onChange={(e) => setSetupForm({ ...setupForm, endDate: e.target.value })}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pulse-500"
-                      />
-                  </div>
-                </div>
+            <motion.h1 
+              className="text-4xl lg:text-5xl font-extralight text-gray-900 mb-4 leading-tight"
+              initial={{ opacity: 0, y: 20 }}
+              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ duration: 0.8, delay: 0.3 }}
+            >
+              Semester
+              <span className="text-orange-500 font-light"> Roadmap</span>
+            </motion.h1>
 
-                  {/* Meeting Frequency */}
-                <div>
-                    <label className="block text-sm font-medium mb-2">Meeting Frequency</label>
-                    <select
-                      value={setupForm.meetingFrequency}
-                      onChange={(e) => setSetupForm({ ...setupForm, meetingFrequency: e.target.value as any })}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pulse-500"
-                    >
-                      <option value="weekly">Weekly</option>
-                      <option value="biweekly">Bi-weekly</option>
-                      <option value="monthly">Monthly</option>
-                    </select>
-                </div>
-
-                  {/* Meeting Days */}
-              <div>
-                    <label className="block text-sm font-medium mb-2">Meeting Days</label>
-                    <div className="grid grid-cols-4 gap-2">
-                      {DAYS_OF_WEEK.map(day => (
-              <button
-                          key={day}
-                          type="button"
-                onClick={() => {
-                            const updatedDays = setupForm.meetingDays.includes(day)
-                              ? setupForm.meetingDays.filter(d => d !== day)
-                              : [...setupForm.meetingDays, day];
-                            setSetupForm({ ...setupForm, meetingDays: updatedDays });
-                          }}
-                          className={`p-2 text-sm rounded-lg border transition-colors ${
-                            setupForm.meetingDays.includes(day)
-                              ? 'bg-pulse-500 text-white border-pulse-500'
-                              : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
-                          }`}
-                        >
-                          {day.slice(0, 3)}
-              </button>
-                      ))}
-                        </div>
-                            </div>
-
-                  {/* Meeting Time & Duration */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                      <label className="block text-sm font-medium mb-2">Meeting Time</label>
-                  <input
-                    type="time"
-                        value={setupForm.meetingTime}
-                        onChange={(e) => setSetupForm({ ...setupForm, meetingTime: e.target.value })}
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pulse-500"
-                  />
-                </div>
-                <div>
-                      <label className="block text-sm font-medium mb-2">Duration (minutes)</label>
-                  <input
-                        type="number"
-                        value={setupForm.meetingDuration}
-                        onChange={(e) => setSetupForm({ ...setupForm, meetingDuration: parseInt(e.target.value) })}
-                        min="15"
-                        max="180"
-                        step="15"
-                        className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pulse-500"
-                  />
-                </div>
-              </div>
-
-                  {/* Club Goals */}
-              <div>
-                    <label className="block text-sm font-medium mb-2">Club Goals & Objectives</label>
-                <textarea
-                      value={setupForm.clubGoals}
-                      onChange={(e) => setSetupForm({ ...setupForm, clubGoals: e.target.value })}
-                      placeholder="What do you want to achieve this semester? What skills should members learn?"
-                      rows={4}
-                      className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pulse-500"
-                />
-              </div>
-              </div>
-
-                <div className="flex gap-4 mt-8">
-              <button
-                    onClick={handleSetupSubmit}
-                    disabled={!setupForm.topic || !setupForm.startDate || !setupForm.endDate || setupForm.meetingDays.length === 0}
-                    className="flex-1 px-6 py-3 bg-pulse-500 text-white font-semibold rounded-lg hover:bg-pulse-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Generate Roadmap
-              </button>
-              <button
-                    onClick={() => setShowSetupModal(false)}
-                    className="flex-1 px-6 py-3 bg-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-400"
+            <motion.div
+              className="flex flex-col sm:flex-row items-center justify-center gap-4 text-gray-600 font-extralight"
+              initial={{ opacity: 0, y: 20 }}
+              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+            >
+              <span className="flex items-center space-x-2">
+                <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                <span>{clubName}</span>
+              </span>
+              <span className="hidden sm:block">•</span>
+              <span>Weekly meetings</span>
+              <motion.button
+                onClick={() => setShowSetupModal(true)}
+                className="ml-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-2 rounded-xl font-light text-sm hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg"
+                whileHover={{ scale: 1.05, y: -1 }}
+                whileTap={{ scale: 0.95 }}
               >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-        </div>
-      )}
+                <Settings className="w-4 h-4 inline mr-2" />
+                Setup
+              </motion.button>
+            </motion.div>
+          </motion.div>
 
-        {clubConfig && (
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold mb-4">✅ Configuration Saved!</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-              <div><span className="font-medium">Topic:</span> {clubConfig.topic}</div>
-              <div><span className="font-medium">Meetings:</span> {clubConfig.meetingFrequency} on {clubConfig.meetingDays.join(', ')}</div>
-              <div><span className="font-medium">Time:</span> {clubConfig.meetingTime} ({clubConfig.meetingDuration} mins)</div>
-          </div>
+          {/* Progress Stats */}
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-4 gap-6"
+            initial={{ opacity: 0, y: 30 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ duration: 0.8, delay: 0.6 }}
+          >
+            {[
+              { value: totalMeetings, label: "Total Meetings", color: "from-gray-500 to-gray-600", icon: Calendar },
+              { value: completedMeetings, label: "Completed", color: "from-green-500 to-green-600", icon: CheckSquare },
+              { value: upcomingMeetings, label: "Upcoming", color: "from-blue-500 to-blue-600", icon: Clock },
+              { value: `${progressPercentage}%`, label: "Progress", color: "from-orange-500 to-orange-600", icon: TrendingUp, showProgress: true }
+            ].map((stat, index) => (
+              <motion.div
+                key={stat.label}
+                className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group"
+                initial={{ opacity: 0, y: 20 }}
+                animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                transition={{ delay: 0.8 + index * 0.1, duration: 0.6 }}
+                whileHover={{ y: -5, scale: 1.02 }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`w-12 h-12 bg-gradient-to-r ${stat.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                    <stat.icon className="w-6 h-6 text-white" />
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all duration-300" />
+                </div>
+                
+                <div className="text-3xl font-light text-gray-900 mb-1">
+                  {stat.value}
+                </div>
+                <div className="text-sm text-gray-600 font-extralight mb-3">{stat.label}</div>
+                
+                {stat.showProgress && (
+                  <div className="w-full bg-gray-200/50 rounded-full h-2">
+                    <motion.div 
+                      className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progressPercentage}%` }}
+                      transition={{ duration: 1, delay: 1.2 }}
+                    />
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* Calendar Navigation */}
+          <motion.div 
+            className="flex items-center justify-between"
+            initial={{ opacity: 0, y: 20 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.6, delay: 1.0 }}
+          >
+            <motion.button
+              onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
+              className="flex items-center space-x-2 bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-xl px-4 py-3 font-light text-gray-700 hover:bg-white/90 hover:shadow-lg transition-all duration-300"
+              whileHover={{ scale: 1.05, x: -5 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <ArrowRight className="w-4 h-4 rotate-180" />
+              <span>Previous</span>
+            </motion.button>
+            
+            <motion.h2 
+              className="text-2xl font-light text-gray-800"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+              transition={{ duration: 0.6, delay: 1.1 }}
+            >
+              {monthYear}
+            </motion.h2>
+            
+            <motion.button
+              onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
+              className="flex items-center space-x-2 bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-xl px-4 py-3 font-light text-gray-700 hover:bg-white/90 hover:shadow-lg transition-all duration-300"
+              whileHover={{ scale: 1.05, x: 5 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <span>Next</span>
+              <ArrowRight className="w-4 h-4" />
+            </motion.button>
+          </motion.div>
+
+          {/* Enhanced Calendar */}
+          <motion.div
+            className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-3xl overflow-hidden shadow-xl"
+            initial={{ opacity: 0, y: 30 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ duration: 0.8, delay: 1.2 }}
+          >
+            {/* Day Headers */}
+            <div className="grid grid-cols-7 bg-gradient-to-r from-gray-50 to-gray-100/50">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                <div key={day} className="p-4 text-center font-light text-gray-700 border-r border-gray-200/50 last:border-r-0">
+                  {day}
+                </div>
+              ))}
+            </div>
+            
+            {/* Calendar Days */}
+            <div className="grid grid-cols-7">
+              {days.map((day, index) => {
+                const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
+                const isToday = day.toDateString() === new Date().toDateString();
+                
+                return (
+                  <motion.div
+                    key={index}
+                    className={`min-h-[120px] p-3 border-r border-b border-gray-200/30 last:border-r-0 transition-all duration-200 cursor-pointer group ${
+                      isCurrentMonth 
+                        ? 'bg-white/50 hover:bg-white/80' 
+                        : 'bg-gray-50/30 text-gray-400'
+                    } ${isToday ? 'bg-orange-50/50 ring-2 ring-orange-200' : ''}`}
+                    whileHover={{ scale: 1.02 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: 1.4 + index * 0.01 }}
+                  >
+                    <div className={`text-sm font-light mb-2 ${
+                      isToday 
+                        ? 'text-orange-600 font-medium' 
+                        : isCurrentMonth 
+                          ? 'text-gray-900' 
+                          : 'text-gray-400'
+                    }`}>
+                      {day.getDate()}
+                    </div>
+                    
+                    {/* Sample Events */}
+                    {isCurrentMonth && day.getDate() % 7 === 0 && (
+                      <motion.div
+                        className="bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs px-2 py-1 rounded-lg mb-1 shadow-sm"
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: 1.6 + index * 0.02 }}
+                      >
+                        Club Meeting
+                      </motion.div>
+                    )}
+                    
+                    {isCurrentMonth && day.getDate() % 14 === 0 && (
+                      <motion.div
+                        className="bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs px-2 py-1 rounded-lg shadow-sm"
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: 1.7 + index * 0.02 }}
+                      >
+                        Workshop
+                      </motion.div>
+                    )}
+                  </motion.div>
+                );
+              })}
+            </div>
+          </motion.div>
+
+          {/* Progress Stats - Moved Below Calendar */}
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-4 gap-6"
+            initial={{ opacity: 0, y: 30 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ duration: 0.8, delay: 1.8 }}
+          >
+            {[
+              { value: totalMeetings, label: "Total Meetings", color: "from-gray-500 to-gray-600", icon: Calendar },
+              { value: completedMeetings, label: "Completed", color: "from-green-500 to-green-600", icon: CheckSquare },
+              { value: upcomingMeetings, label: "Upcoming", color: "from-blue-500 to-blue-600", icon: Clock },
+              { value: `${progressPercentage}%`, label: "Progress", color: "from-orange-500 to-orange-600", icon: TrendingUp, showProgress: true }
+            ].map((stat, index) => (
+              <motion.div
+                key={stat.label}
+                className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 group"
+                initial={{ opacity: 0, y: 20 }}
+                animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+                transition={{ delay: 2.0 + index * 0.1, duration: 0.6 }}
+                whileHover={{ y: -5, scale: 1.02 }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`w-12 h-12 bg-gradient-to-r ${stat.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                    <stat.icon className="w-6 h-6 text-white" />
+                  </div>
+                  <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all duration-300" />
+                </div>
+                
+                <div className="text-3xl font-light text-gray-900 mb-1">
+                  {stat.value}
+                </div>
+                <div className="text-sm text-gray-600 font-extralight mb-3">{stat.label}</div>
+                
+                {stat.showProgress && (
+                  <div className="w-full bg-gray-200/50 rounded-full h-2">
+                    <motion.div 
+                      className="bg-gradient-to-r from-orange-500 to-orange-600 h-2 rounded-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${progressPercentage}%` }}
+                      transition={{ duration: 1, delay: 2.4 }}
+                    />
+                  </div>
+                )}
+              </motion.div>
+            ))}
+          </motion.div>
         </div>
-      )}
-          </div>
+      </div>
     </ClubLayout>
   );
 } 
