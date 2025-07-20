@@ -400,6 +400,7 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
   const [generationResult, setGenerationResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [showEmailModal, setShowEmailModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [sending, setSending] = useState(false);
   const [emailSuccess, setEmailSuccess] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -495,6 +496,7 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
       );
 
       setGenerationResult(result);
+      setShowSuccessModal(true);
       // Save to backend history
       if (result && user) {
         // Generate thumbnail
@@ -815,6 +817,18 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
           onSend={handleSendEmail}
           onClose={() => setShowEmailModal(false)}
           sending={sending}
+        />
+      )}
+
+      {showSuccessModal && generationResult && (
+        <PresentationSuccessModal
+          viewerUrl={generationResult.viewerUrl}
+          downloadUrl={generationResult.s3Url}
+          onClose={() => setShowSuccessModal(false)}
+          onSendToMembers={() => {
+            setShowSuccessModal(false);
+            setShowEmailModal(true);
+          }}
         />
       )}
     </div>
@@ -5225,4 +5239,89 @@ interface Message {
   isUser?: boolean;
   system?: boolean;
   timestamp: Date;
+}
+
+interface PresentationSuccessModalProps {
+  onClose: () => void;
+  viewerUrl: string;
+  downloadUrl: string;
+  onSendToMembers: () => void;
+}
+
+function PresentationSuccessModal({ onClose, viewerUrl, downloadUrl, onSendToMembers }: PresentationSuccessModalProps) {
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <motion.div 
+        className="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden"
+        initial={{ opacity: 0, scale: 0.95, y: 20 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95, y: 20 }}
+        transition={{ duration: 0.2 }}
+      >
+        {/* Success Header */}
+        <div className="bg-gradient-to-br from-slate-50 to-slate-100/50 p-8 relative overflow-hidden border-b border-slate-200">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:10px_10px]" />
+          
+          {/* Content */}
+          <div className="relative">
+            <div className="bg-white w-12 h-12 rounded-xl flex items-center justify-center mb-5 shadow-sm border border-slate-200">
+              <CheckCircle className="w-6 h-6 text-slate-700" />
+            </div>
+            
+            <h3 className="text-xl font-medium text-slate-900 mb-2">
+              Presentation generated successfully
+            </h3>
+            <p className="text-slate-500 text-sm">
+              Your presentation has been created using your club's data.
+            </p>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="p-6 space-y-3">
+          <motion.a
+            href={viewerUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center w-full bg-slate-900 text-white px-6 py-3 rounded-xl text-sm font-medium hover:bg-slate-800 transition-all duration-200"
+            whileHover={{ scale: 1.005 }}
+            whileTap={{ scale: 0.995 }}
+          >
+            <Presentation className="w-4 h-4 mr-2 opacity-70" />
+            View Presentation Online
+          </motion.a>
+
+          <motion.a
+            href={downloadUrl}
+            download
+            className="flex items-center justify-center w-full bg-white text-slate-700 px-6 py-3 rounded-xl text-sm font-medium border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200"
+            whileHover={{ scale: 1.005 }}
+            whileTap={{ scale: 0.995 }}
+          >
+            <Download className="w-4 h-4 mr-2 opacity-70" />
+            Download Presentation (.pptx)
+          </motion.a>
+
+          <motion.button
+            onClick={onSendToMembers}
+            className="flex items-center justify-center w-full bg-white text-slate-700 px-6 py-3 rounded-xl text-sm font-medium border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200"
+            whileHover={{ scale: 1.005 }}
+            whileTap={{ scale: 0.995 }}
+          >
+            <Mail className="w-4 h-4 mr-2 opacity-70" />
+            Send to Club Members
+          </motion.button>
+        </div>
+
+        {/* Close Button */}
+        <button 
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-500 transition-colors duration-200"
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </motion.div>
+    </div>
+  );
 }

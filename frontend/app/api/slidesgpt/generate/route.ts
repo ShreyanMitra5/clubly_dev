@@ -93,21 +93,36 @@ async function callSlidesGPTAPI(prompt: string): Promise<any> {
     throw new Error('SlidesGPT API key not configured');
   }
 
-  const response = await fetch('https://api.slidesgpt.com/v1/presentations/generate', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${SLIDESGPT_API_KEY}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      prompt
-    })
-  });
+  try {
+    console.log('Calling SlidesGPT API with prompt length:', prompt.length);
+    
+    const response = await fetch('https://api.slidesgpt.com/v1/presentations/generate', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SLIDESGPT_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        prompt
+      })
+    });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`SlidesGPT API error: ${response.status} - ${response.statusText} - ${errorText}`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('SlidesGPT API Error Details:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorText,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+      throw new Error(`SlidesGPT API error: ${response.status} - ${response.statusText} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log('SlidesGPT API Response:', data);
+    return data;
+  } catch (error) {
+    console.error('Detailed SlidesGPT API Error:', error);
+    throw error;
   }
-
-  return await response.json();
 } 
