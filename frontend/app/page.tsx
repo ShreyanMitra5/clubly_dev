@@ -9,11 +9,9 @@ import { supabase } from '../utils/supabaseClient';
 import LandingHero from './components/LandingHero';
 import LandingHumanoidSection from './components/LandingHumanoidSection';
 import LandingSpecsSection from './components/LandingSpecsSection';
-import LandingImageShowcase from './components/LandingImageShowcase';
 import LandingFeatures from './components/LandingFeatures';
-import LandingDetails from './components/LandingDetails';
-import LandingTestimonials from './components/LandingTestimonials';
-import LandingNewsletter from './components/LandingNewsletter';
+import LandingPricing from './components/LandingPricing';
+import LandingFAQ from './components/LandingFAQ';
 import LandingMadeByHumans from './components/LandingMadeByHumans';
 import LandingFooter from './components/LandingFooter';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -65,11 +63,9 @@ export default function HomePage() {
         <LandingHero />
         <LandingHumanoidSection />
         <LandingSpecsSection />
-        <LandingDetails />
-        <LandingImageShowcase />
         <LandingFeatures />
-        <LandingTestimonials />
-        <LandingNewsletter />
+        <LandingPricing />
+        <LandingFAQ />
         <LandingMadeByHumans />
         <LandingFooter />
       </main>

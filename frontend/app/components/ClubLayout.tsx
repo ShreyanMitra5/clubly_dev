@@ -3837,3 +3837,21 @@ function formatFeatureName(feature: string) {
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 }
+
+// Add this before any React code
+declare global {
+  namespace JSX {
+    interface IntrinsicElements {
+      'lottie-player': React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement>;
+    }
+  }
+}
+
+// Add this after imports
+interface Message {
+  id: string;
+  content: string;
+  isUser?: boolean;
+  system?: boolean;
+  timestamp: Date;
+}

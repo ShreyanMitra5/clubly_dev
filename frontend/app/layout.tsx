@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { ClerkProvider, UserButton, SignedIn, SignedOut, SignInButton, SignUpButton, SignOutButton } from '@clerk/nextjs';
-import { Inter, Playfair_Display } from 'next/font/google';
+import { Inter } from 'next/font/google';
 import '../styles/globals.css';
 import Link from 'next/link';
 import { Toaster } from 'sonner';
@@ -11,11 +11,7 @@ import { usePathname } from 'next/navigation';
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
-});
-
-const playfair = Playfair_Display({
-  subsets: ['latin'],
-  variable: '--font-playfair',
+  weight: ['100', '200', '300', '400', '500', '600', '700'],
 });
 
 export default function RootLayout({
@@ -24,18 +20,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
-
-  // Track scroll position for navbar background
-  const [isAtTop, setIsAtTop] = useState(true);
 
   // Check if we're on a club page
   const isClubPage = pathname?.includes('/clubs/');
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsAtTop(window.scrollY < 5);
+      setIsScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -61,70 +55,156 @@ export default function RootLayout({
     >
       <html lang="en">
         <head>
-          <link rel="icon" href="/logo-rounded.png" type="image/png" />
+          <link rel="icon" href="/new_logo.png" type="image/png" />
+          <link rel="preconnect" href="https://fonts.googleapis.com" />
+          <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         </head>
-        <body
-          className={`${inter.variable} ${playfair.variable} font-sans antialiased m-0 p-0 bg-white min-h-screen relative`}
-        >
+        <body className={`${inter.variable} font-sans antialiased bg-white text-black`}>
           {/* Only show navbar if not on a club page */}
           {!isClubPage && (
-            <header className={`sticky top-0 z-50 transition-colors duration-300 bg-white/90 border-b border-orange-100 backdrop-blur-md shadow-lg`}>
-              <nav className="container-width py-2 md:py-3">
-                <div className="flex justify-between items-center">
-                  {/* Logo/name always left-aligned */}
+            <header className="fixed top-0 left-0 right-0 z-50 px-4 pt-4">
+              <nav className={`
+                mx-auto max-w-7xl transition-all duration-700 ease-out
+                ${isScrolled 
+                  ? 'bg-white/70 backdrop-blur-2xl border border-black/5 shadow-2xl shadow-black/5' 
+                  : 'bg-white/40 backdrop-blur-xl border border-black/5 shadow-xl shadow-black/5'
+                }
+                rounded-2xl px-8 py-4 relative overflow-hidden
+              `}>
+                {/* Subtle gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-r from-orange-50/30 via-transparent to-orange-50/30 opacity-50" />
+                
+                <div className="relative flex justify-between items-center">
+                  {/* Logo */}
                   <div className="flex items-center justify-start">
-                    <a href="/" className="flex items-center space-x-3">
-                      <img src="/logo.png" alt="Clubly" width={32} height={32} className="rounded-lg" />
-                      <span className="text-xl font-bold text-black">Clubly</span>
-                    </a>
+                    <Link href="/" className="flex items-center space-x-4 group">
+                      <div className="relative">
+                        <img 
+                          src="/new_logo.png" 
+                          alt="Clubly" 
+                          width={48} 
+                          height={48} 
+                          className="rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3" 
+                        />
+                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-orange-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
+                      </div>
+                      <span className="text-2xl font-extralight text-black group-hover:text-orange-600 transition-all duration-500 tracking-tight">
+                        Clubly
+                      </span>
+                    </Link>
                   </div>
+
                   {/* Desktop Nav */}
-                  <div className="hidden md:flex items-center space-x-8">
+                  <div className="hidden md:flex items-center space-x-3">
                     <SignedIn>
-                      <a href="/dashboard" className="font-semibold text-black hover:bg-orange-50 hover:text-orange-600 transition-colors rounded-full px-5 py-2">Dashboard</a>
+                      <Link 
+                        href="/dashboard" 
+                        className="font-light text-black/70 hover:text-black transition-all duration-300 px-6 py-3 rounded-xl hover:bg-black/5 relative group"
+                      >
+                        Dashboard
+                        <div className="absolute bottom-2 left-6 w-0 h-px bg-orange-500 transition-all duration-500 group-hover:w-12" />
+                      </Link>
                       <SignOutButton>
-                        <button className="rounded-full shadow-sm border border-orange-100 bg-white text-orange-600 font-bold px-5 py-2 hover:bg-orange-50 hover:scale-105 transition-all">Logout</button>
+                        <button className="font-light text-black/70 hover:text-black transition-all duration-300 px-6 py-3 rounded-xl hover:bg-black/5">
+                          Sign Out
+                        </button>
                       </SignOutButton>
-                      <UserButton appearance={{ elements: { avatarBox: 'ring-2 ring-orange-400' } }} />
+                      <div className="ml-8 pl-4 border-l border-black/10">
+                        <UserButton 
+                          appearance={{ 
+                            elements: { 
+                              avatarBox: 'w-10 h-10 ring-1 ring-orange-500/20 hover:ring-orange-500/40 transition-all duration-300' 
+                            } 
+                          }} 
+                        />
+                      </div>
                     </SignedIn>
                     <SignedOut>
                       <SignInButton mode="modal">
-                        <button className="rounded-full border border-pulse-500 bg-white text-pulse-500 font-semibold px-5 py-2 text-base hover:bg-orange-50 hover:text-pulse-600 transition-all">Sign in</button>
+                        <button className="font-light text-black/70 hover:text-black transition-all duration-300 px-6 py-3 rounded-xl hover:bg-black/5 relative group">
+                          Sign In
+                          <div className="absolute bottom-2 left-6 w-0 h-px bg-orange-500 transition-all duration-500 group-hover:w-8" />
+                        </button>
                       </SignInButton>
                       <SignUpButton mode="modal">
-                        <button className="rounded-full bg-pulse-500 hover:bg-pulse-600 text-white font-semibold px-5 py-2 text-base transition-all ml-2">Get started</button>
+                        <button className="relative overflow-hidden bg-black text-white font-light px-8 py-3.5 rounded-xl hover:bg-black/90 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-black/20 group ml-2">
+                          <span className="relative z-10">Get Started</span>
+                          <div className="absolute inset-0 bg-gradient-to-r from-orange-600 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                        </button>
                       </SignUpButton>
                     </SignedOut>
                   </div>
+
                   {/* Mobile Hamburger */}
                   <div className="md:hidden flex items-center">
                     <button
                       aria-label="Open menu"
-                      className="p-2 rounded focus:outline-none focus:ring-2 focus:ring-orange-400"
+                      className="p-3 rounded-xl hover:bg-black/5 transition-all duration-300 focus:outline-none"
                       onClick={() => setMobileMenuOpen((v) => !v)}
                     >
-                      <svg width="28" height="28" fill="none" stroke="#EA580C" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-                      </svg>
+                      <div className="relative w-6 h-6">
+                        <span className={`absolute block h-0.5 w-6 bg-black transform transition-all duration-300 ${mobileMenuOpen ? 'rotate-45 top-3' : 'top-1'}`} />
+                        <span className={`absolute block h-0.5 w-6 bg-black transform transition-all duration-300 top-3 ${mobileMenuOpen ? 'opacity-0' : 'opacity-100'}`} />
+                        <span className={`absolute block h-0.5 w-6 bg-black transform transition-all duration-300 ${mobileMenuOpen ? '-rotate-45 top-3' : 'top-5'}`} />
+                      </div>
                     </button>
+
                     {/* Mobile Menu Dropdown */}
                     {mobileMenuOpen && (
-                      <div ref={menuRef} className="absolute right-4 top-16 bg-white rounded-xl shadow-lg border border-orange-100 w-48 z-50 flex flex-col py-2 animate-fade-in">
-                        <SignedIn>
-                          <a href="/dashboard" className="block px-6 py-3 text-black font-semibold hover:bg-orange-100 hover:text-orange-600" onClick={() => setMobileMenuOpen(false)}>Dashboard</a>
-                          <SignOutButton>
-                            <button className="block w-full text-left px-6 py-3 text-black hover:bg-orange-100 hover:text-orange-600" onClick={() => setMobileMenuOpen(false)}>Logout</button>
-                          </SignOutButton>
-                          <div className="px-6 py-3 flex justify-start"><UserButton appearance={{ elements: { avatarBox: 'ring-2 ring-orange-400' } }} /></div>
-                        </SignedIn>
-                        <SignedOut>
-                          <SignInButton mode="modal">
-                            <button className="block w-full text-left px-6 py-3 text-black hover:bg-orange-100 hover:text-orange-600" onClick={() => setMobileMenuOpen(false)}>Sign in</button>
-                          </SignInButton>
-                          <SignUpButton mode="modal">
-                            <button className="block w-full text-left px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-bold rounded-lg" onClick={() => setMobileMenuOpen(false)}>Get started</button>
-                          </SignUpButton>
-                        </SignedOut>
+                      <div 
+                        ref={menuRef} 
+                        className="absolute right-4 top-20 bg-white/90 backdrop-blur-2xl rounded-2xl shadow-2xl border border-black/5 w-64 z-50 overflow-hidden"
+                        style={{
+                          animation: 'slideDown 0.3s ease-out'
+                        }}
+                      >
+                        <div className="p-2">
+                          <SignedIn>
+                            <Link 
+                              href="/dashboard" 
+                              className="block px-6 py-4 text-black/70 font-light hover:bg-black/5 hover:text-black transition-all duration-300 rounded-xl" 
+                              onClick={() => setMobileMenuOpen(false)}
+                            >
+                              Dashboard
+                            </Link>
+                            <SignOutButton>
+                              <button 
+                                className="block w-full text-left px-6 py-4 text-black/70 font-light hover:bg-black/5 hover:text-black transition-all duration-300 rounded-xl" 
+                                onClick={() => setMobileMenuOpen(false)}
+                              >
+                                Sign Out
+                              </button>
+                            </SignOutButton>
+                            <div className="px-6 py-4 flex justify-start">
+                              <UserButton 
+                                appearance={{ 
+                                  elements: { 
+                                    avatarBox: 'w-10 h-10 ring-2 ring-orange-500/20' 
+                                  } 
+                                }} 
+                              />
+                            </div>
+                          </SignedIn>
+                          <SignedOut>
+                            <SignInButton mode="modal">
+                              <button 
+                                className="block w-full text-left px-6 py-4 text-black/70 font-light hover:bg-black/5 hover:text-black transition-all duration-300 rounded-xl" 
+                                onClick={() => setMobileMenuOpen(false)}
+                              >
+                                Sign In
+                              </button>
+                            </SignInButton>
+                            <SignUpButton mode="modal">
+                              <button 
+                                className="block w-full text-left px-6 py-4 bg-black hover:bg-black/90 text-white font-light rounded-xl mx-2 my-2 transition-all duration-300" 
+                                onClick={() => setMobileMenuOpen(false)}
+                              >
+                                Get Started
+                              </button>
+                            </SignUpButton>
+                          </SignedOut>
+                        </div>
                       </div>
                     )}
                   </div>
@@ -134,6 +214,19 @@ export default function RootLayout({
           )}
           {children}
           <Toaster />
+          
+          <style jsx global>{`
+            @keyframes slideDown {
+              from {
+                opacity: 0;
+                transform: translateY(-10px);
+              }
+              to {
+                opacity: 1;
+                transform: translateY(0);
+              }
+            }
+          `}</style>
         </body>
       </html>
     </ClerkProvider>
