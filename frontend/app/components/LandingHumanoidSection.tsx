@@ -136,13 +136,13 @@ const LandingHumanoidSection = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
-                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-orange-500 text-white text-sm mr-3 font-medium">02</span>
-                <span className="text-sm font-light text-black/80">Student-First Design</span>
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-orange-500 text-white text-sm mr-3 font-light">02</span>
+                <span className="text-sm font-extralight text-black/80">AI-powered Student Success</span>
               </motion.div>
             </div>
             
             <motion.h2 
-              className="text-4xl sm:text-5xl md:text-6xl font-bold mb-1 md:mb-2 text-black"
+              className="text-4xl sm:text-5xl md:text-6xl font-extralight mb-1 md:mb-2 text-black"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, delay: 0.4 }}
@@ -175,7 +175,7 @@ const LandingHumanoidSection = () => {
               <div className="relative z-10 p-6 sm:p-8 md:p-12 h-full flex items-center">
                 <div className="max-w-lg">
                   <motion.h3 
-                    className="text-3xl sm:text-4xl md:text-5xl text-white font-bold leading-tight mb-6"
+                    className="text-3xl sm:text-4xl md:text-5xl text-white font-extralight leading-tight mb-6"
                     initial={{ opacity: 0, y: 20 }}
                     animate={isFirstCardVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                     transition={{ delay: 0.3, duration: 0.8 }}
@@ -185,7 +185,7 @@ const LandingHumanoidSection = () => {
                   </motion.h3>
                   
                   <motion.p
-                    className="text-lg text-white/80 font-light leading-relaxed"
+                    className="text-lg text-white/80 font-extralight leading-relaxed"
                     initial={{ opacity: 0, y: 20 }}
                     animate={isFirstCardVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                     transition={{ delay: 0.5, duration: 0.8 }}
@@ -216,14 +216,14 @@ const LandingHumanoidSection = () => {
               
               <div className="absolute top-6 right-6 z-20">
                 <div className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-black/10 backdrop-blur-sm text-black border border-black/10">
-                  <span className="text-sm font-light">The Solution</span>
+                  <span className="text-sm font-extralight">The Solution</span>
                 </div>
               </div>
               
               <div className="relative z-10 p-6 sm:p-8 md:p-12 h-full flex items-center">
                 <div className="max-w-lg">
                   <motion.h3 
-                    className="text-3xl sm:text-4xl md:text-5xl text-black font-bold leading-tight mb-6"
+                    className="text-3xl sm:text-4xl md:text-5xl text-black font-extralight leading-tight mb-6"
                     initial={{ opacity: 0, y: 20 }}
                     animate={isSecondCardVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                     transition={{ delay: 0.3, duration: 0.8 }}
@@ -233,7 +233,7 @@ const LandingHumanoidSection = () => {
                   </motion.h3>
                   
                   <motion.p
-                    className="text-lg text-black/70 font-light leading-relaxed"
+                    className="text-lg text-black/70 font-extralight leading-relaxed"
                     initial={{ opacity: 0, y: 20 }}
                     animate={isSecondCardVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                     transition={{ delay: 0.5, duration: 0.8 }}
@@ -271,7 +271,7 @@ const LandingHumanoidSection = () => {
               <div className="relative z-10 p-6 sm:p-8 md:p-12 h-full flex items-center">
                 <div className="max-w-lg">
                   <motion.h3 
-                    className="text-3xl sm:text-4xl md:text-5xl text-black font-bold leading-tight mb-6"
+                    className="text-3xl sm:text-4xl md:text-5xl text-black font-extralight leading-tight mb-6"
                     initial={{ opacity: 0, y: 20 }}
                     animate={isThirdCardVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                     transition={{ delay: 0.3, duration: 0.8 }}
@@ -281,7 +281,7 @@ const LandingHumanoidSection = () => {
                   </motion.h3>
                   
                   <motion.p
-                    className="text-lg text-black/70 font-light leading-relaxed"
+                    className="text-lg text-black/70 font-extralight leading-relaxed"
                     initial={{ opacity: 0, y: 20 }}
                     animate={isThirdCardVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                     transition={{ delay: 0.5, duration: 0.8 }}
@@ -294,11 +294,11 @@ const LandingHumanoidSection = () => {
               {/* Stats overlay */}
               <div className="absolute bottom-6 left-6 grid grid-cols-2 gap-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-black">10+</div>
+                  <div className="text-2xl font-extralight text-black">10+</div>
                   <div className="text-xs text-black/60 font-light">Hours Saved</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-500">3x</div>
+                  <div className="text-2xl font-extralight text-orange-500">3x</div>
                   <div className="text-xs text-black/60 font-light">Engagement</div>
                 </div>
               </div>
@@ -326,7 +326,7 @@ const LandingHumanoidSection = () => {
               <div className="relative z-10 p-6 sm:p-8 md:p-12 h-full flex items-center">
                 <div className="max-w-lg">
                   <motion.h3 
-                    className="text-3xl sm:text-4xl md:text-5xl text-black font-bold leading-tight mb-6"
+                    className="text-3xl sm:text-4xl md:text-5xl text-black font-extralight leading-tight mb-6"
                     initial={{ opacity: 0, y: 20 }}
                     animate={isFourthCardVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                     transition={{ delay: 0.3, duration: 0.8 }}
@@ -336,7 +336,7 @@ const LandingHumanoidSection = () => {
                   </motion.h3>
                   
                   <motion.p
-                    className="text-lg text-black/70 font-light leading-relaxed mb-8"
+                    className="text-lg text-black/70 font-extralight leading-relaxed mb-8"
                     initial={{ opacity: 0, y: 20 }}
                     animate={isFourthCardVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                     transition={{ delay: 0.5, duration: 0.8 }}
@@ -345,7 +345,7 @@ const LandingHumanoidSection = () => {
                   </motion.p>
                   
                   <motion.button
-                    className="bg-black text-white px-8 py-4 rounded-2xl font-medium hover:bg-black/90 transition-all duration-300 shadow-lg hover:shadow-xl"
+                    className="bg-black text-white px-8 py-4 rounded-2xl font-extralight hover:bg-black/90 transition-all duration-300 shadow-lg hover:shadow-xl"
                     initial={{ opacity: 0, y: 20 }}
                     animate={isFourthCardVisible ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                     transition={{ delay: 0.7, duration: 0.8 }}
