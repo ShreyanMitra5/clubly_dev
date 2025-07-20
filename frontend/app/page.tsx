@@ -25,27 +25,29 @@ export default function HomePage() {
   const { sessionId } = useAuth();
 
   useEffect(() => {
-    // Hide loading screen after a short delay to ensure smooth transition
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1500);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    async function checkOnboarding() {
-      if (isSignedIn && user && sessionId && typeof window !== 'undefined') {
+    // Check user status immediately
+    async function checkUserStatus() {
+      if (isSignedIn && user && sessionId) {
+        // Check if user exists in database
         const { data, error } = await supabase
           .from('memberships')
           .select('user_id')
           .eq('user_id', user.id);
-        if ((!data || data.length === 0) && window.location.pathname !== '/onboarding') {
+        
+        if (!data || data.length === 0) {
+          // New user - redirect to onboarding
           router.push('/onboarding');
+        } else {
+          // Existing user - redirect to dashboard
+          router.push('/dashboard');
         }
+      } else {
+        // Not signed in - show landing page
+        setIsLoading(false);
       }
     }
-    checkOnboarding();
+    
+    checkUserStatus();
   }, [isSignedIn, user, sessionId, router]);
 
   useEffect(() => {
@@ -57,6 +59,7 @@ export default function HomePage() {
     return <LoadingScreen />;
   }
 
+  // Only render landing page for non-authenticated users
   return (
     <ErrorBoundary>
       <main className="min-h-screen space-y-4 sm:space-y-8">
@@ -70,7 +73,6 @@ export default function HomePage() {
         <LandingFooter />
       </main>
 
-      {/* Clerk Sign In Modal Only */}
       {showSignInPrompt && !isSignedIn && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-xl flex items-center justify-center z-50 p-4">
           <SignIn
