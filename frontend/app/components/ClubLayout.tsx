@@ -11,7 +11,7 @@ import saveAs from 'file-saver';
 import Link from 'next/link';
 import { cn } from '../lib/utils';
 import { UserButton } from '@clerk/nextjs';
-import { motion, useInView } from 'framer-motion';
+import { motion, useInView, AnimatePresence } from 'framer-motion';
 import { 
   Users, 
   Presentation, 
@@ -47,8 +47,11 @@ import {
   Loader2,
   History,
   Eye,
-  Edit2
-} from 'lucide-react';
+      Edit2,
+    XCircle,
+    AlertTriangle,
+    Save
+  } from 'lucide-react';
 
 interface ClubLayoutProps {
   children?: React.ReactNode;
@@ -196,7 +199,7 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
           animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.4, 0.2] }}
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
         />
-      </div>
+          </div>
 
       <div className="relative z-10 space-y-8">
         {/* Hero Section */}
@@ -251,14 +254,14 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
               transition={{ duration: 0.8, delay: 0.6 }}
             >
               <div className="relative w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl overflow-hidden shadow-xl">
-                <img 
-                  src="/lovable-uploads/5663820f-6c97-4492-9210-9eaa1a8dc415.png"
-                  alt="Clubly Platform"
+            <img 
+              src="/lovable-uploads/5663820f-6c97-4492-9210-9eaa1a8dc415.png"
+              alt="Clubly Platform"
                   className="w-full h-full object-contain p-8"
-                />
-              </div>
-            </motion.div>
+            />
           </div>
+            </motion.div>
+        </div>
         </motion.div>
 
         {/* Stats Grid */}
@@ -280,13 +283,13 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
               <div className="flex items-center justify-between mb-4">
                 <div className={`w-12 h-12 bg-gradient-to-r ${stat.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
                   <stat.icon className="w-6 h-6 text-white" />
-                </div>
+            </div>
                 <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all duration-300" />
-              </div>
+          </div>
               
               <div className="text-3xl font-light text-gray-900 mb-1">
                 {stat.value}{stat.suffix || ''}
-              </div>
+        </div>
               <div className="text-sm text-gray-600 font-extralight">{stat.label}</div>
             </motion.div>
           ))}
@@ -311,7 +314,7 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
               <span>View All</span>
               <ArrowRight className="w-4 h-4" />
             </motion.button>
-          </div>
+            </div>
 
           {history.length > 0 || meetingNotes.length > 0 ? (
             <div className="space-y-4">
@@ -337,7 +340,7 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
                         ) : (
                           <CheckSquare className="w-5 h-5 text-white" />
                         )}
-                  </div>
+          </div>
                   <div className="flex-1">
                         <h4 className="font-light text-gray-900">
                           {isPresentation ? 'Presentation Created' : 'Meeting Notes Created'}
@@ -345,7 +348,7 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
                         <p className="text-sm text-gray-600 font-extralight">
                           {isPresentation ? (item.topic || 'New presentation') : (item.title || 'Meeting notes')}
                         </p>
-                  </div>
+        </div>
                       <span className="text-xs text-gray-500 font-extralight">{timeAgo}</span>
                 </motion.div>
                   );
@@ -355,10 +358,10 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
             <div className="text-center py-12">
               <div className="w-16 h-16 bg-gradient-to-r from-gray-400 to-gray-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Activity className="w-8 h-8 text-white" />
-              </div>
+          </div>
               <h3 className="text-lg font-light text-gray-900 mb-2">No recent activity</h3>
               <p className="text-gray-600 font-extralight">Start creating presentations and taking notes to see your activity here.</p>
-            </div>
+        </div>
           )}
         </motion.div>
       </div>
@@ -495,8 +498,8 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
             }),
           });
           if (thumbRes.ok) {
-            const thumbData = await thumbRes.json();
-            thumbnailUrl = thumbData.thumbnailUrl;
+          const thumbData = await thumbRes.json();
+          thumbnailUrl = thumbData.thumbnailUrl;
           } else {
             console.error('Thumbnail generation failed:', await thumbRes.text());
           }
@@ -636,7 +639,7 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
             <div className="flex items-start space-x-4">
               <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center flex-shrink-0">
                 <Sparkles className="w-6 h-6 text-white" />
-              </div>
+            </div>
               <div className="flex-1">
                 <h3 className="text-lg font-light text-gray-900 mb-2">
                   Powered by {selectedClub?.clubName || clubName} Data
@@ -657,7 +660,7 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
             transition={{ duration: 0.6, delay: 1.0 }}
           >
             <div className="space-y-6">
-              <div>
+          <div>
                 <label className="block text-lg font-light text-gray-900 mb-4">
                   What's your presentation about?
                 </label>
@@ -673,25 +676,25 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
               </div>
               
               <div className="grid md:grid-cols-2 gap-6">
-                <div>
+              <div>
                   <label className="block text-lg font-light text-gray-900 mb-4">
                     Week Number <span className="text-sm text-gray-500 font-extralight">(optional)</span>
                   </label>
-                  <input
-                    type="number"
-                    name="week"
-                    value={formData.week}
-                    onChange={handleInputChange}
-                    min="1"
+                <input
+                  type="number"
+                  name="week"
+                  value={formData.week}
+                  onChange={handleInputChange}
+                  min="1"
                     placeholder="1"
                     className="w-full px-6 py-4 bg-white/50 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-extralight text-lg placeholder-gray-400 backdrop-blur-sm"
-                  />
-                </div>
+                />
+              </div>
                 
                 <div className="flex items-end">
                   <motion.button
-                    type="submit"
-                    disabled={isLoading || !formData.description.trim()}
+              type="submit"
+              disabled={isLoading || !formData.description.trim()}
                     className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-2xl font-light text-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3"
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
@@ -712,7 +715,7 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
                       </>
                     )}
                   </motion.button>
-                </div>
+          </div>
               </div>
             </div>
           </motion.form>
@@ -774,28 +777,28 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
           </div>
         )}
 
-          {/* Email Success/Error Messages */}
-          {emailSuccess && (
+        {/* Email Success/Error Messages */}
+        {emailSuccess && (
             <motion.div 
               className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              {emailSuccess}
+            {emailSuccess}
             </motion.div>
-          )}
-          
-          {emailError && (
+        )}
+        
+        {emailError && (
             <motion.div 
               className="mt-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              {emailError}
+            {emailError}
             </motion.div>
-          )}
+        )}
         </motion.div>
       </div>
 
@@ -1065,7 +1068,7 @@ function TasksPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
         <div className="absolute bottom-0 right-0 w-80 h-80 bg-gradient-to-tr from-black/10 to-orange-200/10 rounded-full blur-2xl" />
       </div>
       <div className="relative z-10 max-w-7xl mx-auto px-4 py-12">
-        {/* Header */}
+      {/* Header */}
         <div className="mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-4xl font-extralight text-gray-900 mb-2 tracking-tight">Quick Tasks</h1>
@@ -1078,7 +1081,7 @@ function TasksPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
             Add Task
           </button>
-        </div>
+      </div>
 
         {/* Task Columns */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -1092,8 +1095,8 @@ function TasksPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
               {highPriority.map(task => (
                 <TaskCard key={task.id} task={task} onEdit={handleEditTask} onDelete={handleDeleteTask} onStatusChange={handleUpdateTask} />
               ))}
-            </div>
-          </div>
+              </div>
+              </div>
           {/* Medium Priority */}
           <div>
             <h2 className="text-lg font-semibold text-yellow-600 mb-4 flex items-center gap-2">
@@ -1124,91 +1127,91 @@ function TasksPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
         {isFormOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8 border border-gray-100 animate-fadeIn">
-              <button
-                onClick={handleCloseForm}
+                  <button
+                    onClick={handleCloseForm}
                 className="absolute top-4 right-4 text-gray-400 hover:text-orange-500 transition-colors text-2xl"
                 aria-label="Close"
-              >
+                  >
                 &times;
-              </button>
+                  </button>
               <h2 className="text-2xl font-light text-gray-900 mb-6 text-center">{editingTask ? 'Edit Task' : 'Create Task'}</h2>
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-                  <input
-                    type="text"
-                    value={formData.title}
-                    onChange={e => setFormData({ ...formData, title: e.target.value })}
+                    <input
+                      type="text"
+                      value={formData.title}
+                      onChange={e => setFormData({ ...formData, title: e.target.value })}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
-                    required
+                      required
                     placeholder="Task title"
-                  />
-                </div>
-                <div>
+                    />
+                  </div>
+                  <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                  <textarea
-                    value={formData.description}
-                    onChange={e => setFormData({ ...formData, description: e.target.value })}
-                    rows={3}
+                    <textarea
+                      value={formData.description}
+                      onChange={e => setFormData({ ...formData, description: e.target.value })}
+                      rows={3}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
                     placeholder="Describe the task (optional)"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <select
-                      value={formData.status}
-                      onChange={e => setFormData({ ...formData, status: e.target.value as TaskStatus })}
+                      <select
+                        value={formData.status}
+                        onChange={e => setFormData({ ...formData, status: e.target.value as TaskStatus })}
                       className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
-                    >
-                      <option value={TaskStatus.TODO}>To Do</option>
-                      <option value={TaskStatus.IN_PROGRESS}>In Progress</option>
-                      <option value={TaskStatus.COMPLETED}>Completed</option>
-                    </select>
+                      >
+                        <option value={TaskStatus.TODO}>To Do</option>
+                        <option value={TaskStatus.IN_PROGRESS}>In Progress</option>
+                        <option value={TaskStatus.COMPLETED}>Completed</option>
+                      </select>
+                    </div>
+                    <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                      <select
+                        value={formData.priority}
+                        onChange={e => setFormData({ ...formData, priority: e.target.value as TaskPriority })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                      >
+                        <option value={TaskPriority.LOW}>Low</option>
+                        <option value={TaskPriority.MEDIUM}>Medium</option>
+                        <option value={TaskPriority.HIGH}>High</option>
+                      </select>
+                    </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
-                    <select
-                      value={formData.priority}
-                      onChange={e => setFormData({ ...formData, priority: e.target.value as TaskPriority })}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
-                    >
-                      <option value={TaskPriority.LOW}>Low</option>
-                      <option value={TaskPriority.MEDIUM}>Medium</option>
-                      <option value={TaskPriority.HIGH}>High</option>
-                    </select>
-                  </div>
-                </div>
-                <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
-                  <input
-                    type="date"
-                    value={formData.dueDate}
-                    onChange={e => setFormData({ ...formData, dueDate: e.target.value })}
+                    <input
+                      type="date"
+                      value={formData.dueDate}
+                      onChange={e => setFormData({ ...formData, dueDate: e.target.value })}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
-                  />
-                </div>
+                    />
+                  </div>
                 <div className="flex justify-end gap-3 mt-6">
-                  <button
-                    type="button"
-                    onClick={handleCloseForm}
+                    <button
+                      type="button"
+                      onClick={handleCloseForm}
                     className="px-6 py-2 rounded-xl border border-gray-200 bg-white text-gray-700 font-light hover:bg-gray-50 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
                     className="px-6 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-medium shadow transition-colors"
-                  >
+                    >
                     {editingTask ? 'Update Task' : 'Create Task'}
-                  </button>
-                </div>
-              </form>
+                    </button>
+                  </div>
+                </form>
             </div>
           </div>
         )}
-      </div>
+          </div>
     </div>
   );
 }
@@ -1237,17 +1240,17 @@ function TaskCard({ task, onEdit, onDelete, onStatusChange }) {
   };
   return (
     <div className="rounded-2xl bg-white shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200 p-6 flex flex-col gap-2">
-      <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between">
         <h3 className="text-lg font-light text-gray-900 truncate">{task.title}</h3>
         <div className="flex gap-2">
           <button onClick={() => onEdit(task)} className="text-gray-400 hover:text-orange-500 transition-colors">
             <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
-          </button>
+                      </button>
           <button onClick={() => onDelete(task.id)} className="text-gray-400 hover:text-red-500 transition-colors">
             <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-          </button>
-        </div>
-      </div>
+                      </button>
+                    </div>
+                  </div>
       <p className="text-sm text-gray-500 font-light line-clamp-2 mb-2">{task.description}</p>
       <div className="flex flex-wrap gap-2 items-center mt-auto">
         <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(task.priority)}`}>{task.priority.charAt(0).toUpperCase() + task.priority.slice(1).toLowerCase()} Priority</span>
@@ -1691,7 +1694,7 @@ function AdvisorPanel({ clubName, clubInfo, onNavigation }: {
           >
             <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
               <Brain className="w-5 h-5 text-white" />
-            </div>
+      </div>
             <div>
               <h3 className="font-light text-gray-900 text-lg">AI Advisor</h3>
               <p className="text-sm text-gray-600 font-extralight">{clubName}</p>
@@ -1876,7 +1879,7 @@ function AdvisorPanel({ clubName, clubInfo, onNavigation }: {
                   >
                     <div className="w-12 h-12 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center border-2 border-white shadow-md">
                       <Brain className="w-6 h-6 text-gray-600" />
-                    </div>
+                  </div>
                     <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
                   </motion.div>
                   <div className="flex flex-col">
@@ -1890,9 +1893,9 @@ function AdvisorPanel({ clubName, clubInfo, onNavigation }: {
                     </div>
                     <div className="text-xs text-gray-500 mt-2 pl-2 font-extralight">
                       AI Assistant • {formatTime(message.timestamp)}
-                    </div>
                   </div>
                 </div>
+            </div>
               )}
             </motion.div>
           ))}
@@ -1923,8 +1926,8 @@ function AdvisorPanel({ clubName, clubInfo, onNavigation }: {
                       className="w-2 h-2 bg-orange-500 rounded-full"
                       animate={{ scale: [1, 1.5, 1] }}
                       transition={{ duration: 1, repeat: Infinity, delay: 0.4 }}
-                    />
-                  </div>
+                />
+              </div>
                 </div>
               </div>
             </motion.div>
@@ -2200,12 +2203,12 @@ function EmailPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Upload CSV File</label>
               <div className="relative">
-                <input
-                  type="file"
-                  accept=".csv"
-                  onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+              <input
+                type="file"
+                accept=".csv"
+                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
                   className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light text-gray-700"
-                />
+              />
               </div>
               <p className="text-sm text-gray-500 mt-2 font-light">
                 CSV should have columns: email, name (optional)
@@ -2375,6 +2378,7 @@ function EmailPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
 
 // Settings Component
 function SettingsPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any }) {
+  const { user } = useUser();
   const [settings, setSettings] = useState({
     description: clubInfo?.description || '',
     mission: clubInfo?.mission || '',
@@ -2382,92 +2386,318 @@ function SettingsPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any
     audience: clubInfo?.audience || ''
   });
   const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    
+    setError('');
     try {
       const response = await fetch(`/api/clubs/${clubInfo?.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user?.id || ''
+        },
         body: JSON.stringify(settings),
       });
-      
       if (response.ok) {
-        alert('Settings saved successfully!');
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to save settings.');
       }
     } catch (error) {
-      console.error('Error saving settings:', error);
-      alert('Failed to save settings. Please try again.');
+      setError('Failed to save settings. Please try again.');
     } finally {
       setSaving(false);
     }
   };
 
+  const handleDeleteClub = async () => {
+    if (!user || !clubInfo || deleteConfirmation !== clubName) return;
+    setDeleting(true);
+    setError('');
+    try {
+      const response = await fetch(`/api/clubs/${clubInfo.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user.id
+        }
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete club');
+      }
+      window.location.href = '/dashboard';
+    } catch (err: any) {
+      setError(err.message || 'Failed to delete club. Please try again.');
+      setDeleting(false);
+    }
+  };
+
+  const resetDeleteModal = () => {
+    setShowDeleteModal(false);
+    setDeleteConfirmation('');
+    setDeleting(false);
+  };
+
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-pulse-500 mb-2">Club Settings</h1>
-        <p className="text-gray-600">Manage your club's settings and preferences</p>
-      </div>
-
-      <div className="glass-card bg-white/90 border border-pulse-100 rounded-2xl p-8 shadow-lg">
-        <form onSubmit={handleSave} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Club Description</label>
-            <textarea
-              value={settings.description}
-              onChange={(e) => setSettings({...settings, description: e.target.value})}
-              placeholder="Describe your club..."
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pulse-500 focus:border-transparent"
-              rows={3}
-            />
+    <div className="min-h-screen bg-white relative overflow-hidden">
+      
+      <div className="relative z-10 max-w-4xl mx-auto px-6 py-12">
+        {/* Header */}
+        <motion.div 
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+        >
+          <div className="inline-flex items-center space-x-2 bg-orange-500/10 border border-orange-500/20 rounded-full px-4 py-2 mb-6">
+            <Settings className="w-4 h-4 text-orange-500" />
+            <span className="text-orange-500 text-sm font-light">Configuration</span>
           </div>
+          <h1 className="text-5xl font-extralight text-gray-900 mb-4 tracking-tight">
+            Club <span className="text-orange-500 font-light">Settings</span>
+          </h1>
+          <p className="text-gray-600 text-lg font-extralight max-w-2xl mx-auto leading-relaxed">
+            Configure your club's identity and preferences with our AI-powered management system
+          </p>
+        </motion.div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Mission</label>
-            <textarea
-              value={settings.mission}
-              onChange={(e) => setSettings({...settings, mission: e.target.value})}
-              placeholder="What is your club's mission?"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pulse-500 focus:border-transparent"
-              rows={3}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Goals</label>
-            <textarea
-              value={settings.goals}
-              onChange={(e) => setSettings({...settings, goals: e.target.value})}
-              placeholder="What are your club's goals?"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pulse-500 focus:border-transparent"
-              rows={3}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Target Audience</label>
-            <textarea
-              value={settings.audience}
-              onChange={(e) => setSettings({...settings, audience: e.target.value})}
-              placeholder="Who is your target audience?"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pulse-500 focus:border-transparent"
-              rows={3}
-            />
-          </div>
-
-          <div className="pt-4">
-            <button
-              type="submit"
-              disabled={saving}
-              className="button-primary bg-pulse-500 hover:bg-pulse-600 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
+        {/* Status Messages */}
+        <AnimatePresence>
+          {success && (
+            <motion.div
+              className="mb-8 max-w-2xl mx-auto"
+              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
             >
-              {saving ? 'Saving...' : 'Save Settings'}
-            </button>
-          </div>
-        </form>
+                             <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex items-center space-x-3">
+                 <div className="w-10 h-10 bg-emerald-500/20 rounded-full flex items-center justify-center">
+                   <CheckCircle className="w-5 h-5 text-emerald-600" />
+                 </div>
+                 <div>
+                   <p className="text-emerald-600 font-light">Settings updated successfully</p>
+                   <p className="text-emerald-500 text-sm font-extralight">Your changes have been saved</p>
+                 </div>
+               </div>
+            </motion.div>
+          )}
+
+          {error && (
+            <motion.div
+              className="mb-8 max-w-2xl mx-auto"
+              initial={{ opacity: 0, y: -20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              transition={{ duration: 0.3 }}
+            >
+                             <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-4 flex items-center space-x-3">
+                 <div className="w-10 h-10 bg-red-500/20 rounded-full flex items-center justify-center">
+                   <XCircle className="w-5 h-5 text-red-600" />
+                 </div>
+                 <div>
+                   <p className="text-red-600 font-light">Error occurred</p>
+                   <p className="text-red-500 text-sm font-extralight">{error}</p>
+                 </div>
+               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+                 {/* Main Settings Card */}
+         <motion.div
+           className="bg-white border border-gray-200 rounded-3xl p-8 md:p-12 shadow-2xl max-w-2xl mx-auto"
+           initial={{ opacity: 0, y: 30 }}
+           animate={{ opacity: 1, y: 0 }}
+           transition={{ duration: 0.6, delay: 0.2 }}
+         >
+          <form onSubmit={handleSave} className="space-y-8">
+            {/* Club Description */}
+            <div className="space-y-3">
+                             <div className="flex items-center space-x-3 mb-4">
+                 <div className="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                   <FileText className="w-4 h-4 text-orange-500" />
+                 </div>
+                 <label className="text-gray-900 font-light text-lg">Club Description</label>
+               </div>
+               <textarea
+                 value={settings.description}
+                 onChange={(e) => setSettings({...settings, description: e.target.value})}
+                 placeholder="Describe your club's purpose, activities, and what makes it unique..."
+                 className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300 font-extralight resize-none"
+                 rows={4}
+               />
+            </div>
+
+            {/* Mission */}
+            <div className="space-y-3">
+                             <div className="flex items-center space-x-3 mb-4">
+                 <div className="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                   <Target className="w-4 h-4 text-orange-500" />
+                 </div>
+                 <label className="text-gray-900 font-light text-lg">Mission Statement</label>
+               </div>
+               <textarea
+                 value={settings.mission}
+                 onChange={(e) => setSettings({...settings, mission: e.target.value})}
+                 placeholder="Define your club's core mission and primary objectives..."
+                 className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300 font-extralight resize-none"
+                 rows={3}
+               />
+            </div>
+
+            {/* Goals */}
+            <div className="space-y-3">
+                             <div className="flex items-center space-x-3 mb-4">
+                 <div className="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                   <CheckSquare className="w-4 h-4 text-orange-500" />
+                 </div>
+                 <label className="text-gray-900 font-light text-lg">Goals & Objectives</label>
+               </div>
+               <textarea
+                 value={settings.goals}
+                 onChange={(e) => setSettings({...settings, goals: e.target.value})}
+                 placeholder="List your specific goals and what you want to achieve this year..."
+                 className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300 font-extralight resize-none"
+                 rows={3}
+               />
+            </div>
+
+            {/* Target Audience */}
+            <div className="space-y-3">
+                             <div className="flex items-center space-x-3 mb-4">
+                 <div className="w-8 h-8 bg-orange-500/20 rounded-lg flex items-center justify-center">
+                   <Users className="w-4 h-4 text-orange-500" />
+                 </div>
+                 <label className="text-gray-900 font-light text-lg">Target Audience</label>
+               </div>
+               <textarea
+                 value={settings.audience}
+                 onChange={(e) => setSettings({...settings, audience: e.target.value})}
+                 placeholder="Who is your ideal member? Grade levels, interests, experience..."
+                 className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300 font-extralight resize-none"
+                 rows={3}
+               />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 pt-8">
+              <motion.button
+                type="submit"
+                disabled={saving}
+                className="flex-1 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-2xl font-light text-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                {saving ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <span>Saving Changes...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5" />
+                    <span>Save Settings</span>
+                  </>
+                )}
+              </motion.button>
+
+                             <motion.button
+                 type="button"
+                 onClick={() => setShowDeleteModal(true)}
+                 className="bg-red-500/10 border border-red-500/20 text-red-600 px-8 py-4 rounded-2xl font-light text-lg hover:bg-red-500/20 transition-all duration-300 flex items-center justify-center space-x-2"
+                 whileHover={{ scale: 1.02 }}
+                 whileTap={{ scale: 0.98 }}
+               >
+                <Trash2 className="w-5 h-5" />
+                <span>Delete Club</span>
+              </motion.button>
+            </div>
+          </form>
+        </motion.div>
+
+        {/* Delete Confirmation Modal */}
+        <AnimatePresence>
+          {showDeleteModal && (
+            <motion.div
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div
+                className="bg-gray-900/90 backdrop-blur-xl border border-red-500/20 rounded-3xl max-w-md w-full p-8 shadow-2xl"
+                initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <div className="text-center mb-8">
+                  <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <AlertTriangle className="w-8 h-8 text-red-400" />
+                  </div>
+                  <h3 className="text-2xl font-light text-white mb-3">Delete "{clubName}"?</h3>
+                  <p className="text-gray-400 leading-relaxed font-extralight">
+                    This action cannot be undone. All club data, including presentations, tasks, and member information will be permanently deleted.
+                  </p>
+                </div>
+
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-gray-300 font-light mb-3">
+                      Type <span className="font-medium text-red-400">{clubName}</span> to confirm:
+                    </label>
+                    <input
+                      type="text"
+                      value={deleteConfirmation}
+                      onChange={(e) => setDeleteConfirmation(e.target.value)}
+                      className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50 transition-all duration-300 font-extralight"
+                      placeholder={clubName}
+                      disabled={deleting}
+                    />
+                  </div>
+
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={resetDeleteModal}
+                      className="flex-1 px-4 py-3 bg-white/5 border border-white/10 text-gray-300 rounded-xl font-light hover:bg-white/10 transition-all duration-300"
+                      disabled={deleting}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleDeleteClub}
+                      disabled={deleteConfirmation !== clubName || deleting}
+                      className="flex-1 px-4 py-3 bg-red-500 text-white rounded-xl font-light hover:bg-red-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                    >
+                      {deleting ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          <span>Deleting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="w-4 h-4" />
+                          <span>Delete Club</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
@@ -2901,7 +3131,7 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
               <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-orange-100 p-8 text-center">
                 <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
                   <Calendar className="w-10 h-10 text-white" />
-                </div>
+        </div>
                 <h2 className="text-3xl font-light text-gray-900 mb-4">
                   Welcome to <span className="text-orange-500">{clubName}</span> Planning!
                 </h2>
@@ -2952,15 +3182,15 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
                           setFormData({...formData,meetingDays:days});
                         }} />
                         <span className="capitalize">{day}</span>
-                      </label>
+                  </label>
                     ))}
                   </div>
                 </div>
-                <div>
+                  <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Meeting Time</label>
                   <input type="time" value={formData.meetingTime} onChange={e=>setFormData({...formData,meetingTime:e.target.value})} className="w-full p-3 border border-gray-200 rounded-lg" />
-                </div>
-                <div>
+                  </div>
+                  <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Club Goal</label>
                   <textarea value={formData.goals} onChange={e=>setFormData({...formData,goals:e.target.value})} className="w-full p-3 border border-gray-200 rounded-lg" rows={3} placeholder="What is the main goal for this semester?" />
                 </div>
@@ -3009,8 +3239,8 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
                     transition={{ duration: 1, delay: 0.5 }}
                     />
                   </div>
-                </div>
                   </div>
+                </div>
 
             <div className="flex items-center space-x-4">
               <motion.button
@@ -3022,7 +3252,7 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
                 <Settings className="w-4 h-4 inline mr-2" />
                 Setup
               </motion.button>
-                  </div>
+                    </div>
                 </div>
         </motion.div>
 
@@ -3068,11 +3298,11 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
                             {monthEvents.length}
                           </span>
                         )}
-                      </div>
+            </div>
                 </motion.button>
                   );
                 })}
-              </div>
+          </div>
           </div>
           </motion.div>
 
@@ -3109,9 +3339,9 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
               <span>Next</span>
               <ArrowRight className="w-4 h-4" />
             </motion.button>
-              </div>
+                  </div>
 
-              {/* Calendar Grid */}
+                  {/* Calendar Grid */}
               <div className="p-6">
         {/* Day Headers */}
                 <div className="grid grid-cols-7 gap-2 mb-4">
@@ -3174,15 +3404,15 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
                               style={{ cursor: 'pointer' }}
                             >
                               {event.title}
-                    </div>
-                  ))}
-                    </div>
+                      </div>
+                    ))}
+                  </div>
                       </motion.div>
             );
           })}
-        </div>
-        </div>
-        </div>
+                </div>
+                </div>
+            </div>
           </motion.div>
       </div>
 
@@ -3253,7 +3483,7 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
                 <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
                 <div className="flex space-x-2">
                   {['bg-blue-500', 'bg-purple-500', 'bg-green-500', 'bg-orange-500', 'bg-red-500'].map(color => (
-                    <button
+                <button
                       key={color}
                       onClick={() => setEventColor(color)}
                       className={`w-8 h-8 rounded-full ${color} ${eventColor === color ? 'ring-2 ring-gray-400' : ''}`}
@@ -3270,7 +3500,7 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
                   Save
                 </button>
                 {currentEvent && (
-                  <button
+                <button
                     onClick={deleteEvent}
                     className="bg-red-100 text-red-600 px-6 py-2 rounded-xl font-light hover:bg-red-200 transition-all"
                   >
@@ -3288,7 +3518,7 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
           </motion.div>
         </div>
       )}
-        </div>
+    </div>
   );
 }
 
@@ -3871,13 +4101,13 @@ This summary was generated automatically by Clubly AI.
                         <>
                           <Pause className="w-4 h-4 inline mr-2" />
                           Pause
-                        </>
-                      )}
+                  </>
+                )}
                     </motion.button>
                   </>
                 )}
               </motion.div>
-            </div>
+              </div>
           )}
 
           {/* Success State */}
@@ -3923,7 +4153,7 @@ This summary was generated automatically by Clubly AI.
               <div className="flex items-center text-red-600">
                 <AlertCircle className="w-5 h-5 mr-2" />
                 <span className="font-light">{error}</span>
-              </div>
+            </div>
             </motion.div>
           )}
         </motion.div>
@@ -3961,17 +4191,17 @@ This summary was generated automatically by Clubly AI.
             {/* Title Input */}
             <div className="mb-6">
               <label className="block text-sm font-light text-gray-700 mb-2">Meeting Title</label>
-              <input
-                type="text"
+                <input
+                  type="text"
                 className="w-full px-4 py-3 bg-white/80 backdrop-blur-xl border border-gray-200/50 rounded-xl font-extralight focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all duration-300"
                 placeholder="e.g. Weekly Planning, Project Update..."
-                value={meetingTitle}
-                onChange={(e) => setMeetingTitle(e.target.value)}
-                maxLength={80}
-              />
-            </div>
-
-            {/* Action Buttons */}
+                  value={meetingTitle}
+                  onChange={(e) => setMeetingTitle(e.target.value)}
+                  maxLength={80}
+                />
+              </div>
+              
+              {/* Action Buttons */}
             <div className="space-y-3">
               <motion.button
                 className="w-full px-6 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-light rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center"
@@ -4201,7 +4431,7 @@ function HistoryPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
           <p className="text-gray-600 font-extralight">Create your first presentation to get started!</p>
         </motion.div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {history.map((presentation, index) => (
             <motion.div
               key={presentation.id || index}
@@ -4225,7 +4455,7 @@ function HistoryPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
                       allowFullScreen
                       loading={index < 6 ? "eager" : "lazy"}
                     />
-                  </div>
+            </div>
                 ) : (
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                     <div className="w-12 h-12 mb-2 text-gray-200">
@@ -4246,8 +4476,8 @@ function HistoryPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
                 <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
                   <a
                     href={presentation.viewerUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  target="_blank"
+                  rel="noopener noreferrer"
                     className="text-white font-medium hover:underline flex items-center gap-2"
                   >
                     <Eye className="w-5 h-5" />
@@ -4272,8 +4502,8 @@ function HistoryPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
                   {/* View Button */}
                   <a
                     href={presentation.viewerUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  target="_blank"
+                  rel="noopener noreferrer"
                     className="w-full px-4 py-2.5 bg-orange-500 text-white font-medium rounded-xl hover:bg-orange-600 transition-colors duration-200 flex items-center justify-center gap-2"
                   >
                     <Eye className="w-4 h-4" />
@@ -4287,8 +4517,8 @@ function HistoryPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
                     className="w-full px-4 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center gap-2"
                   >
                     <Download className="w-4 h-4" />
-                    Download
-                  </a>
+                  Download
+                </a>
 
                   {/* Email Button */}
                   <button
@@ -4302,11 +4532,11 @@ function HistoryPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
                     <Mail className="w-4 h-4" />
                     Share via Email
                   </button>
-                </div>
-              </div>
+            </div>
+          </div>
             </motion.div>
-          ))}
-        </div>
+        ))}
+      </div>
       )}
 
       {/* Email Modal */}
@@ -4565,7 +4795,7 @@ function SummariesPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
   };
 
   if (loading) {
-    return (
+  return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
           <motion.div
@@ -4667,7 +4897,7 @@ function SummariesPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
                           >
                             Cancel
                           </button>
-                        </div>
+        </div>
                       ) : (
                         <div className="group relative">
                           <h3 className="text-lg font-medium text-gray-900 mb-1 pr-8">
@@ -4686,10 +4916,10 @@ function SummariesPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
                           <p className="text-sm text-gray-500 font-light">
                             Created {new Date(summary.createdAt).toLocaleDateString()}
                           </p>
-                        </div>
+            </div>
                       )}
-                    </div>
-                  </div>
+          </div>
+        </div>
 
                   <div className="prose max-w-none">
                     <p className="text-gray-700 font-light">
@@ -4704,41 +4934,41 @@ function SummariesPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
                         {isExpanded ? "Show Less" : "Read More"}
                       </button>
                     )}
-                  </div>
+              </div>
 
                   <div className="space-y-2 pt-4">
-                    <button
-                      onClick={async () => {
-                        try {
-                          const { Document, Packer, Paragraph, TextRun } = await import("docx");
-                          const doc = new Document({
+                <button
+                  onClick={async () => {
+                    try {
+                      const { Document, Packer, Paragraph, TextRun } = await import("docx");
+                      const doc = new Document({
                             sections: [{
-                              properties: {},
-                              children: [
-                                new Paragraph({
+                            properties: {},
+                            children: [
+                              new Paragraph({
                                   children: [new TextRun({ text: summary.title || "Club Meeting Summary", bold: true, size: 32 })],
-                                  spacing: { after: 300 },
-                                }),
+                                spacing: { after: 300 },
+                              }),
                                 ...(summaryText).split("\n").map(line =>
                                   new Paragraph({
                                     children: [new TextRun({ text: line, size: 24 })],
                                     spacing: { after: 100 },
                                   })
-                                ),
-                              ],
+                              ),
+                            ],
                             }],
-                          });
-                          const blob = await Packer.toBlob(doc);
-                          saveAs(blob, `${summary.title || 'meeting_summary'}.docx`);
-                        } catch (err) {
-                          console.error('Error generating DOCX:', err);
-                        }
-                      }}
+                      });
+                      const blob = await Packer.toBlob(doc);
+                      saveAs(blob, `${summary.title || 'meeting_summary'}.docx`);
+                    } catch (err) {
+                      console.error('Error generating DOCX:', err);
+                    }
+                  }}
                       className="w-full px-4 py-2.5 bg-orange-500 text-white font-medium rounded-xl hover:bg-orange-600 transition-colors duration-200 flex items-center justify-center gap-2"
-                    >
+                >
                       <Download className="w-4 h-4" />
                       Download Summary
-                    </button>
+                </button>
 
                     {/* Email Button */}
                     <button
@@ -4753,19 +4983,19 @@ function SummariesPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
                       Share via Email
                     </button>
 
-                    {summary.audioUrl && (
-                      <a
-                        href={summary.audioUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                {summary.audioUrl && (
+                  <a
+                    href={summary.audioUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
                         className="w-full px-4 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center gap-2"
-                      >
+                  >
                         <Play className="w-4 h-4" />
                         Listen to Recording
-                      </a>
-                    )}
-                  </div>
-                </div>
+                  </a>
+                )}
+              </div>
+            </div>
               </motion.div>
             );
           })}
@@ -4988,12 +5218,12 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
                          <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-lg border border-white/20">
                <img src="/new_logo.png" alt="Clubly" className="w-6 h-6" />
              </div>
-            {!sidebarCompressed && (
+          {!sidebarCompressed && (
               <div>
                 <h1 className="text-xl font-extralight text-white">Clubly</h1>
                 <p className="text-xs text-gray-400 font-extralight">AI-Powered Management</p>
               </div>
-            )}
+          )}
           </motion.div>
         </div>
 
@@ -5054,7 +5284,7 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
           <motion.div 
             className={cn(
               "flex items-center rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 p-3 transition-all duration-300 hover:bg-white/10",
-              sidebarCompressed ? "justify-center" : "gap-3"
+            sidebarCompressed ? "justify-center" : "gap-3"
             )}
             whileHover={{ scale: 1.02 }}
           >
@@ -5084,8 +5314,8 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
             transition={{ duration: 0.3 }}
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
           </motion.div>
         </motion.button>
       </aside>

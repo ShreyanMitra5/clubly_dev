@@ -59,12 +59,12 @@ export default function SemesterRoadmapPage() {
       await new Promise(resolve => setTimeout(resolve, 2000));
       setHasRoadmap(true);
       setShowSetupModal(false);
-    } catch (error) {
+      } catch (error) {
       console.error('Error generating roadmap:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+      } finally {
+        setLoading(false);
+      }
+    };
 
   // Mock stats
   const totalMeetings = 24;
@@ -107,7 +107,7 @@ export default function SemesterRoadmapPage() {
               animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
               transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
             />
-          </div>
+        </div>
 
           <div className="relative z-10 max-w-3xl mx-auto">
             <motion.div
@@ -143,20 +143,20 @@ export default function SemesterRoadmapPage() {
               transition={{ duration: 0.8, delay: 0.4 }}
             >
               <form onSubmit={(e) => { e.preventDefault(); generateRoadmap(); }} className="space-y-8">
-                <div>
+            <div>
                   <label className="block text-lg font-light text-gray-900 mb-4">Club Focus</label>
-                  <input
-                    type="text"
+              <input
+                type="text"
                     value={setupForm.topic}
                     onChange={(e) => setSetupForm({...setupForm, topic: e.target.value})}
                     className="w-full px-6 py-4 bg-white/50 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-extralight text-lg placeholder-gray-400"
                     placeholder="e.g., Programming, Robotics, Soccer, Math"
                     required
-                  />
-                </div>
+              />
+            </div>
 
                 <div className="grid md:grid-cols-2 gap-6">
-                  <div>
+              <div>
                     <label className="block text-lg font-light text-gray-900 mb-4">Academic Year Start</label>
                     <input
                       type="date"
@@ -165,9 +165,9 @@ export default function SemesterRoadmapPage() {
                       className="w-full px-6 py-4 bg-white/50 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-extralight text-lg"
                       required
                     />
-                  </div>
-                  
-                  <div>
+              </div>
+
+              <div>
                     <label className="block text-lg font-light text-gray-900 mb-4">Academic Year End</label>
                     <input
                       type="date"
@@ -176,8 +176,8 @@ export default function SemesterRoadmapPage() {
                       className="w-full px-6 py-4 bg-white/50 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-extralight text-lg"
                       required
                     />
-                  </div>
-                </div>
+              </div>
+            </div>
 
                 <div>
                   <label className="block text-lg font-light text-gray-900 mb-4">Meeting Frequency</label>
@@ -202,7 +202,7 @@ export default function SemesterRoadmapPage() {
                     placeholder="What do you want to achieve this semester?"
                     required
                   />
-                </div>
+              </div>
 
                 <motion.button
                   type="submit"
@@ -229,8 +229,8 @@ export default function SemesterRoadmapPage() {
                 </motion.button>
               </form>
             </motion.div>
-          </div>
-        </div>
+                      </div>
+                </div>
       </ClubLayout>
     );
   }
@@ -250,7 +250,7 @@ export default function SemesterRoadmapPage() {
             animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.4, 0.2] }}
             transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
           />
-        </div>
+                </div>
 
         <div className="relative z-10 space-y-8">
           {/* Header Section */}
@@ -328,13 +328,13 @@ export default function SemesterRoadmapPage() {
                 <div className="flex items-center justify-between mb-4">
                   <div className={`w-12 h-12 bg-gradient-to-r ${stat.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
                     <stat.icon className="w-6 h-6 text-white" />
-                  </div>
+            </div>
                   <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all duration-300" />
-                </div>
-                
+        </div>
+
                 <div className="text-3xl font-light text-gray-900 mb-1">
                   {stat.value}
-                </div>
+            </div>
                 <div className="text-sm text-gray-600 font-extralight mb-3">{stat.label}</div>
                 
                 {stat.showProgress && (
@@ -345,7 +345,7 @@ export default function SemesterRoadmapPage() {
                       animate={{ width: `${progressPercentage}%` }}
                       transition={{ duration: 1, delay: 1.2 }}
                     />
-                  </div>
+                </div>
                 )}
               </motion.div>
             ))}
@@ -400,9 +400,9 @@ export default function SemesterRoadmapPage() {
               {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
                 <div key={day} className="p-4 text-center font-light text-gray-700 border-r border-gray-200/50 last:border-r-0">
                   {day}
-                </div>
-              ))}
-            </div>
+                                  </div>
+                                ))}
+                              </div>
             
             {/* Calendar Days */}
             <div className="grid grid-cols-7">
@@ -431,7 +431,7 @@ export default function SemesterRoadmapPage() {
                           : 'text-gray-400'
                     }`}>
                       {day.getDate()}
-                    </div>
+                        </div>
                     
                     {/* Sample Events */}
                     {isCurrentMonth && day.getDate() % 7 === 0 && (
@@ -458,7 +458,7 @@ export default function SemesterRoadmapPage() {
                   </motion.div>
                 );
               })}
-            </div>
+              </div>
           </motion.div>
 
           {/* Progress Stats - Moved Below Calendar */}
@@ -485,13 +485,13 @@ export default function SemesterRoadmapPage() {
                 <div className="flex items-center justify-between mb-4">
                   <div className={`w-12 h-12 bg-gradient-to-r ${stat.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
                     <stat.icon className="w-6 h-6 text-white" />
-                  </div>
+            </div>
                   <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all duration-300" />
-                </div>
+          </div>
                 
                 <div className="text-3xl font-light text-gray-900 mb-1">
                   {stat.value}
-                </div>
+        </div>
                 <div className="text-sm text-gray-600 font-extralight mb-3">{stat.label}</div>
                 
                 {stat.showProgress && (
@@ -502,13 +502,13 @@ export default function SemesterRoadmapPage() {
                       animate={{ width: `${progressPercentage}%` }}
                       transition={{ duration: 1, delay: 2.4 }}
                     />
-                  </div>
-                )}
+        </div>
+      )}
               </motion.div>
             ))}
           </motion.div>
+          </div>
         </div>
-      </div>
     </ClubLayout>
   );
 } 
