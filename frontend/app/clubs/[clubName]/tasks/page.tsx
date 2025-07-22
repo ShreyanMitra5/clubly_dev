@@ -183,6 +183,11 @@ export default function TaskManager() {
     }
   };
 
+  // Sort tasks by priority
+  const highPriority = tasks.filter(t => t.priority === TaskPriority.HIGH);
+  const mediumPriority = tasks.filter(t => t.priority === TaskPriority.MEDIUM);
+  const lowPriority = tasks.filter(t => t.priority === TaskPriority.LOW);
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -193,31 +198,69 @@ export default function TaskManager() {
 
   return (
     <ClubLayout>
-      <div className="p-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-pulse-500 mb-2">Task Manager</h1>
-          <p className="text-gray-600">Assign and track tasks for officers and members</p>
+      <div className="relative min-h-screen bg-gradient-to-br from-white via-orange-50 to-orange-100 p-0">
+        {/* Abstract background shapes */}
+        <div className="absolute inset-0 pointer-events-none z-0">
+          <div className="absolute -top-24 -left-24 w-96 h-96 bg-gradient-to-br from-orange-200/40 to-orange-400/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-0 w-80 h-80 bg-gradient-to-tr from-black/10 to-orange-200/10 rounded-full blur-2xl" />
         </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 py-12">
+          {/* Header */}
+          <div className="mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+              <h1 className="text-4xl font-extralight text-gray-900 mb-2 tracking-tight">Quick Tasks</h1>
+              <p className="text-gray-500 font-light">Assign and track tasks for officers and members</p>
+            </div>
+            <button
+              onClick={() => setIsFormOpen(true)}
+              className="inline-flex items-center px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-xl shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-400"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+              Add Task
+            </button>
+          </div>
 
-        {/* Rest of the existing content with updated styling */}
-        <div className="max-w-7xl mx-auto">
-          {error && (
-            <div className="mt-6 rounded-md bg-red-50 p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">{error}</h3>
-                </div>
+          {/* Task Columns */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* High Priority */}
+            <div>
+              <h2 className="text-lg font-semibold text-red-600 mb-4 flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-red-500 inline-block" /> High Urgency
+              </h2>
+              <div className="space-y-6">
+                {highPriority.length === 0 && <div className="text-gray-400 text-sm font-light">No high urgency tasks</div>}
+                {highPriority.map(task => (
+                  <TaskCard key={task.id} task={task} onEdit={handleEditTask} onDelete={handleDeleteTask} onStatusChange={handleUpdateTask} />
+                ))}
               </div>
             </div>
-          )}
+            {/* Medium Priority */}
+            <div>
+              <h2 className="text-lg font-semibold text-yellow-600 mb-4 flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-yellow-400 inline-block" /> Medium Urgency
+              </h2>
+              <div className="space-y-6">
+                {mediumPriority.length === 0 && <div className="text-gray-400 text-sm font-light">No medium urgency tasks</div>}
+                {mediumPriority.map(task => (
+                  <TaskCard key={task.id} task={task} onEdit={handleEditTask} onDelete={handleDeleteTask} onStatusChange={handleUpdateTask} />
+                ))}
+              </div>
+            </div>
+            {/* Low Priority */}
+            <div>
+              <h2 className="text-lg font-semibold text-green-600 mb-4 flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-green-400 inline-block" /> Low Urgency
+              </h2>
+              <div className="space-y-6">
+                {lowPriority.length === 0 && <div className="text-gray-400 text-sm font-light">No low urgency tasks</div>}
+                {lowPriority.map(task => (
+                  <TaskCard key={task.id} task={task} onEdit={handleEditTask} onDelete={handleDeleteTask} onStatusChange={handleUpdateTask} />
+                ))}
+              </div>
+            </div>
+          </div>
 
-          {/* Task Form Modal */}
+          {/* Task Form Modal (unchanged) */}
           {isFormOpen && (
             <div className="fixed inset-0 z-50 overflow-y-auto">
               <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
@@ -305,65 +348,43 @@ export default function TaskManager() {
           )}
 
           {/* Task List */}
-          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {tasks.map(task => (
-              <div
-                key={task.id}
-                className="relative flex flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow transition hover:shadow-md"
-              >
-                <div className="p-6">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium text-gray-900 line-clamp-1">{task.title}</h3>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleEditTask(task)}
-                        className="text-gray-400 hover:text-indigo-500 transition-colors"
-                      >
-                        <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                        </svg>
-                      </button>
-                      <button
-                        onClick={() => handleDeleteTask(task.id)}
-                        className="text-gray-400 hover:text-red-500 transition-colors"
-                      >
-                        <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <p className="mt-2 text-sm text-gray-600 line-clamp-2">{task.description}</p>
-                  
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <span className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${getPriorityColor(task.priority)}`}>
-                      {task.priority.charAt(0).toUpperCase() + task.priority.slice(1).toLowerCase()} Priority
-                    </span>
-                    <select
-                      value={task.status}
-                      onChange={(e) => handleUpdateTask(task.id, { status: e.target.value as TaskStatus })}
-                      className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset cursor-pointer ${getStatusColor(task.status)}`}
-                    >
-                      {Object.values(TaskStatus).map(status => (
-                        <option key={status} value={status}>
-                          {status.replace('_', ' ').charAt(0).toUpperCase() + status.slice(1).toLowerCase().replace('_', ' ')}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {task.dueDate && (
-                    <div className="mt-4 flex items-center text-sm text-gray-500">
-                      <svg className="mr-1.5 h-4 w-4 flex-shrink-0 text-gray-400" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-                      </svg>
-                      Due {new Date(task.dueDate).toLocaleDateString()}
-                    </div>
-                  )}
-                </div>
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* High Priority */}
+            <div>
+              <h2 className="text-lg font-semibold text-red-600 mb-4 flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-red-500 inline-block" /> High Urgency
+              </h2>
+              <div className="space-y-6">
+                {highPriority.length === 0 && <div className="text-gray-400 text-sm font-light">No high urgency tasks</div>}
+                {highPriority.map(task => (
+                  <TaskCard key={task.id} task={task} onEdit={handleEditTask} onDelete={handleDeleteTask} onStatusChange={handleUpdateTask} />
+                ))}
               </div>
-            ))}
+            </div>
+            {/* Medium Priority */}
+            <div>
+              <h2 className="text-lg font-semibold text-yellow-600 mb-4 flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-yellow-400 inline-block" /> Medium Urgency
+              </h2>
+              <div className="space-y-6">
+                {mediumPriority.length === 0 && <div className="text-gray-400 text-sm font-light">No medium urgency tasks</div>}
+                {mediumPriority.map(task => (
+                  <TaskCard key={task.id} task={task} onEdit={handleEditTask} onDelete={handleDeleteTask} onStatusChange={handleUpdateTask} />
+                ))}
+              </div>
+            </div>
+            {/* Low Priority */}
+            <div>
+              <h2 className="text-lg font-semibold text-green-600 mb-4 flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-green-400 inline-block" /> Low Urgency
+              </h2>
+              <div className="space-y-6">
+                {lowPriority.length === 0 && <div className="text-gray-400 text-sm font-light">No low urgency tasks</div>}
+                {lowPriority.map(task => (
+                  <TaskCard key={task.id} task={task} onEdit={handleEditTask} onDelete={handleDeleteTask} onStatusChange={handleUpdateTask} />
+                ))}
+              </div>
+            </div>
           </div>
 
           {tasks.length === 0 && (
@@ -389,5 +410,63 @@ export default function TaskManager() {
         </div>
       </div>
     </ClubLayout>
+  );
+}
+
+// TaskCard component for visual polish
+function TaskCard({ task, onEdit, onDelete, onStatusChange }) {
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case TaskPriority.HIGH:
+        return 'bg-red-100 text-red-700';
+      case TaskPriority.MEDIUM:
+        return 'bg-yellow-100 text-yellow-700';
+      case TaskPriority.LOW:
+        return 'bg-green-100 text-green-700';
+    }
+  };
+  const getStatusColor = (status) => {
+    switch (status) {
+      case TaskStatus.TODO:
+        return 'bg-gray-100 text-gray-600';
+      case TaskStatus.IN_PROGRESS:
+        return 'bg-blue-100 text-blue-700';
+      case TaskStatus.COMPLETED:
+        return 'bg-green-100 text-green-700';
+    }
+  };
+  return (
+    <div className="rounded-2xl bg-white shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200 p-6 flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-light text-gray-900 truncate">{task.title}</h3>
+        <div className="flex gap-2">
+          <button onClick={() => onEdit(task)} className="text-gray-400 hover:text-orange-500 transition-colors">
+            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
+          </button>
+          <button onClick={() => onDelete(task.id)} className="text-gray-400 hover:text-red-500 transition-colors">
+            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+          </button>
+        </div>
+      </div>
+      <p className="text-sm text-gray-500 font-light line-clamp-2 mb-2">{task.description}</p>
+      <div className="flex flex-wrap gap-2 items-center mt-auto">
+        <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(task.priority)}`}>{task.priority.charAt(0).toUpperCase() + task.priority.slice(1).toLowerCase()} Priority</span>
+        <select
+          value={task.status}
+          onChange={e => onStatusChange(task.id, { status: e.target.value })}
+          className={`px-2 py-1 rounded text-xs font-medium cursor-pointer ${getStatusColor(task.status)}`}
+        >
+          {Object.values(TaskStatus).map(status => (
+            <option key={status} value={status}>{status.replace('_', ' ').charAt(0).toUpperCase() + status.slice(1).toLowerCase().replace('_', ' ')}</option>
+          ))}
+        </select>
+        {task.dueDate && (
+          <span className="ml-auto flex items-center gap-1 text-xs text-gray-400">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            {new Date(task.dueDate).toLocaleDateString()}
+          </span>
+        )}
+      </div>
+    </div>
   );
 } 

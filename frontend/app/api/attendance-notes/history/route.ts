@@ -13,7 +13,7 @@ const BUCKET = process.env.S3_BUCKET_NAME!;
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, summary, transcript, clubName, createdAt } = await request.json();
+    const { userId, summary, transcript, clubName, clubId, createdAt, title } = await request.json();
     if (!userId || !summary || !transcript || !createdAt) {
       return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
     }
@@ -33,29 +33,49 @@ export async function POST(request: NextRequest) {
       console.log('[MeetingNotesHistory][POST] No existing history found, starting new. Error:', e?.message || e);
     }
 
-    // Add new meeting note to the top
-    const newNote = { summary, transcript, clubName, createdAt };
+    // If no title provided, try to generate one
+    let finalTitle = title;
+    if (!finalTitle) {
+      try {
+        const titleRes = await fetch(`${process.env.VERCEL_URL || 'http://localhost:3000'}/api/attendance-notes/generate-title`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ summary }),
+        });
+        if (titleRes.ok) {
+          const titleData = await titleRes.json();
+          finalTitle = titleData.title;
+        }
+      } catch (err) {
+        console.error('Error generating title:', err);
+      }
+    }
+
+    // Add new meeting note to the top with unique ID
+    const newNote = { 
+      id: Date.now().toString(),
+      summary, 
+      transcript, 
+      clubName, 
+      clubId,
+      createdAt,
+      title: finalTitle || 'Untitled Meeting'
+    };
     history.unshift(newNote);
 
     // Save back to S3
-    try {
-      const putCmd = new PutObjectCommand({
-        Bucket: BUCKET,
-        Key: key,
-        Body: JSON.stringify(history),
-        ContentType: 'application/json',
-      });
-      await s3.send(putCmd);
-      console.log('[MeetingNotesHistory][POST] Successfully saved history, new length:', history.length);
-    } catch (e) {
-      console.error('[MeetingNotesHistory][POST] Error saving to S3:', e?.message || e);
-      return NextResponse.json({ success: false, error: e?.message || e }, { status: 500 });
-    }
+    const putCmd = new PutObjectCommand({
+      Bucket: BUCKET,
+      Key: key,
+      Body: JSON.stringify(history),
+      ContentType: 'application/json',
+    });
+    await s3.send(putCmd);
 
     return NextResponse.json({ success: true });
-  } catch (e) {
-    console.error('[MeetingNotesHistory][POST] Unexpected error:', e?.message || e);
-    return NextResponse.json({ success: false, error: e?.message || e }, { status: 500 });
+  } catch (error: any) {
+    console.error('[MeetingNotesHistory][POST] Error:', error);
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
 
@@ -65,27 +85,26 @@ export async function GET(request: NextRequest) {
   if (!userId) return NextResponse.json({ error: 'Missing userId' }, { status: 400 });
 
   const key = `meeting-notes-history/${userId}.json`;
-  console.log('[MeetingNotesHistory][GET] userId:', userId, 'key:', key);
   try {
     const getCmd = new GetObjectCommand({ Bucket: BUCKET, Key: key });
     const data = await s3.send(getCmd);
     const body = await data.Body.transformToString();
     const history = JSON.parse(body);
-    console.log('[MeetingNotesHistory][GET] Loaded history, length:', history.length);
     return NextResponse.json({ history });
   } catch (e) {
-    console.log('[MeetingNotesHistory][GET] No history found or error:', e?.message || e);
     return NextResponse.json({ history: [] });
   }
 }
 
-export async function PATCH(request: NextRequest) {
+export async function PUT(request: NextRequest) {
   try {
-    const { userId, clubName, clubId, title } = await request.json();
-    if (!userId || (!clubName && !clubId) || !title) {
-      return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
+    const { userId, summaryId, title, clubId } = await request.json();
+    if (!userId || !summaryId || !title || !clubId) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
+
     const key = `meeting-notes-history/${userId}.json`;
+    
     // Fetch existing history
     let history: any[] = [];
     try {
@@ -94,30 +113,29 @@ export async function PATCH(request: NextRequest) {
       const body = await data.Body.transformToString();
       history = JSON.parse(body);
     } catch (e) {
-      return NextResponse.json({ success: false, error: 'No history found' }, { status: 404 });
+      return NextResponse.json({ error: 'History not found' }, { status: 404 });
     }
-    // Find the first matching entry (most recent for this club)
-    const idx = history.findIndex(note =>
-      (clubId && note.clubId === clubId) || (!clubId && note.clubName === clubName)
-    );
-    if (idx === -1) {
-      return NextResponse.json({ success: false, error: 'No matching meeting summary found' }, { status: 404 });
-    }
-    history[idx].title = title;
+
+    // Find and update the specific summary that matches both ID and clubId
+    const updatedHistory = history.map(note => {
+      if (note.id === summaryId && note.clubId === clubId) {
+        return { ...note, title };
+      }
+      return note;
+    });
+
     // Save back to S3
-    try {
-      const putCmd = new PutObjectCommand({
-        Bucket: BUCKET,
-        Key: key,
-        Body: JSON.stringify(history),
-        ContentType: 'application/json',
-      });
-      await s3.send(putCmd);
-    } catch (e) {
-      return NextResponse.json({ success: false, error: e?.message || e }, { status: 500 });
-    }
+    const putCmd = new PutObjectCommand({
+      Bucket: BUCKET,
+      Key: key,
+      Body: JSON.stringify(updatedHistory),
+      ContentType: 'application/json',
+    });
+    await s3.send(putCmd);
+
     return NextResponse.json({ success: true });
-  } catch (e) {
-    return NextResponse.json({ success: false, error: e?.message || e }, { status: 500 });
+  } catch (error: any) {
+    console.error('[MeetingNotesHistory][PUT] Error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 } 

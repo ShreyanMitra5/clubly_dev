@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 
-const LandingHumanoidSection = () => {
+const LandingHumanoidSection = ({ openSignInModal }: { openSignInModal?: () => void }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const cardsContainerRef = useRef<HTMLDivElement>(null);
   const [activeCardIndex, setActiveCardIndex] = useState(0);
@@ -136,7 +136,6 @@ const LandingHumanoidSection = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.8, delay: 0.2 }}
               >
-                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-orange-500 text-white text-sm mr-3 font-light">02</span>
                 <span className="text-sm font-extralight text-black/80">AI-powered Student Success</span>
               </motion.div>
             </div>
@@ -351,6 +350,7 @@ const LandingHumanoidSection = () => {
                     transition={{ delay: 0.7, duration: 0.8 }}
                     whileHover={{ scale: 1.05, y: -2 }}
                     whileTap={{ scale: 0.95 }}
+                    onClick={openSignInModal}
                   >
                     Start Your Transformation
                   </motion.button>

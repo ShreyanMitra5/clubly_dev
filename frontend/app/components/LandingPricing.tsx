@@ -4,7 +4,7 @@ import React, { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { Check, Zap, Crown, Star, ArrowRight } from 'lucide-react';
 
-export default function LandingPricing() {
+export default function LandingPricing({ openSignInModal }: { openSignInModal?: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
 
@@ -13,7 +13,7 @@ export default function LandingPricing() {
       name: "Starter",
       price: 0,
       period: "Free forever",
-      description: "Perfect for small student organizations getting started",
+      description: "Perfect for small clubs getting started",
       features: [
         "Up to 5 club members",
         "Basic AI presentations",
@@ -21,7 +21,7 @@ export default function LandingPricing() {
         "Email support",
         "Standard templates"
       ],
-      cta: "Start for Free",
+      cta: "Get Started",
       popular: false
     },
     {
@@ -39,7 +39,7 @@ export default function LandingPricing() {
         "Event management",
         "Member engagement tools"
       ],
-      cta: "Start Free Trial",
+      cta: "Get Started",
       popular: true
     },
     {
@@ -161,16 +161,25 @@ export default function LandingPricing() {
 
                 {/* CTA Button */}
                 <motion.button
-                  className={`w-full py-4 rounded-2xl font-light transition-all duration-300 flex items-center justify-center space-x-2 ${
+                  key={plan.name}
+                  className={`w-full py-4 px-6 rounded-xl font-medium text-lg transition-all duration-300 ${
                     plan.popular
-                      ? 'bg-black text-white hover:bg-black/90 shadow-lg'
-                      : 'border border-black/20 text-black hover:bg-black/5'
+                      ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 shadow-lg'
+                      : plan.cta === 'Contact Sales'
+                      ? 'border-2 border-gray-200 text-gray-700 hover:border-orange-300 hover:bg-orange-50'
+                      : 'bg-gray-900 text-white hover:bg-gray-800'
                   }`}
-                  whileHover={{ scale: 1.02 }}
+                  whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
+                  onClick={() => {
+                    if (plan.cta === 'Contact Sales') {
+                      window.open('mailto:clublyteam@gmail.com?subject=Enterprise Inquiry&body=Hi, I would like to learn more about Clubly Enterprise pricing and features.', '_blank');
+                    } else {
+                      openSignInModal?.();
+                    }
+                  }}
                 >
-                  <span>{plan.cta}</span>
-                  <ArrowRight className="w-4 h-4" />
+                  {plan.cta}
                 </motion.button>
               </div>
             </motion.div>

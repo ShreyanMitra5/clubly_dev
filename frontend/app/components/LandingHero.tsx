@@ -14,7 +14,7 @@ import {
   Award
 } from 'lucide-react';
 
-export default function LandingHero() {
+export default function LandingHero({ openSignInModal }: { openSignInModal?: () => void }) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
 
@@ -67,7 +67,7 @@ export default function LandingHero() {
                   animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                   transition={{ duration: 0.6, delay: 0.7 }}
                 >
-                  student organization
+                  clubs
                 </motion.span>
                 <motion.span 
                   className="block"
@@ -103,14 +103,16 @@ export default function LandingHero() {
                 className="bg-black text-white px-8 py-4 rounded-lg font-light text-lg hover:bg-gray-900 transition-all duration-300 shadow-sm"
                 whileHover={{ scale: 1.02, y: -1 }}
                 whileTap={{ scale: 0.98 }}
+                onClick={openSignInModal}
               >
-                Start free trial
+                Get Started
               </motion.button>
               
               <motion.button 
                 className="border border-gray-300 text-black px-8 py-4 rounded-lg font-light text-lg hover:bg-gray-50 transition-all duration-300"
                 whileHover={{ scale: 1.02, y: -1 }}
                 whileTap={{ scale: 0.98 }}
+                onClick={() => window.open('mailto:clublyteam@gmail.com?subject=Demo Request&body=Hi, I would like to schedule a demo of Clubly.', '_blank')}
               >
                 View demo
               </motion.button>

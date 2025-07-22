@@ -4,7 +4,7 @@ import React, { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { Users, Clock, Check, ArrowRight, Star, Zap, Play, Brain, Target, Sparkles, ChevronRight } from 'lucide-react';
 
-export default function LandingMadeByHumans() {
+export default function LandingMadeByHumans({ openSignInModal }: { openSignInModal?: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
 
@@ -87,7 +87,7 @@ export default function LandingMadeByHumans() {
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-extralight text-white mb-8 leading-tight">
             Everything Your{' '}
             <span className="text-orange-500 font-light">
-              Student Club
+              Club
             </span>
             <br />
             Needs to{' '}
@@ -97,7 +97,7 @@ export default function LandingMadeByHumans() {
           </h2>
           
           <p className="text-xl text-gray-300 font-extralight max-w-3xl mx-auto leading-relaxed mb-12">
-            Streamline operations, boost engagement, and create professional content with our comprehensive AI toolkit designed specifically for student organizations.
+            Streamline operations, boost engagement, and create professional content with our comprehensive AI toolkit designed specifically for clubs.
           </p>
 
           {/* Benefits Grid */}
@@ -179,8 +179,9 @@ export default function LandingMadeByHumans() {
               className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-10 py-4 rounded-lg font-extralight text-lg flex items-center space-x-2 hover:from-orange-600 hover:to-orange-700 transition-all duration-300 group shadow-lg"
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
+              onClick={openSignInModal}
             >
-              <span>Start Free Trial</span>
+              <span>Get Started</span>
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </motion.button>
             
@@ -188,6 +189,7 @@ export default function LandingMadeByHumans() {
               className="border border-white/20 text-white px-10 py-4 rounded-lg font-extralight text-lg hover:bg-white/5 transition-all duration-300 flex items-center space-x-2 group"
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
+              onClick={() => window.open('mailto:clublyteam@gmail.com?subject=Demo Request&body=Hi, I would like to see a demo of Clubly.', '_blank')}
             >
               <Play className="w-4 h-4" />
               <span>See Demo</span>

@@ -38,7 +38,16 @@ import {
   Download,
   X,
   Activity,
-  Star
+  Star,
+  Upload,
+  UserPlus,
+  Trash2,
+  UserX,
+  Send,
+  Loader2,
+  History,
+  Eye,
+  Edit2
 } from 'lucide-react';
 
 interface ClubLayoutProps {
@@ -50,6 +59,7 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
   const { user } = useUser();
   const [history, setHistory] = useState<any[]>([]);
   const [meetingNotes, setMeetingNotes] = useState<any[]>([]);
+  const [hoursSaved, setHoursSaved] = useState(0);
   const [loading, setLoading] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
@@ -72,9 +82,15 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
         if (notesResponse.ok) {
           const notesData = await notesResponse.json();
           const clubId = clubInfo?.id || clubInfo?.clubId;
-          setMeetingNotes((notesData.history || []).filter((note: any) =>
+          const filteredNotes = (notesData.history || []).filter((note: any) =>
             (note.clubId && note.clubId === clubId) || (!note.clubId && note.clubName === clubName)
-          ));
+          );
+          setMeetingNotes(filteredNotes);
+          
+          // Calculate hours saved after data is loaded
+          const presentationHours = history.length * 1; // 1 hour per presentation
+          const notesHours = filteredNotes.length * 0.33; // 20 minutes per note
+          setHoursSaved(Math.round(presentationHours + notesHours));
         }
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -85,11 +101,23 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
     fetchData();
   }, [user, clubInfo, clubName]);
 
+  // Helper function to format time ago
+  const getTimeAgo = (date: Date) => {
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+    return `${Math.floor(diffInSeconds / 2592000)}mo ago`;
+  };
+
   const stats = [
     { icon: Presentation, value: history.length, label: "Presentations Created", color: "from-orange-500 to-orange-600" },
     { icon: Clock, value: meetingNotes.length, label: "Meeting Notes", color: "from-blue-500 to-blue-600" },
     { icon: Users, value: 15, label: "Active Members", color: "from-green-500 to-green-600" },
-    { icon: TrendingUp, value: 85, label: "Engagement Rate", suffix: "%", color: "from-purple-500 to-purple-600" }
+    { icon: TrendingUp, value: hoursSaved, label: "Hours Saved", suffix: "h", color: "from-purple-500 to-purple-600" }
   ];
 
   const quickActions = [
@@ -213,30 +241,7 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
                 Streamline your organization with AI-powered tools designed to amplify your impact and engage your community.
               </motion.p>
 
-              <motion.div 
-                className="flex flex-col sm:flex-row gap-4"
-                initial={{ opacity: 0, y: 20 }}
-                animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                transition={{ duration: 0.8, delay: 0.5 }}
-              >
-                <motion.button 
-                  className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-xl font-light text-lg flex items-center justify-center space-x-3 hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg group"
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Brain className="w-5 h-5" />
-                  <span>Create AI Presentation</span>
-                </motion.button>
-                
-                <motion.button 
-                  className="border border-white/20 text-white px-8 py-4 rounded-xl font-light text-lg hover:bg-white/5 transition-all duration-300 flex items-center justify-center space-x-3 group"
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Calendar className="w-5 h-5" />
-                  <span>View Roadmap</span>
-                </motion.button>
-              </motion.div>
+
             </div>
 
             <motion.div 
@@ -288,47 +293,7 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
         </motion.div>
 
         {/* Quick Actions */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-          transition={{ duration: 0.8, delay: 1.0 }}
-        >
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-3xl font-light text-gray-900">Quick Actions</h2>
-            <span className="text-sm text-gray-500 font-extralight">Powered by AI</span>
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {quickActions.map((action, index) => (
-              <motion.div
-                key={action.title}
-                className="group bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer"
-                initial={{ opacity: 0, y: 20 }}
-                animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                transition={{ delay: 1.2 + index * 0.1, duration: 0.6 }}
-                whileHover={{ y: -5, scale: 1.02 }}
-              >
-                <div className="flex items-center justify-between mb-6">
-                  <motion.div 
-                    className={`w-16 h-16 bg-gradient-to-r ${action.gradient} rounded-2xl flex items-center justify-center`}
-                    whileHover={{ rotate: 360, scale: 1.1 }}
-                    transition={{ duration: 0.6, ease: "easeInOut" }}
-                  >
-                    <action.icon className="w-8 h-8 text-white" />
-                  </motion.div>
-                  <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all duration-300" />
-                </div>
-                
-                <h3 className="text-xl font-light text-gray-900 mb-2 group-hover:text-gray-700 transition-colors duration-300">
-                  {action.title}
-                </h3>
-                <p className="text-gray-600 font-extralight leading-relaxed">
-                  {action.description}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
 
         {/* Recent Activity */}
         <motion.div
@@ -350,7 +315,15 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
 
           {history.length > 0 || meetingNotes.length > 0 ? (
             <div className="space-y-4">
-              {history.slice(0, 3).map((item, index) => (
+              {[...history, ...meetingNotes]
+                .sort((a, b) => new Date(b.createdAt || b.timestamp || Date.now()).getTime() - new Date(a.createdAt || a.timestamp || Date.now()).getTime())
+                .slice(0, 5)
+                .map((item, index) => {
+                  const isPresentation = 'topic' in item;
+                  const timestamp = new Date(item.createdAt || item.timestamp || Date.now());
+                  const timeAgo = getTimeAgo(timestamp);
+                  
+                  return (
                 <motion.div
                   key={index}
                   className="flex items-center space-x-4 p-4 bg-gray-50/50 rounded-xl hover:bg-gray-100/50 transition-colors duration-300"
@@ -358,16 +331,25 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
                   animate={inView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
                   transition={{ delay: 1.6 + index * 0.1, duration: 0.6 }}
                 >
-                  <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
+                      <div className={`w-10 h-10 bg-gradient-to-r ${isPresentation ? 'from-orange-500 to-orange-600' : 'from-blue-500 to-blue-600'} rounded-lg flex items-center justify-center`}>
+                        {isPresentation ? (
                     <Presentation className="w-5 h-5 text-white" />
+                        ) : (
+                          <CheckSquare className="w-5 h-5 text-white" />
+                        )}
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-light text-gray-900">Presentation Created</h4>
-                    <p className="text-sm text-gray-600 font-extralight">{item.topic || 'New presentation'}</p>
+                        <h4 className="font-light text-gray-900">
+                          {isPresentation ? 'Presentation Created' : 'Meeting Notes Created'}
+                        </h4>
+                        <p className="text-sm text-gray-600 font-extralight">
+                          {isPresentation ? (item.topic || 'New presentation') : (item.title || 'Meeting notes')}
+                        </p>
                   </div>
-                  <span className="text-xs text-gray-500 font-extralight">2h ago</span>
+                      <span className="text-xs text-gray-500 font-extralight">{timeAgo}</span>
                 </motion.div>
-              ))}
+                  );
+                })}
             </div>
           ) : (
             <div className="text-center py-12">
@@ -497,45 +479,53 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
 
       setGenerationResult(result);
       setShowSuccessModal(true);
-      // Save to backend history
+      
+      // Save to backend history and generate thumbnail
       if (result && user) {
         // Generate thumbnail
         let thumbnailUrl = null;
         try {
-          const presentationId = result.s3Url.split('/').pop().replace('.pptx', '');
           const thumbRes = await fetch('/api/presentations/thumbnail', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               s3Url: result.s3Url,
               userId: user.id,
-              presentationId,
+              presentationId: result.s3Url.split('/').pop()?.replace('.pptx', '') || Date.now().toString()
             }),
           });
-          const thumbData = await thumbRes.json();
-          thumbnailUrl = thumbData.thumbnailUrl;
+          if (thumbRes.ok) {
+            const thumbData = await thumbRes.json();
+            thumbnailUrl = thumbData.thumbnailUrl;
+          } else {
+            console.error('Thumbnail generation failed:', await thumbRes.text());
+          }
         } catch (e) {
-          // fallback: no thumbnail
+          console.error('Error generating thumbnail:', e);
         }
+
+        // Save presentation with thumbnail to history
         await fetch('/api/presentations/history', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             userId: user.id,
             presentation: {
+              id: result.s3Url.split('/').pop()?.replace('.pptx', '') || Date.now().toString(),
               clubId: selectedClub.clubId,
               description: formData.description,
               week: formData.week,
               generatedAt: result.generatedAt,
               s3Url: result.s3Url,
               viewerUrl: result.viewerUrl,
-              thumbnailUrl,
+              thumbnailUrl
             }
           })
         });
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      console.error('Error generating presentation:', err);
+      setError('Failed to generate presentation. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -975,9 +965,7 @@ function TasksPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
             task: formData
           })
         });
-
         if (!response.ok) throw new Error('Failed to update task');
-        
         const updatedTask = await response.json();
         setTasks(tasks.map(t => t.id === editingTask.id ? updatedTask : t));
       } else {
@@ -990,13 +978,10 @@ function TasksPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
             task: formData
           })
         });
-
         if (!response.ok) throw new Error('Failed to create task');
-        
         const newTask = await response.json();
         setTasks([newTask, ...tasks]);
       }
-
       handleCloseForm();
     } catch (err) {
       setError(editingTask ? 'Failed to update task' : 'Failed to create task');
@@ -1032,9 +1017,7 @@ function TasksPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
           task: updates
         })
       });
-
       if (!response.ok) throw new Error('Failed to update task');
-      
       const updatedTask = await response.json();
       setTasks(tasks.map(t => t.id === taskId ? updatedTask : t));
     } catch (err) {
@@ -1048,9 +1031,7 @@ function TasksPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
       const response = await fetch(`/api/tasks?clubId=${encodeURIComponent(clubName as string)}&taskId=${taskId}`, {
         method: 'DELETE'
       });
-
       if (!response.ok) throw new Error('Failed to delete task');
-      
       setTasks(tasks.filter(t => t.id !== taskId));
     } catch (err) {
       setError('Failed to delete task');
@@ -1058,39 +1039,18 @@ function TasksPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
     }
   };
 
-  const getPriorityColor = (priority: TaskPriority) => {
-    switch (priority) {
-      case TaskPriority.HIGH:
-        return 'bg-red-50 text-red-700 ring-red-600/20';
-      case TaskPriority.MEDIUM:
-        return 'bg-yellow-50 text-yellow-700 ring-yellow-600/20';
-      case TaskPriority.LOW:
-        return 'bg-green-50 text-green-700 ring-green-600/20';
-    }
-  };
-
-  const getStatusColor = (status: TaskStatus) => {
-    switch (status) {
-      case TaskStatus.TODO:
-        return 'bg-gray-50 text-gray-600 ring-gray-500/20';
-      case TaskStatus.IN_PROGRESS:
-        return 'bg-blue-50 text-blue-700 ring-blue-600/20';
-      case TaskStatus.COMPLETED:
-        return 'bg-green-50 text-green-700 ring-green-600/20';
-    }
-  };
+  // Sort tasks by priority
+  const highPriority = tasks.filter(t => t.priority === TaskPriority.HIGH);
+  const mediumPriority = tasks.filter(t => t.priority === TaskPriority.MEDIUM);
+  const lowPriority = tasks.filter(t => t.priority === TaskPriority.LOW);
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <motion.div
-            className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-          >
-            <Sparkles className="w-8 h-8 text-white" />
-          </motion.div>
+          <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center animate-spin">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+          </div>
           <p className="text-gray-600 font-extralight">Loading tasks...</p>
         </div>
       </div>
@@ -1098,203 +1058,214 @@ function TasksPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
   }
 
   return (
-    <div className="p-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-pulse-500 mb-2">Task Manager</h1>
-        <p className="text-gray-600">Assign and track tasks for officers and members</p>
+    <div className="relative min-h-screen bg-gradient-to-br from-white via-orange-50 to-orange-100 p-0">
+      {/* Abstract background shapes */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-gradient-to-br from-orange-200/40 to-orange-400/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-80 h-80 bg-gradient-to-tr from-black/10 to-orange-200/10 rounded-full blur-2xl" />
       </div>
+      <div className="relative z-10 max-w-7xl mx-auto px-4 py-12">
+        {/* Header */}
+        <div className="mb-10 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div>
+            <h1 className="text-4xl font-extralight text-gray-900 mb-2 tracking-tight">Quick Tasks</h1>
+            <p className="text-gray-500 font-light">Assign and track tasks for officers and members</p>
+          </div>
+          <button
+            onClick={() => setIsFormOpen(true)}
+            className="inline-flex items-center px-6 py-3 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-xl shadow transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-orange-400"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+            Add Task
+          </button>
+        </div>
 
-      {/* Rest of the existing content with updated styling */}
-      <div className="max-w-7xl mx-auto">
-        {error && (
-          <div className="mt-6 rounded-md bg-red-50 p-4">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">{error}</h3>
-              </div>
+        {/* Task Columns */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* High Priority */}
+          <div>
+            <h2 className="text-lg font-semibold text-red-600 mb-4 flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-red-500 inline-block" /> High Urgency
+            </h2>
+            <div className="space-y-6">
+              {highPriority.length === 0 && <div className="text-gray-400 text-sm font-light">No high urgency tasks</div>}
+              {highPriority.map(task => (
+                <TaskCard key={task.id} task={task} onEdit={handleEditTask} onDelete={handleDeleteTask} onStatusChange={handleUpdateTask} />
+              ))}
             </div>
           </div>
-        )}
+          {/* Medium Priority */}
+          <div>
+            <h2 className="text-lg font-semibold text-yellow-600 mb-4 flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-yellow-400 inline-block" /> Medium Urgency
+            </h2>
+            <div className="space-y-6">
+              {mediumPriority.length === 0 && <div className="text-gray-400 text-sm font-light">No medium urgency tasks</div>}
+              {mediumPriority.map(task => (
+                <TaskCard key={task.id} task={task} onEdit={handleEditTask} onDelete={handleDeleteTask} onStatusChange={handleUpdateTask} />
+              ))}
+            </div>
+          </div>
+          {/* Low Priority */}
+          <div>
+            <h2 className="text-lg font-semibold text-green-600 mb-4 flex items-center gap-2">
+              <span className="w-3 h-3 rounded-full bg-green-400 inline-block" /> Low Urgency
+            </h2>
+            <div className="space-y-6">
+              {lowPriority.length === 0 && <div className="text-gray-400 text-sm font-light">No low urgency tasks</div>}
+              {lowPriority.map(task => (
+                <TaskCard key={task.id} task={task} onEdit={handleEditTask} onDelete={handleDeleteTask} onStatusChange={handleUpdateTask} />
+              ))}
+            </div>
+          </div>
+        </div>
 
         {/* Task Form Modal */}
         {isFormOpen && (
-          <div className="fixed inset-0 z-50 overflow-y-auto">
-            <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
-            <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-              <div className="relative transform overflow-hidden rounded-lg bg-white px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-lg sm:p-6">
-                <div className="absolute right-0 top-0 pr-4 pt-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8 border border-gray-100 animate-fadeIn">
+              <button
+                onClick={handleCloseForm}
+                className="absolute top-4 right-4 text-gray-400 hover:text-orange-500 transition-colors text-2xl"
+                aria-label="Close"
+              >
+                &times;
+              </button>
+              <h2 className="text-2xl font-light text-gray-900 mb-6 text-center">{editingTask ? 'Edit Task' : 'Create Task'}</h2>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                  <input
+                    type="text"
+                    value={formData.title}
+                    onChange={e => setFormData({ ...formData, title: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                    required
+                    placeholder="Task title"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                  <textarea
+                    value={formData.description}
+                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                    rows={3}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                    placeholder="Describe the task (optional)"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                    <select
+                      value={formData.status}
+                      onChange={e => setFormData({ ...formData, status: e.target.value as TaskStatus })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                    >
+                      <option value={TaskStatus.TODO}>To Do</option>
+                      <option value={TaskStatus.IN_PROGRESS}>In Progress</option>
+                      <option value={TaskStatus.COMPLETED}>Completed</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                    <select
+                      value={formData.priority}
+                      onChange={e => setFormData({ ...formData, priority: e.target.value as TaskPriority })}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                    >
+                      <option value={TaskPriority.LOW}>Low</option>
+                      <option value={TaskPriority.MEDIUM}>Medium</option>
+                      <option value={TaskPriority.HIGH}>High</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Due Date</label>
+                  <input
+                    type="date"
+                    value={formData.dueDate}
+                    onChange={e => setFormData({ ...formData, dueDate: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                  />
+                </div>
+                <div className="flex justify-end gap-3 mt-6">
                   <button
                     type="button"
                     onClick={handleCloseForm}
-                    className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                    className="px-6 py-2 rounded-xl border border-gray-200 bg-white text-gray-700 font-light hover:bg-gray-50 transition-colors"
                   >
-                    <span className="sr-only">Close</span>
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-medium shadow transition-colors"
+                  >
+                    {editingTask ? 'Update Task' : 'Create Task'}
                   </button>
                 </div>
-
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Title</label>
-                    <input
-                      type="text"
-                      value={formData.title}
-                      onChange={e => setFormData({ ...formData, title: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Description</label>
-                    <textarea
-                      value={formData.description}
-                      onChange={e => setFormData({ ...formData, description: e.target.value })}
-                      rows={3}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Status</label>
-                      <select
-                        value={formData.status}
-                        onChange={e => setFormData({ ...formData, status: e.target.value as TaskStatus })}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      >
-                        <option value={TaskStatus.TODO}>To Do</option>
-                        <option value={TaskStatus.IN_PROGRESS}>In Progress</option>
-                        <option value={TaskStatus.COMPLETED}>Completed</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Priority</label>
-                      <select
-                        value={formData.priority}
-                        onChange={e => setFormData({ ...formData, priority: e.target.value as TaskPriority })}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                      >
-                        <option value={TaskPriority.LOW}>Low</option>
-                        <option value={TaskPriority.MEDIUM}>Medium</option>
-                        <option value={TaskPriority.HIGH}>High</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Due Date</label>
-                    <input
-                      type="date"
-                      value={formData.dueDate}
-                      onChange={e => setFormData({ ...formData, dueDate: e.target.value })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                    />
-                  </div>
-
-                  <div className="flex justify-end space-x-3">
-                    <button
-                      type="button"
-                      onClick={handleCloseForm}
-                      className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                    >
-                      {editingTask ? 'Update' : 'Create'} Task
-                    </button>
-                  </div>
-                </form>
-              </div>
+              </form>
             </div>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
 
-        {/* Task List */}
-        <div className="mt-8">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-gray-900">Tasks</h2>
-            <button
-              onClick={() => setIsFormOpen(true)}
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            >
-              Add Task
-            </button>
-          </div>
-
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            <ul className="divide-y divide-gray-200">
-              {tasks.map((task) => (
-                <li key={task.id} className="px-6 py-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <input
-                          type="checkbox"
-                          checked={task.status === TaskStatus.COMPLETED}
-                          onChange={() => handleUpdateTask(task.id, { 
-                            status: task.status === TaskStatus.COMPLETED ? TaskStatus.TODO : TaskStatus.COMPLETED 
-                          })}
-                          className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-                        />
-                      </div>
-                      <div className="ml-4">
-                        <div className="flex items-center">
-                          <p className={`text-sm font-medium ${task.status === TaskStatus.COMPLETED ? 'line-through text-gray-500' : 'text-gray-900'}`}>
-                            {task.title}
-                          </p>
-                          <span className={`ml-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${getPriorityColor(task.priority)}`}>
-                            {task.priority}
-                          </span>
-                          <span className={`ml-2 inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${getStatusColor(task.status)}`}>
-                            {task.status}
-                          </span>
-                        </div>
-                        {task.description && (
-                          <p className="text-sm text-gray-500 mt-1">{task.description}</p>
-                        )}
-                        {task.dueDate && (
-                          <p className="text-sm text-gray-500 mt-1">Due: {new Date(task.dueDate).toLocaleDateString()}</p>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleEditTask(task)}
-                        className="text-indigo-600 hover:text-indigo-900 text-sm font-medium"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteTask(task.id)}
-                        className="text-red-600 hover:text-red-900 text-sm font-medium"
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </li>
-              ))}
-            </ul>
-            {tasks.length === 0 && (
-              <div className="text-center py-12">
-                <p className="text-gray-500">No tasks yet. Create your first task!</p>
-              </div>
-            )}
-          </div>
+// TaskCard component for visual polish
+function TaskCard({ task, onEdit, onDelete, onStatusChange }) {
+  const getPriorityColor = (priority) => {
+    switch (priority) {
+      case TaskPriority.HIGH:
+        return 'bg-red-100 text-red-700';
+      case TaskPriority.MEDIUM:
+        return 'bg-yellow-100 text-yellow-700';
+      case TaskPriority.LOW:
+        return 'bg-green-100 text-green-700';
+    }
+  };
+  const getStatusColor = (status) => {
+    switch (status) {
+      case TaskStatus.TODO:
+        return 'bg-gray-100 text-gray-600';
+      case TaskStatus.IN_PROGRESS:
+        return 'bg-blue-100 text-blue-700';
+      case TaskStatus.COMPLETED:
+        return 'bg-green-100 text-green-700';
+    }
+  };
+  return (
+    <div className="rounded-2xl bg-white shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-200 p-6 flex flex-col gap-2">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-light text-gray-900 truncate">{task.title}</h3>
+        <div className="flex gap-2">
+          <button onClick={() => onEdit(task)} className="text-gray-400 hover:text-orange-500 transition-colors">
+            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" /></svg>
+          </button>
+          <button onClick={() => onDelete(task.id)} className="text-gray-400 hover:text-red-500 transition-colors">
+            <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
+          </button>
         </div>
+      </div>
+      <p className="text-sm text-gray-500 font-light line-clamp-2 mb-2">{task.description}</p>
+      <div className="flex flex-wrap gap-2 items-center mt-auto">
+        <span className={`px-2 py-1 rounded text-xs font-medium ${getPriorityColor(task.priority)}`}>{task.priority.charAt(0).toUpperCase() + task.priority.slice(1).toLowerCase()} Priority</span>
+        <select
+          value={task.status}
+          onChange={e => onStatusChange(task.id, { status: e.target.value })}
+          className={`px-2 py-1 rounded text-xs font-medium cursor-pointer ${getStatusColor(task.status)}`}
+        >
+          {Object.values(TaskStatus).map(status => (
+            <option key={status} value={status}>{status.replace('_', ' ').charAt(0).toUpperCase() + status.slice(1).toLowerCase().replace('_', ' ')}</option>
+          ))}
+        </select>
+        {task.dueDate && (
+          <span className="ml-auto flex items-center gap-1 text-xs text-gray-400">
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+            {new Date(task.dueDate).toLocaleDateString()}
+          </span>
+        )}
       </div>
     </div>
   );
@@ -2175,7 +2146,7 @@ function EmailPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
             animate={{ rotate: 360 }}
             transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
           >
-            <Sparkles className="w-8 h-8 text-white" />
+            <Mail className="w-8 h-8 text-white" />
           </motion.div>
           <p className="text-gray-600 font-extralight">Loading email manager...</p>
         </div>
@@ -2184,115 +2155,178 @@ function EmailPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
   }
 
   return (
-    <div className="p-8">
+    <div className="p-8 max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-pulse-500 mb-2">Club Email Manager</h1>
-        <p className="text-gray-600">Manage your club's mailing list and send announcements</p>
+        <h1 className="text-4xl font-light text-gray-900 mb-2">Email Manager</h1>
+        <p className="text-gray-600 font-extralight">Manage your club's mailing list and send announcements</p>
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+        <motion.div 
+          className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
           {error}
-        </div>
+        </motion.div>
       )}
 
       {success && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+        <motion.div 
+          className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
           {success}
-        </div>
+        </motion.div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
         {/* Upload CSV Section */}
-        <div className="glass-card bg-white/90 border border-pulse-100 rounded-2xl p-6 shadow-lg">
-          <h2 className="text-2xl font-bold mb-6">Upload Email List</h2>
+        <motion.div 
+          className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <Upload className="w-6 h-6 text-orange-500" />
+            <h2 className="text-2xl font-light text-gray-900">Upload Email List</h2>
+          </div>
           <div className="space-y-4">
             <div>
-              <label className="block font-semibold mb-2">Upload CSV File</label>
-              <input
-                type="file"
-                accept=".csv"
-                onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pulse-500 focus:border-transparent"
-              />
-              <p className="text-sm text-gray-500 mt-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Upload CSV File</label>
+              <div className="relative">
+                <input
+                  type="file"
+                  accept=".csv"
+                  onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light text-gray-700"
+                />
+              </div>
+              <p className="text-sm text-gray-500 mt-2 font-light">
                 CSV should have columns: email, name (optional)
               </p>
             </div>
             <button
               onClick={handleFileUpload}
               disabled={!selectedFile || uploading}
-              className="w-full px-6 py-3 bg-pulse-500 text-white font-semibold rounded-lg hover:bg-pulse-600 disabled:opacity-50 transition-all"
+              className="w-full px-6 py-3 bg-orange-500 text-white font-medium rounded-xl hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
             >
-              {uploading ? 'Uploading...' : 'Upload CSV'}
+              {uploading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                <>
+                  <Upload className="w-5 h-5" />
+                  Upload CSV
+                </>
+              )}
             </button>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Add Contact Section */}
-        <div className="glass-card bg-white/90 border border-pulse-100 rounded-2xl p-6 shadow-lg">
-          <h2 className="text-2xl font-bold mb-6">Add Individual Contact</h2>
+        {/* Add Individual Contact Section */}
+        <motion.div 
+          className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <div className="flex items-center gap-3 mb-6">
+            <UserPlus className="w-6 h-6 text-orange-500" />
+            <h2 className="text-2xl font-light text-gray-900">Add Individual Contact</h2>
+          </div>
           <div className="space-y-4">
             <div>
-              <label className="block font-semibold mb-2">Email Address</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
               <input
                 type="email"
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pulse-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
                 placeholder="member@example.com"
               />
             </div>
             <div>
-              <label className="block font-semibold mb-2">Name (Optional)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Name (Optional)</label>
               <input
                 type="text"
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pulse-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
                 placeholder="Member Name"
               />
             </div>
             <button
               onClick={handleAddContact}
               disabled={!newEmail}
-              className="w-full px-6 py-3 bg-pulse-500 text-white font-semibold rounded-lg hover:bg-pulse-600 disabled:opacity-50 transition-all"
+              className="w-full px-6 py-3 bg-orange-500 text-white font-medium rounded-xl hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
             >
+              <UserPlus className="w-5 h-5" />
               Add Contact
             </button>
           </div>
-        </div>
+        </motion.div>
       </div>
 
       {/* Contacts List */}
-      <div className="mt-8 glass-card bg-white/90 border border-pulse-100 rounded-2xl p-6 shadow-lg">
-        <h2 className="text-2xl font-bold mb-6">Manage Contacts ({contacts.length})</h2>
-        <div className="space-y-2 max-h-60 overflow-y-auto">
+      <motion.div 
+        className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100 mb-8"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+      >
+        <div className="flex items-center gap-3 mb-6">
+          <Users className="w-6 h-6 text-orange-500" />
+          <h2 className="text-2xl font-light text-gray-900">Manage Contacts ({contacts.length})</h2>
+        </div>
+        <div className="space-y-2 max-h-60 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-gray-50">
           {contacts.map((contact) => (
-            <div key={contact.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <motion.div 
+              key={contact.id}
+              className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors duration-200"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.3 }}
+            >
               <div>
-                <p className="font-medium">{contact.email}</p>
-                {contact.name && <p className="text-sm text-gray-600">{contact.name}</p>}
+                <p className="font-medium text-gray-900">{contact.email}</p>
+                {contact.name && <p className="text-sm text-gray-600 font-light">{contact.name}</p>}
               </div>
               <button
                 onClick={() => handleRemoveContact(contact.id)}
-                className="text-red-600 hover:text-red-800 text-sm font-medium"
+                className="text-gray-400 hover:text-red-500 transition-colors duration-200"
               >
-                Remove
+                <Trash2 className="w-5 h-5" />
               </button>
-            </div>
+            </motion.div>
           ))}
           {contacts.length === 0 && (
-            <p className="text-gray-500 text-center py-4">No contacts yet. Add contacts above or upload a CSV file!</p>
+            <div className="text-center py-8">
+              <UserX className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500 font-light">No contacts yet. Add contacts above or upload a CSV file!</p>
+            </div>
           )}
         </div>
-      </div>
+      </motion.div>
 
       {/* Email Composer */}
-      <div className="mt-8 glass-card bg-white/90 border border-pulse-100 rounded-2xl p-6 shadow-lg">
-        <h2 className="text-2xl font-bold mb-6">Send Email</h2>
-        
+      <motion.div 
+        className="bg-white rounded-2xl p-8 shadow-lg border border-gray-100"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.3 }}
+      >
+        <div className="flex items-center gap-3 mb-6">
+          <Send className="w-6 h-6 text-orange-500" />
+          <h2 className="text-2xl font-light text-gray-900">Send Email</h2>
+        </div>
         <form onSubmit={handleSendEmail} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
@@ -2300,7 +2334,7 @@ function EmailPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
               type="text"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pulse-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
               placeholder="Meeting reminder, announcement, etc."
               required
             />
@@ -2311,7 +2345,7 @@ function EmailPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
               value={content}
               onChange={(e) => setContent(e.target.value)}
               rows={8}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pulse-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light resize-none"
               placeholder="Write your message here..."
               required
             />
@@ -2319,12 +2353,22 @@ function EmailPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
           <button
             type="submit"
             disabled={contacts.length === 0 || sending || !subject || !content}
-            className="w-full button-primary bg-pulse-500 hover:bg-pulse-600 text-white px-6 py-3 rounded-full font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-6 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-medium rounded-xl hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex items-center justify-center gap-2"
           >
-            {sending ? 'Sending...' : `Send to ${contacts.length} contacts`}
+            {sending ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Sending...
+              </>
+            ) : (
+              <>
+                <Send className="w-5 h-5" />
+                Send to {contacts.length} contacts
+              </>
+            )}
           </button>
         </form>
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -2444,14 +2488,18 @@ interface ClubEvent {
   title: string;
   start: Date;
   end: Date;
-  type: 'meeting' | 'special' | 'holiday';
+  date?: Date; // For backward compatibility
+  type: 'meeting' | 'special' | 'holiday' | 'custom';
   description?: string;
   location?: string;
-  backgroundColor: string;
-  borderColor: string;
-  textColor: string;
+  backgroundColor?: string;
+  borderColor?: string;
+  textColor?: string;
   topic?: string;
-  semesterId: string;
+  semesterId?: string;
+  time?: string;
+  color?: string;
+  prerequisites?: string; // <-- Added for Groq meetings
 }
 
 interface Holiday {
@@ -2527,18 +2575,18 @@ const US_HOLIDAYS: Holiday[] = [
 
 function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any }) {
   const { user } = useUser();
-  const [showSetup, setShowSetup] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const inView = useInView(ref, { once: true, margin: "-100px" });
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [events, setEvents] = useState<any[]>([]);
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [events, setEvents] = useState<ClubEvent[]>([]);
   const [showEventModal, setShowEventModal] = useState(false);
-  const [currentEvent, setCurrentEvent] = useState<any>(null);
+  const [selectedEvent, setSelectedEvent] = useState<ClubEvent | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [hasRoadmapData, setHasRoadmapData] = useState(false);
   const [eventTitle, setEventTitle] = useState('');
   const [eventDescription, setEventDescription] = useState('');
   const [eventColor, setEventColor] = useState('bg-purple-500');
+  const [currentEvent, setCurrentEvent] = useState<ClubEvent | null>(null);
   const [formData, setFormData] = useState({
     clubTopic: '',
     schoolYearStart: '',
@@ -2548,407 +2596,128 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
     meetingTime: '15:00',
     goals: ''
   });
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
+  const [onboardingStage, setOnboardingStage] = useState<'intro' | 'form'>('intro');
 
-  // US Federal Holidays and School Breaks
-  const holidays = [
-    // 2024 holidays
-    { date: '2024-01-01', name: 'New Year\'s Day', type: 'federal' },
-    { date: '2024-01-15', name: 'Martin Luther King Jr. Day', type: 'federal' },
-    { date: '2024-02-19', name: 'Presidents\' Day', type: 'federal' },
-    { date: '2024-05-27', name: 'Memorial Day', type: 'federal' },
-    { date: '2024-07-04', name: 'Independence Day', type: 'federal' },
-    { date: '2024-09-02', name: 'Labor Day', type: 'federal' },
-    { date: '2024-10-14', name: 'Columbus Day', type: 'federal' },
-    { date: '2024-11-11', name: 'Veterans Day', type: 'federal' },
-    { date: '2024-11-28', name: 'Thanksgiving', type: 'federal' },
-    { date: '2024-11-29', name: 'Black Friday', type: 'school' },
-    { date: '2024-12-25', name: 'Christmas Day', type: 'federal' },
-    // 2024 School breaks
-    { date: '2024-11-25', name: 'Thanksgiving Break', type: 'school' },
-    { date: '2024-11-26', name: 'Thanksgiving Break', type: 'school' },
-    { date: '2024-11-27', name: 'Thanksgiving Break', type: 'school' },
-    { date: '2024-12-23', name: 'Winter Break Start', type: 'school' },
-    { date: '2024-12-24', name: 'Winter Break', type: 'school' },
-    { date: '2024-12-26', name: 'Winter Break', type: 'school' },
-    { date: '2024-12-27', name: 'Winter Break', type: 'school' },
-    { date: '2024-12-30', name: 'Winter Break', type: 'school' },
-    { date: '2024-12-31', name: 'Winter Break', type: 'school' },
-    
-    // 2025 holidays
-    { date: '2025-01-01', name: 'New Year\'s Day', type: 'federal' },
-    { date: '2025-01-02', name: 'Winter Break', type: 'school' },
-    { date: '2025-01-03', name: 'Winter Break', type: 'school' },
-    { date: '2025-01-20', name: 'Martin Luther King Jr. Day', type: 'federal' },
-    { date: '2025-02-17', name: 'Presidents\' Day', type: 'federal' },
-    { date: '2025-03-10', name: 'Spring Break', type: 'school' },
-    { date: '2025-03-11', name: 'Spring Break', type: 'school' },
-    { date: '2025-03-12', name: 'Spring Break', type: 'school' },
-    { date: '2025-03-13', name: 'Spring Break', type: 'school' },
-    { date: '2025-03-14', name: 'Spring Break', type: 'school' },
-    { date: '2025-05-26', name: 'Memorial Day', type: 'federal' },
-    { date: '2025-07-04', name: 'Independence Day', type: 'federal' },
-    { date: '2025-09-01', name: 'Labor Day', type: 'federal' },
-    { date: '2025-10-13', name: 'Columbus Day', type: 'federal' },
-    { date: '2025-11-11', name: 'Veterans Day', type: 'federal' },
-    { date: '2025-11-27', name: 'Thanksgiving', type: 'federal' },
-    { date: '2025-11-28', name: 'Black Friday', type: 'school' },
-    { date: '2025-12-25', name: 'Christmas Day', type: 'federal' }
-  ];
-
-  const isHoliday = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0];
-    return holidays.find(h => h.date === dateStr);
-  };
-
-  const generateSmartTopics = (clubTopic: string, count: number) => {
-    const topicLower = clubTopic.toLowerCase();
-    let topics = [];
-    
-    if (topicLower.includes('programming') || topicLower.includes('coding') || topicLower.includes('computer science')) {
-      topics = [
-        'Welcome & Setup Your Development Environment',
-        'Variables, Data Types & Your First Program',
-        'Control Structures: Making Decisions in Code',
-        'Functions: Building Reusable Code Blocks',
-        'Debugging Workshop: Finding & Fixing Bugs',
-        'Data Structures: Arrays, Lists & Objects',
-        'File Input/Output & Working with Data',
-        'Web Development Basics: HTML & CSS',
-        'Interactive Programming: Event Handling',
-        'Database Fundamentals & SQL',
-        'APIs & External Data Sources',
-        'Version Control with Git & GitHub',
-        'Team Project Planning Session',
-        'Code Review & Best Practices',
-        'Testing Your Code: Unit Tests',
-        'Project Showcase & Presentations'
-      ];
-    } else if (topicLower.includes('robot') || topicLower.includes('engineering')) {
-      topics = [
-        'Welcome & Introduction to Robotics',
-        'Robot Components: Sensors, Motors & Controllers',
-        'Building Your First Robot Chassis',
-        'Programming Movement: Forward, Backward, Turn',
-        'Sensor Integration: Touch, Light & Distance',
-        'Autonomous Navigation Challenges',
-        'Robot Vision: Cameras & Image Processing',
-        'Gripper & Manipulation Systems',
-        'Wireless Control & Communication',
-        'Competition Robot Design Workshop',
-        'Advanced Programming: AI & Machine Learning',
-        'Troubleshooting & Repair Techniques',
-        'Robot Competition Preparation',
-        'Final Robot Showcase',
-        'Reflection & Future Projects'
-      ];
-    } else if (topicLower.includes('math') || topicLower.includes('calculus') || topicLower.includes('algebra')) {
-      topics = [
-        'Welcome & Math Games Icebreaker',
-        'Problem Solving Strategies & Techniques',
-        'Real World Math: Practical Applications',
-        'Mathematical Modeling Workshop',
-        'Puzzle Solving & Logic Games',
-        'Statistics & Data Analysis Project',
-        'Geometry in Art & Architecture',
-        'Calculus Concepts Through Visualization',
-        'Math Competition Preparation',
-        'Creating Math Teaching Materials',
-        'Technology in Mathematics',
-        'Mathematical Research Projects',
-        'Peer Teaching & Presentations',
-        'Math Fair Preparation',
-        'Celebration & Awards Ceremony'
-      ];
-    } else if (topicLower.includes('art') || topicLower.includes('creative') || topicLower.includes('design')) {
-      topics = [
-        'Welcome & Art Style Exploration',
-        'Fundamentals: Color Theory & Composition',
-        'Drawing Techniques & Skill Building',
-        'Digital Art Tools & Software',
-        'Portrait & Figure Drawing Workshop',
-        'Landscape & Environmental Art',
-        'Character Design & Storytelling',
-        'Mixed Media & Experimental Techniques',
-        'Art History & Master Studies',
-        'Collaborative Mural Project',
-        'Portfolio Development Workshop',
-        'Art Critique & Feedback Sessions',
-        'Exhibition Planning & Curation',
-        'Community Art Project',
-        'Final Gallery Opening & Celebration'
-      ];
-    } else if (topicLower.includes('business') || topicLower.includes('entrepreneur')) {
-      topics = [
-        'Welcome & Entrepreneurship Mindset',
-        'Idea Generation & Opportunity Recognition',
-        'Market Research & Customer Validation',
-        'Business Model Canvas Workshop',
-        'Financial Planning & Budgeting',
-        'Marketing & Brand Development',
-        'Sales Techniques & Customer Relations',
-        'Digital Marketing & Social Media',
-        'Legal Basics for Business',
-        'Pitch Development & Presentation Skills',
-        'Investor Relations & Fundraising',
-        'Operations & Supply Chain Basics',
-        'Business Plan Competition',
-        'Mock Shark Tank Presentations',
-        'Networking & Industry Connections'
-      ];
-    } else {
-      // Generic topics for any club
-      topics = [
-        `Welcome to ${clubTopic} Club!`,
-        `${clubTopic} Fundamentals & Basics`,
-        'Hands-on Workshop & Practice Session',
-        'Guest Speaker from Industry',
-        'Skill Building & Technique Development',
-        'Creative Project Planning',
-        'Team Building & Collaboration',
-        'Problem Solving Workshop',
-        'Advanced Concepts & Applications',
-        'Community Service Project',
-        'Competition or Challenge Event',
-        'Peer Teaching & Knowledge Sharing',
-        'Innovation & Creative Thinking',
-        'Final Project Presentations',
-        'Celebration & Recognition Ceremony'
-      ];
-    }
-    
-    return topics.slice(0, count);
-  };
-
-  // Load/Save roadmap data using Supabase
   useEffect(() => {
-    if (!clubName || !user) return;
-    
-    const loadRoadmapData = async () => {
+    const checkRoadmapData = async () => {
+      if (!user || !clubInfo?.id) return;
       try {
-        // Get club ID from club name
-        const { data: clubData, error: clubError } = await supabase
-          .from('clubs')
+        const { data, error } = await supabase
+          .from('roadmaps')
           .select('id')
-          .eq('name', clubName)
+          .eq('club_id', clubInfo.id)
           .single();
-        
-        if (clubError) {
-          console.error('Error fetching club ID:', clubError);
-      return;
-    }
-
-        const clubId = clubData.id;
-        
-        // Fetch roadmap data from API
-        const response = await fetch(`/api/clubs/${clubId}/roadmap`);
-        if (response.ok) {
-          const result = await response.json();
-          if (result.data && result.data.data) {
-            const roadmapData = result.data.data;
-            if (roadmapData.config) {
-              setFormData(roadmapData.config);
-              setShowSetup(false);
-            }
-            if (roadmapData.events) {
-              setEvents(roadmapData.events.map((event: any) => ({
-                ...event,
-                date: new Date(event.date)
-              })));
-            }
-          }
+        if (error && error.code === 'PGRST116') {
+          setShowOnboarding(true);
+          setHasRoadmapData(false);
+        } else if (data) {
+          setShowOnboarding(false);
+          setHasRoadmapData(true);
         }
       } catch (error) {
-        console.error('Error loading roadmap data:', error);
+        console.error('Error checking roadmap data:', error);
+        setShowOnboarding(true);
+        setHasRoadmapData(false);
       }
     };
+    checkRoadmapData();
+  }, [user, clubInfo]);
 
-    loadRoadmapData();
-  }, [clubName, user]);
-
-  const saveRoadmapData = async (data: any) => {
-    if (!clubName || !user) return;
-    
+  // --- Refactored roadmap data operations to use API route ---
+  const loadRoadmapData = async () => {
+    if (!clubInfo?.id) return;
     try {
-      // Save roadmap data directly to Supabase
-      const { data: savedData, error } = await supabase
-        .from('roadmaps')
-        .upsert({
-          club_name: clubName,
-          user_id: user.id,
-          config: formData,
-          events: data.map((e: any) => ({ ...e, date: e.date.toISOString() })),
-          updated_at: new Date().toISOString()
-        });
-
-      if (error) {
-        console.error('Error saving roadmap data:', error);
-      } else {
-        console.log('Roadmap saved successfully');
+      const res = await fetch(`/api/clubs/${clubInfo.id}/roadmap`);
+      const json = await res.json();
+      let events = [];
+      if (json?.data?.events) {
+        events = json.data.events;
+      } else if (json?.data?.data?.events) {
+        events = json.data.data.events;
       }
+      const parsedEvents = Array.isArray(events)
+        ? events.map((event: any) => ({
+            ...event,
+            start: new Date(event.start || event.date),
+            end: new Date(event.end || event.date),
+            date: new Date(event.start || event.date)
+          }))
+        : [];
+      setEvents(parsedEvents);
     } catch (error) {
-      console.error('Error saving roadmap data:', error);
-    }
-  };
-
-  const generateRoadmap = async () => {
-    if (!formData.clubTopic || !formData.goals || !formData.schoolYearStart) {
-      alert('Please fill in all required fields');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Calculate meeting count
-      const startDate = new Date(formData.schoolYearStart);
-      const endDate = new Date(formData.schoolYearEnd);
-      const weeksDuration = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 7));
-      
-      let meetingCount;
-      if (formData.meetingFrequency === 'weekly') {
-        meetingCount = Math.min(weeksDuration, 30);
-      } else if (formData.meetingFrequency === 'biweekly') {
-        meetingCount = Math.min(Math.floor(weeksDuration / 2), 15);
-      } else {
-        meetingCount = Math.min(Math.floor(weeksDuration / 4), 8);
-      }
-
-      const response = await fetch(`/api/clubs/generate-topics`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clubTopic: formData.clubTopic,
-          clubGoals: formData.goals,
-          meetingCount: meetingCount
-        })
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        // Use fallback topics if API returns empty
-        const topics = data.topics && data.topics.length > 0 ? data.topics : 
-          generateSmartTopics(formData.clubTopic, meetingCount);
-        const specialEvents = data.specialEvents || [];
-        
-        const generatedEvents = generateCalendarEvents(topics, specialEvents);
-        setEvents(generatedEvents);
-        saveRoadmapData(generatedEvents);
-        setShowSetup(false);
-      } else {
-        throw new Error('API request failed');
-      }
-          } catch (error) {
-        console.error('Error generating roadmap:', error);
-        // Use fallback generation
-        const fallbackTopics = generateSmartTopics(formData.clubTopic, 12);
-        const fallbackSpecialEvents = [
-          { title: 'Mid-Semester Showcase', description: 'Present your progress to the community' },
-          { title: 'Guest Speaker Event', description: 'Industry professional shares insights' },
-          { title: 'End of Year Competition', description: 'Friendly competition to test skills' }
-        ];
-        
-        const generatedEvents = generateCalendarEvents(fallbackTopics, fallbackSpecialEvents);
-        setEvents(generatedEvents);
-        saveRoadmapData(generatedEvents);
-        setShowSetup(false);
+      console.error('Error loading roadmap data:', error);
+      setEvents([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const generateCalendarEvents = (topics: string[], specialEvents: any[] = []) => {
-    const events = [];
-    const startDate = new Date(formData.schoolYearStart);
-    const endDate = new Date(formData.schoolYearEnd);
-    let currentDate = new Date(startDate);
-    
-    // Day mapping
-    const dayMap = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
-    const targetDays = formData.meetingDays.map(day => dayMap[day as keyof typeof dayMap]);
-    
-    let topicIndex = 0;
-    let dayOfWeekIndex = 0;
-    
-    // Generate meetings for multiple days per week
-    while (currentDate <= endDate && topicIndex < topics.length) {
-      // For each week, schedule meetings on all selected days
-      const weekStart = new Date(currentDate);
-      
-      // Find the start of this week (adjust to Monday as start)
-      const dayOfWeek = weekStart.getDay();
-      const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Handle Sunday as day 0
-      weekStart.setDate(weekStart.getDate() + mondayOffset);
-      
-      // Schedule meetings for each selected day in this week
-      for (const targetDay of targetDays) {
-        if (topicIndex >= topics.length) break;
-        
-        const meetingDate = new Date(weekStart);
-        meetingDate.setDate(weekStart.getDate() + (targetDay === 0 ? 6 : targetDay - 1)); // Adjust for Sunday
-        
-        // Only schedule if within semester bounds
-        if (meetingDate >= new Date(formData.schoolYearStart) && meetingDate <= endDate) {
-          // Skip holidays
-          const holiday = isHoliday(meetingDate);
-          if (!holiday) {
-            events.push({
-              id: `meeting-${topicIndex}`,
-              title: topics[topicIndex],
-              description: `Club meeting: ${topics[topicIndex]}`,
-              date: new Date(meetingDate),
-              time: formData.meetingTime,
-              type: 'meeting',
-              color: 'bg-blue-500'
-            });
-            topicIndex++;
-          }
-        }
-      }
-      
-      // Move to next week/period based on frequency
-      const daysToAdd = formData.meetingFrequency === 'weekly' ? 7 : 
-                       formData.meetingFrequency === 'biweekly' ? 14 : 28;
-      currentDate.setDate(currentDate.getDate() + daysToAdd);
-    }
-    
-    // Add special events spread throughout the semester
-    if (specialEvents.length > 0) {
-      const semesterDuration = endDate.getTime() - startDate.getTime();
-      specialEvents.forEach((event, index) => {
-        const eventDate = new Date(startDate.getTime() + (semesterDuration / (specialEvents.length + 1)) * (index + 1));
-        
-        // Make sure it's on a school day and not a holiday
-        while (eventDate.getDay() === 0 || eventDate.getDay() === 6 || isHoliday(eventDate)) {
-          eventDate.setDate(eventDate.getDate() + 1);
-        }
-        
-        events.push({
-          id: `special-${index}`,
-          title: event.title,
-          description: event.description,
-          date: eventDate,
-          type: 'custom',
-          color: 'bg-purple-500'
-        });
+  const saveEventsToAPI = async (updatedEvents: ClubEvent[]) => {
+    if (!clubInfo?.id) return;
+    try {
+      const res = await fetch(`/api/clubs/${clubInfo.id}/roadmap`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          config: formData,
+          events: updatedEvents.map(e => ({
+            ...e,
+            start: e.start.toISOString(),
+            end: e.end.toISOString(),
+            date: e.date?.toISOString() || e.start.toISOString()
+          }))
+        })
       });
-    }
-    
-    // Add holiday events
-    holidays.forEach(holiday => {
-      const holidayDate = new Date(holiday.date);
-      if (holidayDate >= startDate && holidayDate <= endDate) {
-        events.push({
-          id: `holiday-${holiday.date}`,
-          title: holiday.name,
-          description: holiday.type === 'federal' ? 'Federal Holiday' : 'School Break',
-          date: holidayDate,
-          type: 'holiday',
-          color: holiday.type === 'federal' ? 'bg-red-500' : 'bg-orange-400'
-        });
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        console.error('Error saving roadmap:', json.error || json);
+      } else {
+        console.log('Roadmap saved successfully');
       }
-    });
-    
-    return events.sort((a, b) => a.date.getTime() - b.date.getTime());
+    } catch (error) {
+      console.error('Error saving roadmap:', error);
+    }
   };
+
+  const saveEvent = async () => {
+    if (!eventTitle.trim() || !selectedDate) return;
+    const newEvent: ClubEvent = {
+      id: currentEvent ? currentEvent.id : `event-${Date.now()}`,
+      title: eventTitle,
+      description: eventDescription,
+      start: selectedDate,
+      end: selectedDate,
+      date: selectedDate,
+      type: 'custom',
+      color: eventColor
+    };
+    const updatedEvents = currentEvent
+      ? events.map(e => e.id === currentEvent.id ? newEvent : e)
+      : [...events, newEvent];
+    setEvents(updatedEvents);
+    await saveEventsToAPI(updatedEvents);
+    setShowEventModal(false);
+    setEventTitle('');
+    setEventDescription('');
+    setCurrentEvent(null);
+  };
+
+  const deleteEvent = async () => {
+    if (!currentEvent) return;
+    const updatedEvents = events.filter(e => e.id !== currentEvent.id);
+    setEvents(updatedEvents);
+    await saveEventsToAPI(updatedEvents);
+    setShowEventModal(false);
+    setCurrentEvent(null);
+  };
+
+  useEffect(() => {
+    if (hasRoadmapData && clubInfo?.id) {
+      loadRoadmapData();
+    }
+  }, [hasRoadmapData, clubInfo]);
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear();
@@ -2966,41 +2735,7 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
     return days;
   };
 
-  const saveEvent = () => {
-    if (!eventTitle.trim()) return;
-    
-    const newEvent = {
-      id: currentEvent ? currentEvent.id : `event-${Date.now()}`,
-      title: eventTitle,
-      description: eventDescription,
-      date: selectedDate,
-      type: 'custom',
-      color: eventColor
-    };
-
-    const updatedEvents = currentEvent 
-      ? events.map(e => e.id === currentEvent.id ? newEvent : e)
-      : [...events, newEvent];
-    
-    setEvents(updatedEvents);
-    saveRoadmapData(updatedEvents);
-    setShowEventModal(false);
-    setEventTitle('');
-    setEventDescription('');
-    setCurrentEvent(null);
-  };
-
-  const deleteEvent = () => {
-    if (currentEvent) {
-      const updatedEvents = events.filter(e => e.id !== currentEvent.id);
-      setEvents(updatedEvents);
-      saveRoadmapData(updatedEvents);
-      setShowEventModal(false);
-      setCurrentEvent(null);
-    }
-  };
-
-  const openEventModal = (date: Date, event?: any) => {
+  const openEventModal = (date: Date, event?: ClubEvent) => {
     setSelectedDate(date);
     if (event) {
       setCurrentEvent(event);
@@ -3016,186 +2751,6 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
     setShowEventModal(true);
   };
 
-    if (showSetup) {
-      return (
-        <div ref={ref} className="space-y-8">
-          {/* Background Elements */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            <motion.div
-              className="absolute top-10 right-10 w-72 h-72 bg-gradient-to-r from-orange-500/5 to-orange-400/3 rounded-full blur-3xl"
-              animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-              transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            />
-          </div>
-
-          <div className="relative z-10 max-w-3xl mx-auto">
-            <motion.div
-              className="text-center mb-12"
-              initial={{ opacity: 0, y: 30 }}
-              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-              transition={{ duration: 0.8 }}
-            >
-              <motion.div
-                className="inline-flex items-center space-x-2 bg-white/80 backdrop-blur-xl border border-orange-200/50 rounded-full px-4 py-2 mb-6"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-              >
-                <Target className="w-4 h-4 text-orange-500" />
-                <span className="text-sm font-extralight text-gray-700">Smart Planning Setup</span>
-              </motion.div>
-
-              <h1 className="text-4xl lg:text-5xl font-extralight text-gray-900 mb-4 leading-tight">
-                Plan Your
-                <span className="text-orange-500 font-light"> Semester</span>
-              </h1>
-              
-              <p className="text-xl text-gray-600 font-extralight leading-relaxed">
-                Let's create an intelligent roadmap for {clubName} activities throughout the year.
-              </p>
-            </motion.div>
-
-            <motion.div
-              className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-3xl p-8 shadow-xl"
-              initial={{ opacity: 0, y: 30 }}
-              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-            >
-              <div className="space-y-8">
-                {/* Club Topic */}
-                <div>
-                  <label className="block text-lg font-light text-gray-900 mb-4">Club Focus</label>
-                  <input
-                    type="text"
-                    value={formData.clubTopic}
-                    onChange={(e) => setFormData({...formData, clubTopic: e.target.value})}
-                    className="w-full px-6 py-4 bg-white/50 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-extralight text-lg placeholder-gray-400"
-                    placeholder="e.g., Programming, Robotics, Soccer, Math"
-                  />
-                </div>
-
-                {/* Academic Year */}
-                <div className="grid md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-lg font-light text-gray-900 mb-4">Academic Year Start</label>
-                    <input
-                      type="date"
-                      value={formData.schoolYearStart}
-                      onChange={(e) => setFormData({...formData, schoolYearStart: e.target.value})}
-                      className="w-full px-6 py-4 bg-white/50 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-extralight text-lg"
-                    />
-                  </div>
-                  
-                  <div>
-                    <label className="block text-lg font-light text-gray-900 mb-4">Academic Year End</label>
-                    <input
-                      type="date"
-                      value={formData.schoolYearEnd}
-                      onChange={(e) => setFormData({...formData, schoolYearEnd: e.target.value})}
-                      className="w-full px-6 py-4 bg-white/50 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-extralight text-lg"
-                    />
-                  </div>
-                </div>
-
-                {/* Meeting Schedule */}
-                <div>
-                  <label className="block text-lg font-light text-gray-900 mb-4">Meeting Schedule</label>
-                  <div className="grid md:grid-cols-2 gap-6 mb-6">
-                    <select
-                      value={formData.meetingFrequency}
-                      onChange={(e) => setFormData({...formData, meetingFrequency: e.target.value})}
-                      className="w-full px-6 py-4 bg-white/50 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-extralight text-lg"
-                    >
-                      <option value="weekly">Weekly</option>
-                      <option value="biweekly">Bi-weekly</option>
-                      <option value="monthly">Monthly</option>
-                    </select>
-                    <input
-                      type="time"
-                      value={formData.meetingTime}
-                      onChange={(e) => setFormData({...formData, meetingTime: e.target.value})}
-                      className="w-full px-6 py-4 bg-white/50 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-extralight text-lg"
-                    />
-                  </div>
-
-                  {/* Day Selector */}
-                  <div className="flex flex-wrap gap-3">
-                    {[
-                      { value: 'monday', label: 'Mon' },
-                      { value: 'tuesday', label: 'Tue' },
-                      { value: 'wednesday', label: 'Wed' },
-                      { value: 'thursday', label: 'Thu' },
-                      { value: 'friday', label: 'Fri' },
-                      { value: 'saturday', label: 'Sat' },
-                      { value: 'sunday', label: 'Sun' }
-                    ].map(day => (
-                      <button
-                        key={day.value}
-                        type="button"
-                        onClick={() => {
-                          const currentDays = formData.meetingDays || [];
-                          const isSelected = currentDays.includes(day.value);
-                          if (isSelected) {
-                            setFormData({...formData, meetingDays: currentDays.filter(d => d !== day.value)});
-                          } else {
-                            setFormData({...formData, meetingDays: [...currentDays, day.value]});
-                          }
-                        }}
-                        className={`px-6 py-3 rounded-2xl font-light text-sm transition-all ${
-                          (formData.meetingDays || []).includes(day.value)
-                            ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg'
-                            : 'bg-white/70 text-gray-700 border border-gray-200/50 hover:border-orange-300 hover:bg-white/90'
-                        }`}
-                      >
-                        {day.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Goals */}
-                <div>
-                  <label className="block text-lg font-light text-gray-900 mb-4">Club Goals</label>
-                  <textarea
-                    value={formData.goals}
-                    onChange={(e) => setFormData({...formData, goals: e.target.value})}
-                    className="w-full px-6 py-4 bg-white/50 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-extralight text-lg placeholder-gray-400 resize-none"
-                    rows={4}
-                    placeholder="What do you want to achieve this semester?"
-                  />
-                </div>
-
-                {/* Generate Button */}
-                <motion.button
-                  onClick={generateRoadmap}
-                  disabled={loading || !formData.clubTopic || !formData.goals || !(formData.meetingDays && formData.meetingDays.length > 0)}
-                  className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-2xl font-light text-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3"
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {loading ? (
-                    <>
-                      <motion.div
-                        className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full"
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      />
-                      <span>Generating Roadmap...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-5 h-5" />
-                      <span>Generate Smart Roadmap</span>
-                    </>
-                  )}
-                </motion.button>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      );
-  }
-
   const monthYear = currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   const days = getDaysInMonth(currentMonth);
 
@@ -3205,755 +2760,534 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
   const upcomingMeetings = totalMeetings - completedMeetings;
   const progressPercentage = totalMeetings > 0 ? Math.round((completedMeetings / totalMeetings) * 100) : 0;
 
-  return (
-    <div ref={ref} className="space-y-8">
-      {/* Background Elements */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          className="absolute top-10 right-10 w-72 h-72 bg-gradient-to-r from-orange-500/5 to-orange-400/3 rounded-full blur-3xl"
-          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute bottom-10 left-10 w-64 h-64 bg-gradient-to-r from-blue-500/3 to-purple-500/3 rounded-full blur-3xl"
-          animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.4, 0.2] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-        />
-      </div>
+  // --- REFACTOR: Use Groq-generated meetings for roadmap events ---
+  // Replace fetchGenerateTopics and onboarding submit logic
+  const fetchGroqMeetings = async () => {
+    try {
+      const res = await fetch(`/api/clubs/${clubInfo.id}/generate-topics`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic: formData.clubTopic,
+          startDate: formData.schoolYearStart,
+          endDate: formData.schoolYearEnd,
+          frequency: formData.meetingFrequency,
+          meetingDays: formData.meetingDays,
+          meetingTime: formData.meetingTime,
+          clubName: clubName,
+        })
+      });
+      if (res.ok) {
+        const { meetings } = await res.json();
+        return meetings;
+      }
+    } catch (err) {
+      console.error('groq meeting generation error', err);
+    }
+    return [];
+  };
 
-      <div className="relative z-10 space-y-8">
-        {/* Header Section */}
+  const handleOnboardingSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = await fetchGroqMeetings();
+    if (!res || !res.length) return;
+    let meetings = res;
+    let specialEvents = [];
+    if (Array.isArray(res)) {
+      meetings = res;
+    } else {
+      meetings = res.meetings || [];
+      specialEvents = res.specialEvents || [];
+    }
+    // Prepare holidays within semester
+    const start = new Date(formData.schoolYearStart);
+    const end = new Date(formData.schoolYearEnd);
+    const holidays = US_HOLIDAYS.filter(h => {
+      const d = new Date(h.date);
+      return d >= start && d <= end;
+    }).map(h => ({
+      id: `hol-${h.date}`,
+      title: h.name,
+      description: '',
+      start: new Date(h.date),
+      end: new Date(h.date),
+      date: new Date(h.date),
+      type: 'holiday',
+      color: 'bg-red-500',
+    }));
+    // Convert Groq meetings to ClubEvent objects, skipping holidays
+    const holidayDates = new Set(holidays.map(h => h.date.toDateString()));
+    const generatedEvents = meetings.map((m, i) => {
+      const eventDate = new Date(m.date + 'T' + (m.time || formData.meetingTime));
+      if (holidayDates.has(eventDate.toDateString())) return null; // skip if holiday
+      return {
+        id: `groq-meeting-${i}`,
+        title: m.topic || `${formData.clubTopic || clubName} Meeting` || 'Meeting',
+        description: m.description || '',
+        prerequisites: m.prerequisites || '',
+        start: eventDate,
+        end: eventDate,
+        date: eventDate,
+        type: 'meeting',
+        color: 'bg-blue-500',
+        topic: m.topic || '',
+      };
+    }).filter(Boolean);
+    // Add Groq special events (e.g., hackathons)
+    specialEvents.forEach((se, i) => {
+      let eventDate = start;
+      if (se.suggestedMonth) {
+        const monthIdx = new Date(Date.parse(se.suggestedMonth + ' 1, 2024')).getMonth();
+        const year = start.getFullYear();
+        let candidate = new Date(year, monthIdx, 7);
+        if (candidate < start) candidate.setFullYear(year + 1);
+        if (candidate > end) candidate = start;
+        eventDate = candidate;
+      }
+      generatedEvents.push({
+        id: `groq-special-${i}`,
+        title: se.title,
+        description: se.description,
+        start: eventDate,
+        end: eventDate,
+        date: eventDate,
+        type: 'special',
+        color: se.color || 'bg-pink-500',
+        topic: se.title,
+        prerequisites: '',
+      });
+    });
+    // Add holidays to events
+    generatedEvents.push(...holidays);
+    // Save to API route
+    try {
+      const payload = {
+        config: formData,
+        events: generatedEvents.map(ev => ({
+          ...ev,
+          start: ev.start.toISOString(),
+          end: ev.end.toISOString(),
+          date: ev.date?.toISOString() || ev.start.toISOString()
+        }))
+      };
+      console.log('Saving roadmap payload:', payload);
+      const res = await fetch(`/api/clubs/${clubInfo.id}/roadmap`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json();
+      if (!res.ok || json.error) {
+        console.error('Error saving roadmap:', json.error || json);
+      } else {
+        setEvents(generatedEvents);
+        setShowOnboarding(false);
+        setHasRoadmapData(true);
+      }
+    } catch (error) {
+      console.error('Error saving generated roadmap:', error);
+    }
+  };
+
+  // Remove old generateEventsFromForm logic
+  // ... existing code ...
+
+  return (
+    <div ref={ref} className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50">
+      {showOnboarding && (
+        <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-blue-50 flex items-center justify-center p-8">
+          <div className="max-w-2xl w-full">
+            {onboardingStage === 'intro' && (
+              <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-orange-100 p-8 text-center">
+                <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <Calendar className="w-10 h-10 text-white" />
+                </div>
+                <h2 className="text-3xl font-light text-gray-900 mb-4">
+                  Welcome to <span className="text-orange-500">{clubName}</span> Planning!
+                </h2>
+                <p className="text-gray-600 font-light mb-8 leading-relaxed">
+                  Let's set up your semester roadmap to help you plan events, meetings, and activities efficiently.
+                </p>
+                <button
+                  onClick={() => setOnboardingStage('form')}
+                  className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-2xl font-light text-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl"
+                >
+                  Start Planning Your Semester
+                </button>
+              </div>
+            )}
+
+            {onboardingStage === 'form' && (
+              <form onSubmit={handleOnboardingSubmit} className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-orange-100 p-8 space-y-6">
+                <h2 className="text-2xl font-light text-gray-900 mb-4 text-center">Semester Setup</h2>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Club Topic</label>
+                  <input type="text" value={formData.clubTopic} onChange={e=>setFormData({...formData,clubTopic:e.target.value})} className="w-full p-3 border border-gray-200 rounded-lg" required />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                    <input type="date" value={formData.schoolYearStart} onChange={e=>setFormData({...formData,schoolYearStart:e.target.value})} className="w-full p-3 border border-gray-200 rounded-lg" required />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                    <input type="date" value={formData.schoolYearEnd} onChange={e=>setFormData({...formData,schoolYearEnd:e.target.value})} className="w-full p-3 border border-gray-200 rounded-lg" required />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Meeting Frequency</label>
+                  <select value={formData.meetingFrequency} onChange={e=>setFormData({...formData,meetingFrequency:e.target.value as any})} className="w-full p-3 border border-gray-200 rounded-lg">
+                    <option value="weekly">Weekly</option>
+                    <option value="biweekly">Bi-Weekly</option>
+                    <option value="monthly">Monthly</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Meeting Days</label>
+                  <div className="grid grid-cols-3 gap-2 text-sm text-gray-700">
+                    {['monday','tuesday','wednesday','thursday','friday','saturday','sunday'].map(day=> (
+                      <label key={day} className="flex items-center space-x-2">
+                        <input type="checkbox" checked={formData.meetingDays.includes(day)} onChange={e=>{
+                          const days=formData.meetingDays.includes(day)?formData.meetingDays.filter(d=>d!==day):[...formData.meetingDays,day];
+                          setFormData({...formData,meetingDays:days});
+                        }} />
+                        <span className="capitalize">{day}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Meeting Time</label>
+                  <input type="time" value={formData.meetingTime} onChange={e=>setFormData({...formData,meetingTime:e.target.value})} className="w-full p-3 border border-gray-200 rounded-lg" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Club Goal</label>
+                  <textarea value={formData.goals} onChange={e=>setFormData({...formData,goals:e.target.value})} className="w-full p-3 border border-gray-200 rounded-lg" rows={3} placeholder="What is the main goal for this semester?" />
+                </div>
+                <div className="text-center pt-4">
+                  <button type="submit" className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-3 rounded-lg font-light hover:from-orange-600 hover:to-orange-700 transition-all">Generate Roadmap</button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
+      {/* Modern Roadmap UI */}
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Progress Header */}
+            <motion.div
+          className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 mb-8 shadow-xl border border-orange-100"
+              initial={{ opacity: 0, y: 30 }}
+              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              transition={{ duration: 0.8 }}
+            >
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                <div>
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center">
+                  <Calendar className="w-6 h-6 text-white" />
+                </div>
+                  <div>
+                  <h1 className="text-3xl font-light text-gray-900">
+                    {clubName} <span className="text-orange-500">Roadmap</span>
+                  </h1>
+                  <p className="text-gray-600 font-light">Smart semester planning</p>
+                </div>
+                  </div>
+                  
+              {/* Progress Bar */}
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm text-gray-600">
+                  <span>Progress: {completedMeetings}/{totalMeetings} meetings completed</span>
+                  <span>{progressPercentage}%</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-3">
+                  <motion.div
+                    className="bg-gradient-to-r from-orange-500 to-orange-600 h-3 rounded-full"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${progressPercentage}%` }}
+                    transition={{ duration: 1, delay: 0.5 }}
+                    />
+                  </div>
+                </div>
+                  </div>
+
+            <div className="flex items-center space-x-4">
+              <motion.button
+                onClick={() => setShowOnboarding(true)}
+                className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-2xl font-light hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg"
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Settings className="w-4 h-4 inline mr-2" />
+                Setup
+              </motion.button>
+                  </div>
+                </div>
+        </motion.div>
+
+        {/* Main Content Grid */}
+        <div className="grid lg:grid-cols-4 gap-8">
+          {/* Month Navigation Sidebar */}
+          <motion.div
+            className="lg:col-span-1"
+            initial={{ opacity: 0, x: -30 }}
+            animate={inView ? { opacity: 1, x: 0 } : { opacity: 0, x: -30 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            <div className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-gray-100 sticky top-6">
+              <h3 className="text-lg font-light text-gray-900 mb-4">Months</h3>
+              <div className="space-y-2">
+                {Array.from({ length: 12 }, (_, i) => {
+                  const monthDate = new Date(currentMonth.getFullYear(), i, 1);
+                  const isCurrent = monthDate.getMonth() === currentMonth.getMonth();
+                  const monthEvents = events.filter(event => 
+                    event.start.getMonth() === i && event.start.getFullYear() === currentMonth.getFullYear()
+                  );
+                  
+                  return (
+                <motion.button
+                      key={i}
+                      onClick={() => setCurrentMonth(monthDate)}
+                      className={`w-full text-left p-3 rounded-2xl transition-all duration-300 ${
+                        isCurrent 
+                          ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg' 
+                          : 'bg-white/50 text-gray-700 hover:bg-white/80 hover:shadow-md'
+                      }`}
+                      whileHover={{ scale: 1.02, x: 5 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                      <div className="flex items-center justify-between">
+                        <span className="font-light">
+                          {monthDate.toLocaleDateString('en-US', { month: 'short' })}
+                        </span>
+                        {monthEvents.length > 0 && (
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            isCurrent ? 'bg-white/20' : 'bg-orange-100 text-orange-600'
+                          }`}>
+                            {monthEvents.length}
+                          </span>
+                        )}
+                      </div>
+                </motion.button>
+                  );
+                })}
+              </div>
+          </div>
+          </motion.div>
+
+          {/* Calendar Main Area */}
         <motion.div
-          className="text-center"
+            className="lg:col-span-3"
           initial={{ opacity: 0, y: 30 }}
           animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-          transition={{ duration: 0.8 }}
-        >
-          <motion.div
-            className="inline-flex items-center space-x-2 bg-white/80 backdrop-blur-xl border border-orange-200/50 rounded-full px-4 py-2 mb-6"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <Calendar className="w-4 h-4 text-orange-500" />
-            <span className="text-sm font-extralight text-gray-700">Smart Planning</span>
-          </motion.div>
-
-          <motion.h1 
-            className="text-4xl lg:text-5xl font-extralight text-gray-900 mb-4 leading-tight"
-            initial={{ opacity: 0, y: 20 }}
-            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-          >
-            Semester
-            <span className="text-orange-500 font-light"> Roadmap</span>
-          </motion.h1>
-
-          <motion.div
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 text-gray-600 font-extralight"
-            initial={{ opacity: 0, y: 20 }}
-            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.8, delay: 0.4 }}
           >
-            <span className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-              <span>{clubName}</span>
-            </span>
-            <span className="hidden sm:block">•</span>
-            <span>{formData.meetingFrequency} meetings</span>
-            <motion.button
-              onClick={() => setShowSetup(true)}
-              className="ml-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-2 rounded-xl font-light text-sm hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg"
-              whileHover={{ scale: 1.05, y: -1 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              <Settings className="w-4 h-4 inline mr-2" />
-              Setup
-            </motion.button>
-          </motion.div>
-                  </motion.div>
-
-                    {/* Calendar Navigation */}
-          <motion.div 
-            className="flex items-center justify-between"
-            initial={{ opacity: 0, y: 20 }}
-            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-          >
+            <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+              {/* Calendar Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-100">
             <motion.button
               onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))}
-              className="flex items-center space-x-2 bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-xl px-4 py-3 font-light text-gray-700 hover:bg-white/90 hover:shadow-lg transition-all duration-300"
-              whileHover={{ scale: 1.05, x: -5 }}
+                  className="flex items-center space-x-2 bg-white/70 border border-gray-200 rounded-2xl px-4 py-2 font-light text-gray-700 hover:bg-white hover:shadow-md transition-all duration-300"
+                  whileHover={{ scale: 1.05, x: -3 }}
               whileTap={{ scale: 0.95 }}
             >
               <ArrowRight className="w-4 h-4 rotate-180" />
               <span>Previous</span>
             </motion.button>
             
-            <motion.h2 
-              className="text-2xl font-light text-gray-800"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.6, delay: 0.7 }}
-            >
+                <h2 className="text-2xl font-light text-gray-900">
               {monthYear}
-            </motion.h2>
+                </h2>
             
             <motion.button
               onClick={() => setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))}
-              className="flex items-center space-x-2 bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-xl px-4 py-3 font-light text-gray-700 hover:bg-white/90 hover:shadow-lg transition-all duration-300"
-              whileHover={{ scale: 1.05, x: 5 }}
+                  className="flex items-center space-x-2 bg-white/70 border border-gray-200 rounded-2xl px-4 py-2 font-light text-gray-700 hover:bg-white hover:shadow-md transition-all duration-300"
+                  whileHover={{ scale: 1.05, x: 3 }}
               whileTap={{ scale: 0.95 }}
             >
               <span>Next</span>
               <ArrowRight className="w-4 h-4" />
             </motion.button>
-          </motion.div>
+              </div>
 
-          {/* Enhanced Calendar */}
-          <motion.div
-            className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-3xl overflow-hidden shadow-xl"
-            initial={{ opacity: 0, y: 30 }}
-            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-          >
-          </motion.div>
+              {/* Calendar Grid */}
+              <div className="p-6">
         {/* Day Headers */}
-        <div className="grid grid-cols-7 bg-gray-50 border-b">
+                <div className="grid grid-cols-7 gap-2 mb-4">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-            <div key={day} className="p-3 text-center font-medium text-gray-700 border-r last:border-r-0 text-sm">
+                    <div key={day} className="p-3 text-center font-medium text-gray-600 text-sm">
               {day}
             </div>
           ))}
         </div>
         
         {/* Calendar Days */}
-        <div className="grid grid-cols-7">
+                <div className="grid grid-cols-7 gap-2">
           {days.map((day, index) => {
             const isCurrentMonth = day.getMonth() === currentMonth.getMonth();
             const isToday = day.toDateString() === new Date().toDateString();
             const isPast = day < new Date() && !isToday;
             const dayEvents = events.filter(event => 
-              event.date.toDateString() === day.toDateString()
+                      (event.start || event.date)?.toDateString() === day.toDateString()
             );
-            const meetingEvents = dayEvents.filter(e => e.type === 'meeting');
-            const holidayEvents = dayEvents.filter(e => e.type === 'holiday');
-            const customEvents = dayEvents.filter(e => e.type === 'custom');
             
             return (
-                      <div
+                      <motion.div
                         key={index}
-                className={`min-h-[100px] p-2 border-r border-b last:border-r-0 cursor-pointer hover:bg-gray-25 transition-colors ${
-                  !isCurrentMonth ? 'bg-gray-50 text-gray-400' : 'bg-white'
-                } ${isToday ? 'bg-blue-50' : ''} ${isPast && isCurrentMonth ? 'opacity-75' : ''}`}
+                        className={`min-h-[120px] p-3 rounded-2xl cursor-pointer transition-all duration-300 ${
+                          !isCurrentMonth 
+                            ? 'bg-gray-50/50 text-gray-400' 
+                            : isToday 
+                              ? 'bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200' 
+                              : 'bg-white/50 hover:bg-white/80 hover:shadow-md'
+                        } ${isPast && isCurrentMonth ? 'opacity-75' : ''}`}
                 onClick={() => openEventModal(day)}
+                        whileHover={{ scale: 1.02, y: -2 }}
+                        whileTap={{ scale: 0.98 }}
               >
                 <div className={`text-sm mb-2 flex items-center justify-between ${
                   isToday ? 'text-blue-600 font-semibold' : isPast ? 'text-gray-500' : 'text-gray-900'
                 }`}>
                   <span>{day.getDate()}</span>
-                  {isToday && <span className="text-xs bg-blue-500 text-white px-1 py-0.5 rounded">Today</span>}
+                          {isToday && (
+                            <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded-full">
+                              Today
+                            </span>
+                          )}
                           </div>
                 
                 <div className="space-y-1">
-                  {/* Meetings */}
-                  {meetingEvents.map(event => (
-                    <div
-                      key={event.id}
-                      className={`text-xs p-1.5 rounded cursor-pointer transition-all ${
-                        isPast ? 'bg-gray-400 text-white' : 'bg-blue-500 text-white hover:bg-blue-600'
-                      }`}
+                          {dayEvents.map((event, eventIndex) => (
+                            <div
+                              key={eventIndex}
+                              className={`text-xs p-2 rounded-lg text-white font-medium truncate ${
+                                event.type === 'meeting' ? 'bg-blue-500' :
+                                event.type === 'special' ? 'bg-purple-500' :
+                                event.type === 'holiday' ? 'bg-red-500' :
+                                'bg-orange-500'
+                              }`}
                               onClick={(e) => {
                                 e.stopPropagation();
-                        openEventModal(day, event);
-                      }}
-                      title={event.title}
-                    >
-                      <div className="font-medium truncate">{event.title}</div>
-                      {event.time && <div className="opacity-90 text-xs">{event.time}</div>}
-                      {isPast && <div className="text-xs opacity-75">✓ Completed</div>}
-                    </div>
-                  ))}
-                  
-                  {/* Holidays */}
-                  {holidayEvents.map(event => (
-                    <div
-                      key={event.id}
-                      className={`text-xs p-1.5 rounded ${event.color} text-white`}
-                      title={event.title}
-                    >
-                      <div className="font-medium truncate">{event.title}</div>
-                    </div>
-                  ))}
-                  
-                  {/* Custom Events */}
-                  {customEvents.map(event => (
-                    <div
-                      key={event.id}
-                      className="text-xs p-1.5 rounded bg-purple-500 text-white cursor-pointer hover:bg-purple-600 transition-all"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                        openEventModal(day, event);
+                                openEventModal(event.date || event.start, event);
                               }}
-                      title={event.title}
+                              style={{ cursor: 'pointer' }}
                             >
-                      <div className="font-medium truncate">{event.title}</div>
-                          </div>
+                              {event.title}
+                    </div>
                   ))}
-                </div>
-              </div>
+                    </div>
+                      </motion.div>
             );
           })}
-        </div> {/* <-- This closes the grid for calendar days */}
-      </div> {/* <-- This closes the motion.div for the calendar */}
-
-      {/* Legend */}
-      <div className="mt-6 flex flex-wrap gap-4 text-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-blue-500 rounded"></div>
-          <span>Club Meetings</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-purple-500 rounded"></div>
-          <span>Special Events</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-red-500 rounded"></div>
-          <span>Federal Holidays</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-orange-400 rounded"></div>
-          <span>School Breaks</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 bg-gray-400 rounded"></div>
-          <span>Completed</span>
-        </div>
+          </motion.div>
       </div>
 
-          {/* Progress Stats - Moved Below Calendar */}
-      <div className="mt-12">
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <h2 className="text-3xl font-bold bg-gradient-to-r from-orange-600 to-blue-600 bg-clip-text text-transparent">
-              Semester Journey
-            </h2>
-            <p className="text-gray-600 mt-1">Track your club's progress through the academic year</p>
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">Completed</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-              <span className="text-sm text-gray-600">Current</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <div className="w-3 h-3 bg-gray-300 rounded-full"></div>
-              <span className="text-sm text-gray-600">Upcoming</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-br from-white via-orange-50/30 to-blue-50/30 rounded-3xl border border-gray-100 p-8 shadow-xl">
-          <div className="max-w-4xl mx-auto">
-            {/* Progress Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-green-100 to-green-200 rounded-xl flex items-center justify-center">
-                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Completed</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {(() => {
-                        const pastEvents = events.filter(event => 
-                          new Date(event.date) < new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-                        );
-                        return pastEvents.length;
-                      })()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-orange-100 to-orange-200 rounded-xl flex items-center justify-center">
-                    <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">This Month</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {(() => {
-                        const currentMonthEvents = events.filter(event => 
-                          event.date.getMonth() === new Date().getMonth() && 
-                          event.date.getFullYear() === new Date().getFullYear()
-                        );
-                        return currentMonthEvents.length;
-                      })()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <p className="text-sm text-gray-600">Remaining</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {(() => {
-                        const futureEvents = events.filter(event => 
-                          new Date(event.date) > new Date()
-                        );
-                        return futureEvents.length;
-                      })()}
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Enhanced Timeline */}
-            <div className="relative">
-              {/* Curved Timeline Path */}
-              <div className="absolute left-8 top-0 bottom-0 w-1">
-                <div className="w-full h-full bg-gradient-to-b from-green-400 via-orange-400 to-blue-400 rounded-full relative overflow-hidden">
-                  <div className="absolute inset-0 bg-gradient-to-b from-green-400 via-orange-400 to-blue-400 animate-pulse opacity-20"></div>
-                </div>
-              </div>
-
-              {/* Timeline Items */}
-              <div className="space-y-8">
-                {(() => {
-                  const timelineItems = [];
-                  const startDate = new Date(formData.schoolYearStart);
-                  const endDate = new Date(formData.schoolYearEnd);
-                  const currentDate = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
-                  
-                  while (currentDate <= endDate) {
-                    const monthName = currentDate.toLocaleDateString('en-US', { month: 'long' });
-                    const monthShort = currentDate.toLocaleDateString('en-US', { month: 'short' });
-                    const monthEvents = events.filter(event => 
-                      event.date.getMonth() === currentDate.getMonth() && 
-                      event.date.getFullYear() === currentDate.getFullYear()
-                    );
-                    const meetingCount = monthEvents.filter(e => e.type === 'meeting').length;
-                    const specialCount = monthEvents.filter(e => e.type === 'custom').length;
-                    const isCurrentMonth = currentDate.getMonth() === new Date().getMonth() && 
-                                          currentDate.getFullYear() === new Date().getFullYear();
-                    const isPastMonth = currentDate < new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-                    
-                    timelineItems.push(
-                      <div key={`${currentDate.getFullYear()}-${currentDate.getMonth()}`} className="flex items-start space-x-6">
-                        {/* Enhanced Timeline Node */}
-                        <div className="relative z-10">
-                          <div className={`flex items-center justify-center w-20 h-20 rounded-full border-4 transition-all duration-500 hover:scale-110 ${
-                            isCurrentMonth 
-                              ? 'bg-gradient-to-br from-orange-400 to-orange-600 border-orange-300 text-white shadow-2xl shadow-orange-200 animate-pulse' 
-                              : isPastMonth
-                              ? 'bg-gradient-to-br from-green-400 to-green-600 border-green-300 text-white shadow-xl shadow-green-200'
-                              : 'bg-gradient-to-br from-gray-100 to-gray-200 border-gray-300 text-gray-600 shadow-lg'
-                          }`}>
-                            {isPastMonth ? (
-                              <svg className="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                              </svg>
-                            ) : (
-                              <span className="font-bold text-lg">{monthShort}</span>
-                            )}
-                          </div>
-                          
-                          {/* Status indicator */}
-                          <div className="absolute -top-2 -right-2">
-                            <div className={`w-6 h-6 rounded-full border-2 border-white ${
-                              isCurrentMonth ? 'bg-orange-500' : 
-                              isPastMonth ? 'bg-green-500' : 'bg-gray-400'
-                            }`}></div>
-                          </div>
-                        </div>
-                        
-                        {/* Enhanced Content Card */}
-                        <div className="flex-1 min-w-0">
-                          <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-lg hover:shadow-xl transition-all duration-300">
-                            <div className="flex items-center justify-between mb-4">
-                              <div>
-                                <h3 className="text-xl font-bold text-gray-900">{monthName}</h3>
-                                <p className="text-sm text-gray-500">{currentDate.getFullYear()}</p>
-                              </div>
-                              <div className="flex items-center space-x-3">
-                                {meetingCount > 0 && (
-                                  <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-1">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                                    </svg>
-                                    <span>{meetingCount}</span>
-                                  </div>
-                                )}
-                                {specialCount > 0 && (
-                                  <div className="bg-purple-50 text-purple-700 px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-1">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                                    </svg>
-                                    <span>{specialCount}</span>
-                                  </div>
-                                )}
-                              </div>
-                              
-                              {monthEvents.length > 0 ? (
-                                <div className="space-y-3">
-                                  {monthEvents.slice(0, 4).map((event, idx) => (
-                                    <div 
-                                      key={event.id}
-                                      className={`text-sm p-3 rounded-xl text-white ${event.color} flex items-center space-x-3 shadow-sm hover:shadow-md transition-all duration-200`}
-                                    >
-                                      <div className="w-2 h-2 bg-white/40 rounded-full flex-shrink-0"></div>
-                                      <span className="truncate font-medium">{event.title}</span>
-                                      <div className="text-xs bg-white/20 px-2 py-1 rounded-full flex-shrink-0">
-                                        {event.date.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
-                        </div>
-                      </div>
-                    ))}
-                                  {monthEvents.length > 4 && (
-                                    <div className="text-sm text-gray-500 bg-gray-50 rounded-lg p-3 text-center">
-                                      +{monthEvents.length - 4} more events
-                  </div>
-                                  )}
-                </div>
-              ) : (
-                                <div className="text-center py-8">
-                                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                  </div>
-                                  <p className="text-gray-500 text-sm">No events scheduled</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-                    );
-                    
-                    currentDate.setMonth(currentDate.getMonth() + 1);
-                  }
-                  
-                  return timelineItems;
-                })()}
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Floating Action Button */}
+        <motion.button
+          onClick={() => openEventModal(new Date())}
+          className="fixed bottom-8 right-8 w-16 h-16 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 z-50"
+          whileHover={{ scale: 1.1, rotate: 90 }}
+          whileTap={{ scale: 0.9 }}
+        >
+                   <Plus className="w-8 h-8" />
+       </motion.button>
       </div>
 
       {/* Event Modal */}
       {showEventModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl max-w-lg w-full shadow-lg">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  {currentEvent ? 'Edit Event' : 'Add Event'}
-                </h2>
-            <button
-                  onClick={() => setShowEventModal(false)}
-                  className="text-gray-400 hover:text-gray-600 text-xl"
-            >
-                  ✕
-            </button>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div
+            className="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl"
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+          >
+            <h3 className="text-2xl font-light text-gray-900 mb-6">
+              {currentEvent ? 'Edit Event' : 'Add Event'}
+            </h3>
+            {/* Show club topic if available */}
+            {currentEvent && currentEvent.topic && (
+              <div className="mb-4 p-3 bg-blue-50 rounded-xl text-blue-700 text-sm">
+                <strong>Club Topic:</strong> {currentEvent.topic}
               </div>
-              <p className="text-sm text-gray-600 mt-1">
-                {selectedDate?.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-              </p>
-            </div>
-
-            <div className="p-6 space-y-4">
+            )}
+            <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Event Title</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Event Title / Topic</label>
                 <input
                   type="text"
                   value={eventTitle}
                   onChange={(e) => setEventTitle(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none"
-                  placeholder="Enter event title"
-                  autoFocus
+                  className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  placeholder="Enter event title or topic"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
                 <textarea
                   value={eventDescription}
                   onChange={(e) => setEventDescription(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none h-20 resize-none"
-                  placeholder="Add details about this event"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  rows={3}
+                  placeholder="Enter event description"
                 />
               </div>
-
-              {/* Color Picker */}
+              {/* Prerequisites field for Groq meetings */}
+              {currentEvent && currentEvent.prerequisites !== undefined && (
                 <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Event Color</label>
-                <div className="flex gap-2 flex-wrap">
-                  {[
-                    { color: 'bg-purple-500', label: 'Purple' },
-                    { color: 'bg-blue-500', label: 'Blue' },
-                    { color: 'bg-green-500', label: 'Green' },
-                    { color: 'bg-yellow-500', label: 'Yellow' },
-                    { color: 'bg-red-500', label: 'Red' },
-                    { color: 'bg-pink-500', label: 'Pink' },
-                    { color: 'bg-indigo-500', label: 'Indigo' },
-                    { color: 'bg-teal-500', label: 'Teal' }
-                  ].map(({ color, label }) => (
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Prerequisites</label>
+                  <input
+                    type="text"
+                    value={currentEvent.prerequisites}
+                    onChange={(e) => setCurrentEvent({ ...currentEvent, prerequisites: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder="Enter prerequisites (optional)"
+                  />
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
+                <div className="flex space-x-2">
+                  {['bg-blue-500', 'bg-purple-500', 'bg-green-500', 'bg-orange-500', 'bg-red-500'].map(color => (
                     <button
                       key={color}
-                      type="button"
                       onClick={() => setEventColor(color)}
-                      className={`w-8 h-8 rounded-full ${color} border-2 transition-all ${
-                        eventColor === color ? 'border-gray-800 scale-110' : 'border-gray-300 hover:scale-105'
-                      }`}
-                      title={label}
+                      className={`w-8 h-8 rounded-full ${color} ${eventColor === color ? 'ring-2 ring-gray-400' : ''}`}
                     />
                   ))}
                 </div>
               </div>
-
-
-              
-              <div className="flex gap-3 pt-2">
+              {/* Add Save/Delete/Cancel buttons as before */}
+              <div className="flex justify-between pt-4">
                 <button
                   onClick={saveEvent}
-                  disabled={!eventTitle.trim()}
-                  className="flex-1 bg-orange-500 text-white py-3 rounded-lg font-medium hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-2 rounded-xl font-light hover:from-orange-600 hover:to-orange-700 transition-all"
                 >
-                  Save Event
+                  Save
                 </button>
-                
                 {currentEvent && (
-                <button
+                  <button
                     onClick={deleteEvent}
-                    className="px-4 py-3 bg-red-500 text-white rounded-lg font-medium hover:bg-red-600 transition-colors"
+                    className="bg-red-100 text-red-600 px-6 py-2 rounded-xl font-light hover:bg-red-200 transition-all"
                   >
                     Delete
                   </button>
                 )}
-                
-                <button 
+                <button
                   onClick={() => setShowEventModal(false)}
-                  className="px-4 py-3 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+                  className="bg-gray-100 text-gray-700 px-6 py-2 rounded-xl font-light hover:bg-gray-200 transition-all"
                 >
                   Cancel
                 </button>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
-
-          {/* Enhanced Analytics Dashboard */}
-          <motion.div 
-            className="mt-16 relative"
-            initial={{ opacity: 0, y: 40 }}
-            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-          >
-            {/* Background Decorations */}
-            <div className="absolute inset-0 pointer-events-none overflow-hidden">
-              <motion.div
-                className="absolute -top-4 -right-4 w-32 h-32 bg-gradient-to-br from-orange-500/10 to-orange-400/5 rounded-full blur-2xl"
-                animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
-                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-              />
-              <motion.div
-                className="absolute -bottom-4 -left-4 w-24 h-24 bg-gradient-to-br from-blue-500/10 to-blue-400/5 rounded-full blur-2xl"
-                animate={{ scale: [1.2, 1, 1.2], opacity: [0.3, 0.6, 0.3] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-              />
-            </div>
-
-            <div className="relative">
-              {/* Header Section */}
-              <motion.div 
-                className="text-center mb-12"
-                initial={{ opacity: 0, y: 20 }}
-                animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                transition={{ duration: 0.6, delay: 0.9 }}
-              >
-                <motion.div
-                  className="inline-flex items-center space-x-2 bg-white/80 backdrop-blur-xl border border-orange-200/50 rounded-full px-4 py-2 mb-6"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-                  transition={{ duration: 0.6, delay: 1.0 }}
-                >
-                  <TrendingUp className="w-4 h-4 text-orange-500" />
-                  <span className="text-sm font-extralight text-gray-700">Performance Analytics</span>
-                </motion.div>
-
-                <h2 className="text-4xl font-extralight text-gray-900 mb-4 leading-tight">
-                  Club
-                  <span className="text-orange-500 font-light"> Insights</span>
-                </h2>
-                <p className="text-xl text-gray-600 font-extralight leading-relaxed max-w-2xl mx-auto">
-                  Real-time analytics and progress tracking for your club's success journey
-                </p>
-              </motion.div>
-
-              {/* Progress Overview with Visual Enhancement */}
-              <motion.div 
-                className="bg-white/40 backdrop-blur-3xl border border-white/20 rounded-3xl p-8 mb-8 shadow-2xl"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.8, delay: 1.1 }}
-              >
-                <div className="text-center mb-8">
-                  <div className="inline-flex items-center justify-center w-24 h-24 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full mb-4 shadow-lg">
-                    <span className="text-3xl font-light text-white">{progressPercentage}%</span>
-                  </div>
-                  <h3 className="text-2xl font-light text-gray-900 mb-2">Semester Progress</h3>
-                  <p className="text-gray-600 font-extralight">You're making great progress this semester!</p>
-                </div>
-
-                {/* Animated Progress Bar */}
-                <div className="relative h-3 bg-gray-200/50 rounded-full overflow-hidden mb-8">
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-600 rounded-full"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${progressPercentage}%` }}
-                    transition={{ duration: 2, delay: 1.5, ease: "easeOut" }}
-                  />
-                  <motion.div
-                    className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent rounded-full"
-                    animate={{ x: ['-100%', '100%'] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 1.5 }}
-                  />
-                </div>
-
-                {/* Enhanced Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {[
-                    { 
-                      value: completedMeetings, 
-                      label: "Meetings Completed", 
-                      sublabel: "This semester",
-                      icon: CheckSquare, 
-                      color: "from-green-500 to-green-600",
-                      bgColor: "from-green-50 to-green-100",
-                      trend: "+12% from last month"
-                    },
-                    { 
-                      value: events.filter(e => e.date.getMonth() === new Date().getMonth()).length, 
-                      label: "This Month", 
-                      sublabel: "Active events",
-                      icon: Calendar, 
-                      color: "from-blue-500 to-blue-600",
-                      bgColor: "from-blue-50 to-blue-100",
-                      trend: "On track"
-                    },
-                    { 
-                      value: upcomingMeetings, 
-                      label: "Upcoming Events", 
-                      sublabel: "Next 30 days",
-                      icon: Clock, 
-                      color: "from-purple-500 to-purple-600",
-                      bgColor: "from-purple-50 to-purple-100",
-                      trend: "Well planned"
-                    }
-                  ].map((stat, index) => (
-                    <motion.div
-                      key={stat.label}
-                      className="relative group"
-                      initial={{ opacity: 0, y: 30 }}
-                      animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-                      transition={{ delay: 1.3 + index * 0.15, duration: 0.6 }}
-                      whileHover={{ y: -8 }}
-                    >
-                      <div className={`bg-gradient-to-br ${stat.bgColor} border border-white/50 rounded-2xl p-6 relative overflow-hidden transition-all duration-500 group-hover:shadow-2xl`}>
-                        {/* Floating Icon */}
-                        <div className="absolute -top-2 -right-2 opacity-10 group-hover:opacity-20 transition-opacity duration-300">
-                          <stat.icon className="w-16 h-16" />
-                        </div>
-                        
-                        <div className="relative">
-                          <div className={`w-14 h-14 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
-                            <stat.icon className="w-7 h-7 text-white" />
-                          </div>
-                          
-                          <div className="text-4xl font-extralight text-gray-900 mb-2 group-hover:text-gray-700 transition-colors duration-300">
-                            {stat.value}
-                          </div>
-                          
-                          <div className="text-lg font-light text-gray-800 mb-1">{stat.label}</div>
-                          <div className="text-sm text-gray-600 font-extralight mb-3">{stat.sublabel}</div>
-                          
-                          <div className="flex items-center text-sm text-gray-600">
-                            <TrendingUp className="w-4 h-4 mr-1 text-green-500" />
-                            <span className="font-extralight">{stat.trend}</span>
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-
-              {/* Quick Insights Cards */}
-              <motion.div 
-                className="grid grid-cols-1 md:grid-cols-2 gap-6"
-                initial={{ opacity: 0, y: 30 }}
-                animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-                transition={{ duration: 0.8, delay: 1.5 }}
-              >
-                {/* Engagement Insight */}
-                <motion.div 
-                  className="bg-gradient-to-br from-white/60 to-orange-50/60 backdrop-blur-xl border border-white/30 rounded-2xl p-6 shadow-xl"
-                  whileHover={{ scale: 1.02, y: -5 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="flex items-start space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
-                      <TrendingUp className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-lg font-light text-gray-900 mb-2">Strong Momentum</h4>
-                      <p className="text-sm text-gray-600 font-extralight leading-relaxed">
-                        Your club is showing excellent engagement patterns. Keep up the consistent meeting schedule for optimal member retention.
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-
-                {/* Planning Insight */}
-                <motion.div 
-                  className="bg-gradient-to-br from-white/60 to-blue-50/60 backdrop-blur-xl border border-white/30 rounded-2xl p-6 shadow-xl"
-                  whileHover={{ scale: 1.02, y: -5 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <div className="flex items-start space-x-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-                      <Calendar className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="text-lg font-light text-gray-900 mb-2">Well Organized</h4>
-                      <p className="text-sm text-gray-600 font-extralight leading-relaxed">
-                        Your roadmap shows thoughtful planning ahead. Consider adding more interactive events to boost member engagement.
-                      </p>
-                    </div>
-                  </div>
-                </motion.div>
-              </motion.div>
-            </div>
-          </motion.div>
         </div>
   );
 }
@@ -4150,6 +3484,7 @@ function AttendancePanel({ clubName, clubInfo }: { clubName: string; clubInfo: a
         setIsSummarizing(true);
         setError(null);
         try {
+          // Get summary
           const res = await fetch('/api/attendance-notes/summarize', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -4163,6 +3498,7 @@ function AttendancePanel({ clubName, clubInfo }: { clubName: string; clubInfo: a
           setSummary(data.summary);
           
           // Generate AI title for the meeting
+          let generatedTitle = '';
           try {
             const titleRes = await fetch('/api/attendance-notes/generate-title', {
               method: 'POST',
@@ -4171,6 +3507,7 @@ function AttendancePanel({ clubName, clubInfo }: { clubName: string; clubInfo: a
             });
             if (titleRes.ok) {
               const titleData = await titleRes.json();
+              generatedTitle = titleData.title;
               setMeetingTitle(titleData.title);
             }
           } catch (err) {
@@ -4187,6 +3524,7 @@ function AttendancePanel({ clubName, clubInfo }: { clubName: string; clubInfo: a
                 clubName,
                 clubId: clubInfo?.id || clubInfo?.clubId || undefined,
                 createdAt: new Date().toISOString(),
+                title: generatedTitle // Include the generated title
               };
               await fetch('/api/attendance-notes/history', {
                 method: 'POST',
@@ -4706,6 +4044,15 @@ function HistoryPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
   const { user } = useUser();
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [selectedPresentation, setSelectedPresentation] = useState<any>(null);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailContent, setEmailContent] = useState('');
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
 
   useEffect(() => {
     if (!user || !clubInfo?.id && !clubInfo?.clubId) return;
@@ -4731,53 +4078,308 @@ function HistoryPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
     fetchHistory();
   }, [user, clubInfo, clubName]);
 
+  const generateEmailContent = async (presentation: any) => {
+    try {
+      const response = await fetch('/api/emails/generate-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'presentation',
+          clubName,
+          content: presentation.description,
+          presentationUrl: presentation.viewerUrl
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setEmailSubject(data.subject || `[${clubName}] New Presentation: ${presentation.description}`);
+        setEmailContent(data.body || `Dear club members,\n\nA new presentation has been created for our club: "${presentation.description}"\n\nYou can view the presentation here: ${presentation.viewerUrl}\n\nBest regards,\n${clubName} Team`);
+      } else {
+        // Fallback content if generation fails
+        setEmailSubject(`[${clubName}] New Presentation: ${presentation.description}`);
+        setEmailContent(`Dear club members,\n\nA new presentation has been created for our club: "${presentation.description}"\n\nYou can view the presentation here: ${presentation.viewerUrl}\n\nBest regards,\n${clubName} Team`);
+      }
+    } catch (error) {
+      console.error('Error generating email content:', error);
+      // Fallback content if generation fails
+      setEmailSubject(`[${clubName}] New Presentation: ${presentation.description}`);
+      setEmailContent(`Dear club members,\n\nA new presentation has been created for our club: "${presentation.description}"\n\nYou can view the presentation here: ${presentation.viewerUrl}\n\nBest regards,\n${clubName} Team`);
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (!selectedPresentation || !clubInfo || !emailSubject || !emailContent) return;
+    
+    setSending(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const response = await fetch('/api/clubs/emails/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clubId: clubInfo.id || clubInfo.clubId,
+          clubName,
+          subject: emailSubject,
+          content: emailContent,
+          senderName: user?.fullName || user?.firstName || user?.username || 'Club Member'
+        }),
+      });
+
+      if (response.ok) {
+        setSuccess('Presentation sent successfully to club mailing list!');
+        setShowEmailModal(false);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to send email');
+      }
+    } catch (err) {
+      setError('Failed to send email');
+    } finally {
+      setSending(false);
+    }
+  };
+
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pulse-50 via-white to-orange-50 flex items-center justify-center">
-        <div className="text-lg text-pulse-500">Loading club information...</div>
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <motion.div
+            className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          >
+            <History className="w-8 h-8 text-white" />
+          </motion.div>
+          <p className="text-gray-600 font-extralight">Loading presentation history...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="p-8">
-      {/* Welcome Section */}
+    <div ref={ref} className="p-8 max-w-7xl mx-auto">
+      {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-pulse-500 mb-2">Presentation History</h1>
-        <p className="text-gray-600">View all presentations created for this club</p>
+        <h1 className="text-4xl font-light text-gray-900 mb-2">Past Presentations</h1>
+        <p className="text-gray-600 font-extralight">View and share your previous presentations</p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {history.map((item, index) => (
-          <div key={index} className="glass-card bg-white/90 border border-pulse-100 rounded-2xl p-6 shadow-lg">
-            <div className="mb-4">
-              <h3 className="font-semibold text-pulse-500 truncate">{item.description || "Untitled"}</h3>
-              <p className="text-sm text-gray-500">{item.generatedAt && new Date(item.generatedAt).toLocaleDateString()}</p>
-            </div>
-            <div className="space-y-2">
-              {item.viewerUrl && (
-                <a
-                  href={item.viewerUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full text-center bg-pulse-500 hover:bg-pulse-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+
+      {error && (
+        <motion.div 
+          className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          {error}
+        </motion.div>
+      )}
+
+      {success && (
+        <motion.div 
+          className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          {success}
+        </motion.div>
+      )}
+
+      {history.length === 0 ? (
+        <motion.div 
+          className="text-center py-16 bg-white rounded-2xl shadow-lg border border-gray-100"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Presentation className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-xl font-light text-gray-900 mb-2">No Presentations Yet</h3>
+          <p className="text-gray-600 font-extralight">Create your first presentation to get started!</p>
+        </motion.div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {history.map((presentation, index) => (
+            <motion.div
+              key={presentation.id || index}
+              className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: index * 0.1 }}
+            >
+              {/* Preview */}
+              <div className="relative aspect-video mb-4 rounded-xl overflow-hidden bg-gray-50">
+                {presentation.viewerUrl ? (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <iframe
+                      src={presentation.viewerUrl}
+                      className="w-full h-full"
+                      style={{ 
+                        transform: 'scale(0.75)', // Scale down to show full slide
+                        transformOrigin: 'center center'
+                      }}
+                      frameBorder="0"
+                      allowFullScreen
+                      loading={index < 6 ? "eager" : "lazy"}
+                    />
+                  </div>
+                ) : (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                    <div className="w-12 h-12 mb-2 text-gray-200">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <rect x="3" y="3" width="18" height="18" rx="2" />
+                        <path d="M3 14l4-4 10 10" />
+                        <path d="M14 6l7 7" />
+                        <path d="M3 8h4" />
+                        <path d="M3 12h4" />
+                        <path d="M3 16h4" />
+                      </svg>
+                    </div>
+                    <p className="text-sm text-gray-300 font-light">Preview not available</p>
+                  </div>
+                )}
+
+                {/* Hover overlay */}
+                <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                  <a
+                    href={presentation.viewerUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-white font-medium hover:underline flex items-center gap-2"
+                  >
+                    <Eye className="w-5 h-5" />
+                    View Presentation
+                  </a>
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="space-y-4">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1 line-clamp-2">
+                    {presentation.description || 'Untitled Presentation'}
+                  </h3>
+                  <p className="text-sm text-gray-500 font-light">
+                    Created {new Date(presentation.generatedAt).toLocaleDateString()}
+                  </p>
+                </div>
+
+                {/* Actions */}
+                <div className="space-y-2">
+                  {/* View Button */}
+                  <a
+                    href={presentation.viewerUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full px-4 py-2.5 bg-orange-500 text-white font-medium rounded-xl hover:bg-orange-600 transition-colors duration-200 flex items-center justify-center gap-2"
+                  >
+                    <Eye className="w-4 h-4" />
+                    View Presentation
+                  </a>
+
+                  {/* Download Button */}
+                  <a
+                    href={presentation.s3Url}
+                    download
+                    className="w-full px-4 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center gap-2"
+                  >
+                    <Download className="w-4 h-4" />
+                    Download
+                  </a>
+
+                  {/* Email Button */}
+                  <button
+                    onClick={async () => {
+                      setSelectedPresentation(presentation);
+                      await generateEmailContent(presentation);
+                      setShowEmailModal(true);
+                    }}
+                    className="w-full px-4 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center gap-2"
+                  >
+                    <Mail className="w-4 h-4" />
+                    Share via Email
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* Email Modal */}
+      {showEmailModal && selectedPresentation && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div 
+            className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="p-8">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-light text-gray-900">Share Presentation</h3>
+                <button
+                  onClick={() => setShowEmailModal(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  View Online
-                </a>
-              )}
-              {item.s3Url && (
-                <a
-                  href={item.s3Url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full text-center bg-white border border-pulse-200 text-pulse-500 px-4 py-2 rounded-lg text-sm font-medium hover:bg-pulse-50 transition-colors"
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                  <input
+                    type="text"
+                    value={emailSubject}
+                    onChange={(e) => setEmailSubject(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                  <textarea
+                    value={emailContent}
+                    onChange={(e) => setEmailContent(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                    rows={8}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex gap-4 mt-6">
+                <button
+                  onClick={handleSendEmail}
+                  disabled={sending || !emailSubject.trim() || !emailContent.trim()}
+                  className="flex-1 px-6 py-3 bg-orange-500 text-white font-medium rounded-xl hover:bg-orange-600 disabled:opacity-50 transition-colors duration-200 flex items-center justify-center gap-2"
                 >
-                  Download
-                </a>
-              )}
+                  {sending ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-5 h-5" />
+                      Send Email
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => setShowEmailModal(false)}
+                  className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors duration-200"
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
@@ -4787,6 +4389,18 @@ function SummariesPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
   const { user } = useUser();
   const [summaries, setSummaries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showEmailModal, setShowEmailModal] = useState(false);
+  const [selectedSummary, setSelectedSummary] = useState<any>(null);
+  const [expandedSummaries, setExpandedSummaries] = useState<string[]>([]);
+  const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailContent, setEmailContent] = useState('');
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
 
   useEffect(() => {
     if (!user || !clubInfo?.id && !clubInfo?.clubId) return;
@@ -4812,94 +4426,421 @@ function SummariesPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
     fetchSummaries();
   }, [user, clubInfo, clubName]);
 
+  const generateTitle = async (summary: any) => {
+    try {
+      const response = await fetch('/api/attendance-notes/generate-title', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ summary: summary.summary || summary.description }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        return data.title;
+      }
+    } catch (error) {
+      console.error('Error generating title:', error);
+    }
+    return null;
+  };
+
+  const updateSummaryTitle = async (summaryId: string, newTitle: string) => {
+    try {
+      const response = await fetch(`/api/attendance-notes/history`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user?.id,
+          summaryId,
+          title: newTitle,
+          clubId: clubInfo?.id || clubInfo?.clubId,
+        }),
+      });
+
+      if (response.ok) {
+        setSummaries(prev => prev.map(s => 
+          s.id === summaryId ? { ...s, title: newTitle } : s
+        ));
+        setSuccess('Title updated successfully');
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to update title');
+      }
+    } catch (err) {
+      console.error('Error updating title:', err);
+      setError('Failed to update title');
+    }
+    setEditingTitleId(null);
+    setEditingTitle('');
+  };
+
+  const startEditingTitle = (summary: any) => {
+    setEditingTitleId(summary.id);
+    setEditingTitle(summary.title || '');
+  };
+
+  const handleTitleSubmit = async (summaryId: string) => {
+    if (editingTitle.trim()) {
+      await updateSummaryTitle(summaryId, editingTitle.trim());
+    } else {
+      const summary = summaries.find(s => s.id === summaryId);
+      if (summary) {
+        const generatedTitle = await generateTitle(summary);
+        if (generatedTitle) {
+          await updateSummaryTitle(summaryId, generatedTitle);
+        }
+      }
+    }
+  };
+
+  const generateEmailContent = async (summary: any) => {
+    try {
+      const response = await fetch('/api/emails/generate-content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'summary',
+          clubName,
+          content: summary.summary || summary.description
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setEmailSubject(data.subject || `${clubName} Meeting Summary - ${summary.title || 'Untitled Meeting'}`);
+        setEmailContent(data.body || `Dear club members,\n\nHere's a summary of our recent ${clubName} club meeting:\n\n${summary.summary || summary.description}\n\nBest regards,\n${clubName} Team`);
+      } else {
+        // Fallback content if generation fails
+        setEmailSubject(`${clubName} Meeting Summary - ${summary.title || 'Untitled Meeting'}`);
+        setEmailContent(`Dear club members,\n\nHere's a summary of our recent ${clubName} club meeting:\n\n${summary.summary || summary.description}\n\nBest regards,\n${clubName} Team`);
+      }
+    } catch (error) {
+      console.error('Error generating email content:', error);
+      // Fallback content
+      setEmailSubject(`${clubName} Meeting Summary - ${summary.title || 'Untitled Meeting'}`);
+      setEmailContent(`Dear club members,\n\nHere's a summary of our recent ${clubName} club meeting:\n\n${summary.summary || summary.description}\n\nBest regards,\n${clubName} Team`);
+    }
+  };
+
+  const handleSendEmail = async () => {
+    if (!selectedSummary || !clubInfo || !emailSubject || !emailContent) return;
+    
+    setSending(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const response = await fetch('/api/clubs/emails/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clubId: clubInfo.id || clubInfo.clubId,
+          clubName,
+          subject: emailSubject,
+          content: emailContent,
+          senderName: user?.fullName || user?.firstName || user?.username || 'Club Member'
+        }),
+      });
+
+      if (response.ok) {
+        setSuccess('Meeting summary sent successfully to club mailing list!');
+        setShowEmailModal(false);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to send email');
+      }
+    } catch (err) {
+      setError('Failed to send email');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const toggleSummary = (summaryId: string) => {
+    setExpandedSummaries(prev => 
+      prev.includes(summaryId) 
+        ? prev.filter(id => id !== summaryId)
+        : [...prev, summaryId]
+    );
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <motion.div
+            className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center"
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          >
+            <FileText className="w-8 h-8 text-white" />
+          </motion.div>
+          <p className="text-gray-600 font-extralight">Loading meeting summaries...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="p-8">
+    <div ref={ref} className="p-8 max-w-7xl mx-auto">
+      {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold text-pulse-500 mb-2">Meeting Summaries</h1>
-        <p className="text-gray-600">View all meeting summaries and notes</p>
+        <h1 className="text-4xl font-light text-gray-900 mb-2">Past Summaries</h1>
+        <p className="text-gray-600 font-extralight">View and share your meeting notes and summaries</p>
       </div>
 
-      {loading ? (
-        <div className="glass-card bg-white/90 border border-pulse-100 rounded-2xl p-8 shadow-lg text-center">
-          <div className="text-pulse-500">Loading summaries...</div>
-        </div>
-      ) : summaries.length === 0 ? (
-        <div className="glass-card bg-white/90 border border-pulse-100 rounded-2xl p-8 shadow-lg">
-          <div className="text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-teal-500 to-cyan-400 rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-10 h-10 text-white">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="16" y1="13" x2="8" y2="13"></line>
-                <line x1="16" y1="17" x2="8" y2="17"></line>
-                <polyline points="10 9 9 9 8 9"></polyline>
-              </svg>
-            </div>
-            <h3 className="text-2xl font-semibold text-pulse-500 mb-4">No Meeting Summaries Yet</h3>
-            <p className="text-gray-600 mb-8">Record your first meeting to get started.</p>
-          </div>
-        </div>
+      {error && (
+        <motion.div 
+          className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          {error}
+        </motion.div>
+      )}
+
+      {success && (
+        <motion.div 
+          className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-green-700"
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          {success}
+        </motion.div>
+      )}
+
+      {summaries.length === 0 ? (
+        <motion.div 
+          className="text-center py-16 bg-white rounded-2xl shadow-lg border border-gray-100"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <FileText className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-xl font-light text-gray-900 mb-2">No Meeting Summaries Yet</h3>
+          <p className="text-gray-600 font-extralight">Record your first meeting to get started!</p>
+        </motion.div>
       ) : (
-        <div className="space-y-6">
-          {summaries.map((summary, index) => (
-            <div key={index} className="glass-card bg-white/90 border border-pulse-100 rounded-2xl p-6 shadow-lg">
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold text-pulse-500">{summary.title || "Untitled Meeting"}</h3>
-                <p className="text-sm text-gray-500">{summary.createdAt && new Date(summary.createdAt).toLocaleString()}</p>
-              </div>
-              <div className="prose max-w-none mb-4">
-                <p className="text-gray-700">{summary.summary || summary.description || "No summary available"}</p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={async () => {
-                    try {
-                      const { Document, Packer, Paragraph, TextRun } = await import("docx");
-                      const doc = new Document({
-                        sections: [
-                          {
-                            properties: {},
-                            children: [
-                              new Paragraph({
-                                children: [
-                                  new TextRun({ text: summary.title || "Club Meeting Summary", bold: true, size: 32 }),
-                                ],
-                                spacing: { after: 300 },
-                              }),
-                              ...(summary.summary || summary.description || "").split("\n").map(
-                                (line) =>
+        <div className="grid grid-cols-1 gap-6">
+          {summaries.map((summary, index) => {
+            const isExpanded = expandedSummaries.includes(summary.id);
+            const summaryText = summary.summary || summary.description || "No summary available";
+            const truncatedSummary = isExpanded ? summaryText : summaryText.slice(0, 200);
+            const needsTruncation = summaryText.length > 200;
+            const isEditing = editingTitleId === summary.id;
+
+            return (
+              <motion.div
+                key={summary.id || index}
+                className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-200"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <div className="space-y-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      {isEditing ? (
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={editingTitle}
+                            onChange={(e) => setEditingTitle(e.target.value)}
+                            placeholder="Enter title or leave blank to auto-generate"
+                            className="flex-1 px-3 py-1 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light text-gray-900"
+                            autoFocus
+                          />
+                          <button
+                            onClick={() => handleTitleSubmit(summary.id)}
+                            className="px-3 py-1 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditingTitleId(null);
+                              setEditingTitle('');
+                            }}
+                            className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="group relative">
+                          <h3 className="text-lg font-medium text-gray-900 mb-1 pr-8">
+                            {summary.title || "Untitled Meeting"}
+                            <button
+                              onClick={() => startEditingTitle(summary)}
+                              className={cn(
+                                "absolute right-0 top-1/2 -translate-y-1/2 transition-opacity text-gray-400 hover:text-orange-500",
+                                isEditing ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                              )}
+                              style={{ display: summary.clubId === (clubInfo?.id || clubInfo?.clubId) ? 'block' : 'none' }}
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                          </h3>
+                          <p className="text-sm text-gray-500 font-light">
+                            Created {new Date(summary.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="prose max-w-none">
+                    <p className="text-gray-700 font-light">
+                      {truncatedSummary}
+                      {needsTruncation && !isExpanded && "..."}
+                    </p>
+                    {needsTruncation && (
+                      <button
+                        onClick={() => toggleSummary(summary.id)}
+                        className="text-orange-500 hover:text-orange-600 text-sm font-medium mt-2"
+                      >
+                        {isExpanded ? "Show Less" : "Read More"}
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="space-y-2 pt-4">
+                    <button
+                      onClick={async () => {
+                        try {
+                          const { Document, Packer, Paragraph, TextRun } = await import("docx");
+                          const doc = new Document({
+                            sections: [{
+                              properties: {},
+                              children: [
+                                new Paragraph({
+                                  children: [new TextRun({ text: summary.title || "Club Meeting Summary", bold: true, size: 32 })],
+                                  spacing: { after: 300 },
+                                }),
+                                ...(summaryText).split("\n").map(line =>
                                   new Paragraph({
                                     children: [new TextRun({ text: line, size: 24 })],
                                     spacing: { after: 100 },
                                   })
-                              ),
-                            ],
-                          },
-                        ],
-                      });
-                      const blob = await Packer.toBlob(doc);
-                      saveAs(blob, `${summary.title || 'meeting_summary'}.docx`);
-                    } catch (err) {
-                      console.error('Error generating DOCX:', err);
-                    }
-                  }}
-                  className="inline-flex items-center px-4 py-2 bg-pulse-500 text-white rounded-lg hover:bg-pulse-600 transition-colors"
+                                ),
+                              ],
+                            }],
+                          });
+                          const blob = await Packer.toBlob(doc);
+                          saveAs(blob, `${summary.title || 'meeting_summary'}.docx`);
+                        } catch (err) {
+                          console.error('Error generating DOCX:', err);
+                        }
+                      }}
+                      className="w-full px-4 py-2.5 bg-orange-500 text-white font-medium rounded-xl hover:bg-orange-600 transition-colors duration-200 flex items-center justify-center gap-2"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download Summary
+                    </button>
+
+                    {/* Email Button */}
+                    <button
+                      onClick={async () => {
+                        setSelectedSummary(summary);
+                        await generateEmailContent(summary);
+                        setShowEmailModal(true);
+                      }}
+                      className="w-full px-4 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center gap-2"
+                    >
+                      <Mail className="w-4 h-4" />
+                      Share via Email
+                    </button>
+
+                    {summary.audioUrl && (
+                      <a
+                        href={summary.audioUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full px-4 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center gap-2"
+                      >
+                        <Play className="w-4 h-4" />
+                        Listen to Recording
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Email Modal */}
+      {showEmailModal && selectedSummary && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <motion.div 
+            className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="p-8">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-2xl font-light text-gray-900">Share Summary</h3>
+                <button
+                  onClick={() => setShowEmailModal(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  <span className="mr-2">📄</span> Download DOCX
+                  <X className="w-6 h-6" />
                 </button>
-                {summary.audioUrl && (
-                  <a
-                    href={summary.audioUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
-                  >
-                    <span className="mr-2">🎵</span> Listen to Recording
-                  </a>
-                )}
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Subject</label>
+                  <input
+                    type="text"
+                    value={emailSubject}
+                    onChange={(e) => setEmailSubject(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                  <textarea
+                    value={emailContent}
+                    onChange={(e) => setEmailContent(e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                    rows={8}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex gap-4 mt-6">
+                <button
+                  onClick={handleSendEmail}
+                  disabled={sending || !emailSubject.trim() || !emailContent.trim()}
+                  className="flex-1 px-6 py-3 bg-orange-500 text-white font-medium rounded-xl hover:bg-orange-600 disabled:opacity-50 transition-colors duration-200 flex items-center justify-center gap-2"
+                >
+                  {sending ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <Send className="w-5 h-5" />
+                      Send Email
+                    </>
+                  )}
+                </button>
+                <button
+                  onClick={() => setShowEmailModal(false)}
+                  className="flex-1 px-6 py-3 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors duration-200"
+                >
+                  Cancel
+                </button>
               </div>
             </div>
-          ))}
+          </motion.div>
         </div>
       )}
     </div>
@@ -4956,8 +4897,6 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
       setActiveTab(item.key);
     }
   };
-
-  const PanelComponent = panels[activeTab];
 
   // Move featureList here so clubName is defined
   const featureList = [
@@ -5018,6 +4957,8 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
         </svg>
     ), label: 'Settings' },
   ];
+
+  const PanelComponent = panels[activeTab];
 
   return (
     <div className="min-h-screen flex">

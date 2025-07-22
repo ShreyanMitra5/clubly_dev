@@ -133,11 +133,13 @@ export default function OnboardingPage() {
   };
 
   const handleSubmit = async () => {
+    console.log('handleSubmit called');
     setIsSubmitting(true);
     if (!user) {
       setError('User not found. Please sign in again.');
       console.error('User object is missing:', user);
       setIsSubmitting(false);
+      console.log('Early return: user not found');
       return;
     }
     const { id, emailAddresses, fullName } = user;
@@ -146,6 +148,7 @@ export default function OnboardingPage() {
       setError('User information is incomplete. Please sign out and sign in again.');
       console.error('User info incomplete:', { id, emailAddresses, fullName });
       setIsSubmitting(false);
+      console.log('Early return: user info incomplete');
       return;
     }
     const email = emailAddresses?.[0]?.emailAddress || '';
@@ -158,6 +161,7 @@ export default function OnboardingPage() {
       if (userError.message) console.error('Supabase user upsert error message:', userError.message);
       if (userError.details) console.error('Supabase user upsert error details:', userError.details);
       if (userError.hint) console.error('Supabase user upsert error hint:', userError.hint);
+      console.log('Early return: user upsert error');
     }
     // 2. For each club, insert into clubs and memberships
     for (let i = 0; i < clubs.length; i++) {
@@ -165,7 +169,7 @@ export default function OnboardingPage() {
       const clubDetails = clubData[i];
       const role = clubRoles[i] || '';
       const audience = clubAudiences[i] || '';
-      const clubId = uuidv4();
+      const clubId = String(uuidv4());
       // Insert club
       const { data: clubInsert, error: clubError } = await supabase
         .from('clubs')
@@ -187,16 +191,20 @@ export default function OnboardingPage() {
         if (clubError.message) console.error('Supabase club insert error message:', clubError.message);
         if (clubError.details) console.error('Supabase club insert error details:', clubError.details);
         if (clubError.hint) console.error('Supabase club insert error hint:', clubError.hint);
+        console.log('Early return: club insert error');
       }
       // Insert membership
+      const membershipPayload = { id: String(uuidv4()), user_id: String(id), club_id: String(clubId), role, created_at: now };
+      console.log('Inserting membership:', membershipPayload);
       const { error: membershipError } = await supabase.from('memberships').insert([
-        { id: uuidv4(), user_id: id, club_id: clubId, role, created_at: now }
+        membershipPayload
       ]);
       if (membershipError) {
         console.error('Supabase membership insert error:', JSON.stringify(membershipError, null, 2));
         if (membershipError.message) console.error('Supabase membership insert error message:', membershipError.message);
         if (membershipError.details) console.error('Supabase membership insert error details:', membershipError.details);
         if (membershipError.hint) console.error('Supabase membership insert error hint:', membershipError.hint);
+        console.log('Early return: membership insert error');
       }
     }
     router.push('/dashboard');

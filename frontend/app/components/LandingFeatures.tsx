@@ -12,7 +12,8 @@ import {
   Shield,
   Sparkles,
   ArrowUpRight,
-  Zap
+  Zap,
+  Target
 } from "lucide-react";
 
 const FeatureCard = ({ 
@@ -119,7 +120,7 @@ const FeatureCard = ({
   );
 };
 
-const LandingFeatures = () => {
+const LandingFeatures = ({ openSignInModal }: { openSignInModal?: () => void }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: sectionRef,
@@ -139,37 +140,43 @@ const LandingFeatures = () => {
       icon: Presentation,
       title: "AI-Powered Presentations",
       description: "Generate stunning slides in seconds with our advanced AI. Custom visuals, engaging content, and interactive elements tailored to your club's needs.",
-      gradient: "bg-gradient-to-br from-blue-500/10 to-purple-500/10"
+      gradient: "bg-gradient-to-br from-blue-500/10 to-purple-500/10",
+      iconColor: "text-blue-500"
     },
     {
-      icon: Map,
-      title: "Smart Semester Planning",
+      icon: Calendar,
+      title: "Smart Semester Planning", 
       description: "Plan your entire semester with intelligent suggestions. Our AI analyzes trends and creates optimal event schedules for maximum engagement.",
-      gradient: "bg-gradient-to-br from-green-500/10 to-emerald-500/10"
+      gradient: "bg-gradient-to-br from-green-500/10 to-emerald-500/10",
+      iconColor: "text-green-500"
     },
     {
       icon: Brain,
       title: "Intelligent Analytics",
       description: "Get deep insights into member engagement, event performance, and growth opportunities with our advanced analytics engine.",
-      gradient: "bg-gradient-to-br from-orange-500/10 to-red-500/10"
-    },
-    {
-      icon: Calendar,
-      title: "Smart Scheduling",
-      description: "Find the perfect meeting times automatically. Our AI considers member availability, preferences, and optimal engagement periods.",
-      gradient: "bg-gradient-to-br from-purple-500/10 to-pink-500/10"
+      gradient: "bg-gradient-to-br from-orange-500/10 to-red-500/10", 
+      iconColor: "text-orange-500"
     },
     {
       icon: Users,
       title: "Member Management",
       description: "Build stronger communities with intelligent member insights, engagement tracking, and personalized communication tools.",
-      gradient: "bg-gradient-to-br from-cyan-500/10 to-blue-500/10"
+      gradient: "bg-gradient-to-br from-purple-500/10 to-pink-500/10",
+      iconColor: "text-purple-500"
     },
     {
-      icon: Shield,
-      title: "Enterprise Security",
-      description: "Bank-level security with end-to-end encryption, SOC 2 compliance, and advanced access controls for your organization.",
-      gradient: "bg-gradient-to-br from-gray-500/10 to-slate-500/10"
+      icon: Zap,
+      title: "Automated Workflows",
+      description: "Streamline repetitive tasks with smart automation. From meeting reminders to content generation, let AI handle the routine work.",
+      gradient: "bg-gradient-to-br from-cyan-500/10 to-blue-500/10",
+      iconColor: "text-cyan-500"
+    },
+    {
+      icon: Target,
+      title: "Goal Tracking",
+      description: "Set and track club objectives with intelligent progress monitoring. Get actionable insights to achieve your goals faster.",
+      gradient: "bg-gradient-to-br from-pink-500/10 to-rose-500/10",
+      iconColor: "text-pink-500"
     }
   ];
 
@@ -252,18 +259,63 @@ const LandingFeatures = () => {
         </motion.div>
 
         {/* Features Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <motion.div
+          ref={ref}
+          initial={{ opacity: 0, y: 60 }}
+          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 60 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+        >
           {features.map((feature, index) => (
-          <FeatureCard
+            <motion.div
               key={feature.title}
-              icon={feature.icon}
-              title={feature.title}
-              description={feature.description}
-              index={index}
-              gradient={feature.gradient}
-            />
+              initial={{ opacity: 0, y: 40, scale: 0.95 }}
+              animate={inView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 40, scale: 0.95 }}
+              transition={{ 
+                duration: 0.6, 
+                delay: 0.8 + index * 0.1,
+                ease: "easeOut"
+              }}
+              whileHover={{ 
+                y: -8, 
+                scale: 1.02,
+                transition: { duration: 0.3, ease: "easeOut" }
+              }}
+              className={`relative p-8 rounded-2xl border border-gray-200/50 backdrop-blur-sm ${feature.gradient} group cursor-pointer overflow-hidden`}
+            >
+              {/* Background gradient on hover */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              
+              {/* Icon */}
+              <motion.div 
+                className={`w-12 h-12 rounded-xl bg-white shadow-sm flex items-center justify-center mb-6 ${feature.iconColor} relative z-10`}
+                whileHover={{ 
+                  scale: 1.1, 
+                  rotate: 5,
+                  transition: { duration: 0.2 }
+                }}
+              >
+                <feature.icon className="w-6 h-6" />
+              </motion.div>
+
+              {/* Content */}
+              <div className="relative z-10">
+                <h3 className="text-xl font-semibold text-gray-900 mb-3 group-hover:text-gray-800 transition-colors duration-300">
+                  {feature.title}
+                </h3>
+                <p className="text-gray-600 font-light leading-relaxed group-hover:text-gray-700 transition-colors duration-300">
+                  {feature.description}
+                </p>
+              </div>
+
+              {/* Subtle border animation */}
+              <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-gray-200/30 transition-all duration-300" />
+              
+              {/* Corner accent */}
+              <div className={`absolute top-0 right-0 w-20 h-20 ${feature.gradient} opacity-20 blur-xl group-hover:opacity-30 transition-opacity duration-300`} />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         {/* Bottom CTA */}
         <motion.div
@@ -278,6 +330,7 @@ const LandingFeatures = () => {
               boxShadow: "0 25px 50px rgba(0,0,0,0.1)" 
             }}
             whileTap={{ scale: 0.95 }}
+            onClick={openSignInModal}
             className="group relative overflow-hidden bg-black text-white px-12 py-5 rounded-2xl font-light text-lg transition-all duration-300"
           >
             <span className="relative z-10 flex items-center">

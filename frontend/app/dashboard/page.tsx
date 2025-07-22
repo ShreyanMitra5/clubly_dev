@@ -27,6 +27,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const { user } = useUser();
   const [clubs, setClubs] = useState<Club[]>([]);
+  const [hoursSaved, setHoursSaved] = useState(0);
   const [name, setName] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -46,8 +47,74 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!user) return;
     fetchClubs();
+    fetchHoursSaved();
     setName(user.fullName || user.firstName || '');
   }, [user]);
+
+  const fetchHoursSaved = async () => {
+    if (!user) return;
+    
+    try {
+      let totalMinutes = 0;
+      // 1. Events from roadmaps
+      const { data: memberships, error: membershipsError } = await supabase
+        .from('memberships')
+        .select('club_id')
+        .eq('user_id', user.id);
+      if (!membershipsError && memberships && memberships.length > 0) {
+        const clubIds = memberships.map((m: any) => m.club_id);
+        const { data: roadmaps } = await supabase
+          .from('roadmaps')
+          .select('events')
+          .in('club_id', clubIds);
+        if (roadmaps) {
+          let eventsCount = 0;
+          roadmaps.forEach((r: any) => {
+            const arr = Array.isArray(r.events) ? r.events : [];
+            arr.forEach((evt: any) => {
+              if (evt && ['meeting', 'special'].includes(evt.type)) {
+                eventsCount += 1;
+              }
+            });
+          });
+          totalMinutes += eventsCount * 120; // assume 45 min saved per event planning
+        }
+      }
+      // 2. Presentations history via API
+      const presRes = await fetch(`/api/presentations/history?userId=${user.id}`);
+      if (presRes.ok) {
+        const presData = await presRes.json();
+        const presCount = (presData.history || []).length;
+        totalMinutes += presCount * 60; // 60 minutes saved per presentation
+      }
+      // 3. Meeting notes history via API
+      const notesRes = await fetch(`/api/attendance-notes/history?userId=${user.id}`);
+      if (notesRes.ok) {
+        const notesData = await notesRes.json();
+        const notesCount = (notesData.history || []).length;
+        totalMinutes += notesCount * 30; // 20 minutes per meeting note
+      }
+      // 4. Email history via API
+      const emailRes = await fetch(`/api/emails/history?userId=${user.id}`);
+      if (emailRes.ok) {
+        const emailData = await emailRes.json();
+        const emailCount = (emailData.history || []).length;
+        totalMinutes += emailCount * 30; // 30 minutes per email
+      }
+      // 5. Task history via API
+      const taskRes = await fetch(`/api/tasks/history?userId=${user.id}`);
+      if (taskRes.ok) {
+        const taskData = await taskRes.json();
+        const taskCount = (taskData.history || []).length;
+        totalMinutes += taskCount * 15; // 15 minutes per task
+      }
+      const hours = Math.round(totalMinutes / 60);
+      setHoursSaved(hours);
+    } catch (e) {
+      console.error('Error calculating hours saved:', e);
+      setHoursSaved(0);
+    }
+  };
 
   const fetchClubs = async () => {
     if (!user) return;
@@ -82,7 +149,17 @@ export default function DashboardPage() {
     try {
       const clubId = uuidv4();
       
-      const { error: clubError } = await supabase
+      console.log('Creating club with data:', {
+        id: clubId,
+        name: clubFormData.name,
+        description: clubFormData.description,
+        mission: clubFormData.mission,
+        goals: clubFormData.goals,
+        audience: clubFormData.audience,
+        owner_id: user.id
+      });
+
+      const { data: clubData, error: clubError } = await supabase
         .from('clubs')
         .insert({
           id: clubId,
@@ -92,21 +169,39 @@ export default function DashboardPage() {
           goals: clubFormData.goals,
           audience: clubFormData.audience,
           owner_id: user.id
-        });
+        })
+        .select()
+        .single();
 
-      if (clubError) throw clubError;
+      if (clubError) {
+        console.error('Club creation error:', clubError);
+        throw clubError;
+      }
 
-      const { error: membershipError } = await supabase
+      console.log('Club created successfully:', clubData);
+
+      const { data: membershipData, error: membershipError } = await supabase
         .from('memberships')
         .insert({
+          id: uuidv4(), // Explicitly generate UUID for membership
           user_id: user.id,
           club_id: clubId,
           role: clubFormData.role || 'Member'
-        });
+        })
+        .select()
+        .single();
 
-      if (membershipError) throw membershipError;
+      if (membershipError) {
+        console.error('Membership creation error:', membershipError);
+        throw membershipError;
+      }
 
+      console.log('Membership created successfully:', membershipData);
+
+      // Refresh clubs and events data
       await fetchClubs();
+      await fetchHoursSaved();
+      
       setShowAddModal(false);
       setClubFormData({
         name: '',
@@ -116,7 +211,10 @@ export default function DashboardPage() {
         audience: '',
         role: ''
       });
+      
+      console.log('Club creation completed successfully');
     } catch (err: any) {
+      console.error('Create club error:', err);
       setError(err.message || 'Failed to create club');
     } finally {
       setIsLoading(false);
@@ -141,16 +239,14 @@ export default function DashboardPage() {
 
   const stats = [
     { icon: Users, value: clubs.length, label: "Active Clubs", color: "from-orange-500 to-orange-600" },
-    { icon: TrendingUp, value: clubs.length * 3, label: "Total Events", color: "from-blue-500 to-blue-600" },
-    { icon: Activity, value: clubs.length * 12, label: "Members Reached", color: "from-green-500 to-green-600" },
-    { icon: BarChart3, value: 98, label: "Success Rate", suffix: "%", color: "from-purple-500 to-purple-600" }
+    { icon: Clock, value: hoursSaved, label: "Hours Saved", color: "from-blue-500 to-blue-600" }
   ];
 
   const features = [
     { icon: Brain, title: "AI Presentations", description: "Generate professional slides instantly", color: "orange" },
     { icon: Calendar, title: "Smart Planning", description: "AI-powered event scheduling", color: "blue" },
     { icon: Target, title: "Member Analytics", description: "Track engagement and growth", color: "green" },
-    { icon: Sparkles, title: "Content Creation", description: "Automated social media posts", color: "purple" }
+    { icon: Sparkles, title: "Content Creation", description: "Automated social media posts", color: "purple", comingSoon: true }
   ];
 
   return (
@@ -235,11 +331,10 @@ export default function DashboardPage() {
                 <div className={`w-12 h-12 bg-gradient-to-r ${stat.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
                   <stat.icon className="w-6 h-6 text-white" />
                 </div>
-                <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all duration-300" />
               </div>
               
               <div className="text-3xl font-light text-gray-900 mb-1">
-                {stat.value}{stat.suffix || ''}
+                {stat.value}
               </div>
               <div className="text-sm text-gray-600 font-extralight">{stat.label}</div>
             </motion.div>
@@ -302,7 +397,6 @@ export default function DashboardPage() {
                         <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
                           <Users className="w-6 h-6 text-white" />
                         </div>
-                        <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-orange-500 group-hover:translate-x-1 transition-all duration-300" />
                       </div>
                       
                       <h3 className="text-xl font-light text-gray-900 mb-2 group-hover:text-orange-600 transition-colors duration-300">
@@ -331,54 +425,35 @@ export default function DashboardPage() {
                 {features.map((feature, index) => (
                   <motion.div
                     key={feature.title}
-                    className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 group cursor-pointer"
+                    className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 group relative"
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 1.2 + index * 0.1, duration: 0.6 }}
                     whileHover={{ x: 5, scale: 1.02 }}
                   >
-                    <div className="flex items-start space-x-4">
-                      <div className={`w-10 h-10 bg-gradient-to-r ${
-                        feature.color === 'orange' ? 'from-orange-500 to-orange-600' :
-                        feature.color === 'blue' ? 'from-blue-500 to-blue-600' :
-                        feature.color === 'green' ? 'from-green-500 to-green-600' :
-                        'from-purple-500 to-purple-600'
-                      } rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
+                    {feature.comingSoon && (
+                      <div className="absolute -top-2 -right-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white text-xs px-2 py-1 rounded-full font-medium">
+                        Coming Soon
+                      </div>
+                    )}
+                    <div className="flex items-center space-x-3 mb-3">
+                      <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        feature.color === 'orange' ? 'bg-orange-500' : 
+                        feature.color === 'blue' ? 'bg-blue-500' : 
+                        feature.color === 'green' ? 'bg-green-500' : 'bg-purple-500'
+                      }`}>
                         <feature.icon className="w-5 h-5 text-white" />
                       </div>
-                      
-                      <div className="flex-1">
-                        <h3 className="font-light text-gray-900 mb-1 group-hover:text-gray-700 transition-colors duration-300">
-                          {feature.title}
-                        </h3>
-                        <p className="text-xs text-gray-600 font-extralight leading-relaxed">
-                          {feature.description}
-                        </p>
+                      <div>
+                        <h3 className="font-light text-gray-900">{feature.title}</h3>
                       </div>
                     </div>
+                    <p className="text-gray-600 text-sm font-extralight leading-relaxed">
+                      {feature.description}
+                    </p>
                   </motion.div>
                 ))}
               </div>
-
-              {/* Bottom CTA */}
-              <motion.div
-                className="mt-8 bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl p-6 text-white"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 1.6 }}
-              >
-                <div className="flex items-center space-x-3 mb-4">
-                  <Zap className="w-6 h-6 text-orange-500" />
-                  <h3 className="font-light text-lg">Need Help?</h3>
-                </div>
-                <p className="text-gray-300 text-sm font-extralight mb-4 leading-relaxed">
-                  Get the most out of Clubly with our AI-powered recommendations and expert guidance.
-                </p>
-                <button className="text-orange-500 text-sm font-light hover:text-orange-400 transition-colors duration-300 flex items-center space-x-2">
-                  <span>Learn More</span>
-                  <ArrowRight className="w-4 h-4" />
-                </button>
-              </motion.div>
             </motion.div>
           </div>
         </div>

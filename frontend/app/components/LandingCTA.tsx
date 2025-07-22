@@ -4,7 +4,7 @@ import React, { useRef } from 'react';
 import { motion, useInView } from 'framer-motion';
 import { ArrowRight, Sparkles, Users, Zap, CheckCircle, Play } from 'lucide-react';
 
-export default function LandingCTA() {
+export default function LandingCTA({ openSignInModal }: { openSignInModal?: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
 
@@ -60,7 +60,7 @@ export default function LandingCTA() {
           </h2>
           
           <p className="text-xl md:text-2xl text-gray-300 font-light max-w-3xl mx-auto leading-relaxed mb-12">
-            Join thousands of student organizations that are already using AI to create better experiences for their members.
+            Join thousands of clubs that are already using AI to create better experiences for their members.
           </p>
 
           {/* Benefits */}
@@ -90,8 +90,9 @@ export default function LandingCTA() {
               className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-10 py-5 rounded-xl font-light text-lg flex items-center space-x-3 hover:from-blue-600 hover:to-purple-700 transition-all duration-300 shadow-lg shadow-blue-500/20"
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
+              onClick={openSignInModal}
             >
-              <span>Start Free Trial</span>
+              <span>Get Started</span>
               <ArrowRight className="w-5 h-5" />
             </motion.button>
             
@@ -99,6 +100,7 @@ export default function LandingCTA() {
               className="border border-white/15 text-white px-10 py-5 rounded-xl font-light text-lg hover:bg-white/5 transition-all duration-300 flex items-center space-x-3"
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
+              onClick={() => window.open('mailto:clublyteam@gmail.com?subject=Demo Request&body=Hi, I would like to schedule a demo of Clubly.', '_blank')}
             >
               <Play className="w-5 h-5" />
               <span>Schedule Demo</span>

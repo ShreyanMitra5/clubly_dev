@@ -73,6 +73,42 @@ export async function POST(req: Request) {
       clubName
     } = body;
 
+    // Defensive: Check required fields
+    if (!topic || !startDate || !endDate || !frequency || !meetingDays || !meetingTime || !clubName) {
+      console.error('Missing required field(s) in request body:', body);
+      return NextResponse.json(
+        { error: 'Missing required field(s) in request body', body },
+        { status: 400 }
+      );
+    }
+
+    // Defensive: Check meetingDays is array and not empty
+    if (!Array.isArray(meetingDays) || meetingDays.length === 0) {
+      console.error('meetingDays must be a non-empty array:', meetingDays);
+      return NextResponse.json(
+        { error: 'meetingDays must be a non-empty array', meetingDays },
+        { status: 400 }
+      );
+    }
+
+    // Defensive: Check dates
+    if (isNaN(Date.parse(startDate)) || isNaN(Date.parse(endDate))) {
+      console.error('Invalid startDate or endDate:', startDate, endDate);
+      return NextResponse.json(
+        { error: 'Invalid startDate or endDate', startDate, endDate },
+        { status: 400 }
+      );
+    }
+
+    // Defensive: Check Groq API key
+    if (!process.env.GROQ_API_KEY) {
+      console.error('GROQ_API_KEY is not set in environment');
+      return NextResponse.json(
+        { error: 'GROQ_API_KEY is not set in environment' },
+        { status: 500 }
+      );
+    }
+
     // Generate meeting dates
     const dates = generateMeetingDates(
       startDate,
@@ -87,127 +123,137 @@ export async function POST(req: Request) {
     });
 
     // Generate meeting topics using Groq
-    const prompt = `Generate a list of ${dates.length} engaging meeting topics for a ${topic} club. 
-    Each topic should build upon previous topics to create a cohesive learning journey.
-    The club name is "${clubName}".
+    let prompt = `Generate a list of 8-12 specific, actionable, and engaging meeting topics for a ${topic} club. 
+    Each topic should be highly relevant, concrete, and use real-world terms (e.g., for finance: 401k, quant, investing, stock market, etc). The club name is "${clubName}".
+    Every meeting object MUST include a 'topic' field (if missing, use 'Club Meeting').
 
-    You MUST format your response as a valid JSON array of objects, with each object having EXACTLY these fields:
-    - "topic": string - The main topic title
-    - "description": string - A 2-3 sentence description of what will be covered
-    - "prerequisites": string - Any prerequisites or preparation needed
+    You MUST format your response as a valid JSON object with two fields:
+    - "meetings": an array of objects, each with EXACTLY these fields:
+      - "topic": string (max 8 words, do NOT break strings across lines)
+      - "description": string (max 2 sentences, do NOT break strings across lines)
+      - "prerequisites": string (max 12 words, do NOT break strings across lines)
+    - "specialEvents": an array of 2-3 creative, fun, or community-oriented club events (e.g., hackathons, competitions, social events, outreach, etc), each with EXACTLY these fields:
+      - "title": string (max 8 words, do NOT break strings across lines)
+      - "description": string (max 2 sentences, do NOT break strings across lines)
+      - "suggestedMonth": string (e.g., "October")
+      - "color": string (use 'bg-pink-500' for special events)
 
     Example response format:
-    [
-      {
-        "topic": "Introduction to React Hooks",
-        "description": "Learn the basics of React Hooks and their importance in modern React development. We'll cover useState and useEffect hooks with practical examples.",
-        "prerequisites": "Basic understanding of React components and JavaScript"
-      }
-    ]
-
-    DO NOT include any explanatory text, error object, or any other text before or after the JSON array. Respond ONLY with a valid JSON array that can be parsed by JSON.parse().`;
-
-    const completion = await groq.chat.completions.create({
-      messages: [
+    {
+      "meetings": [
         {
-          role: "system",
-          content: "You are a curriculum planning assistant that generates engaging and educational meeting topics. You MUST respond with a JSON array of topics directly, not wrapped in any object."
-        },
-        {
-          role: "user",
-          content: prompt
+          "topic": "Intro to 401k Investing",
+          "description": "Learn the basics of 401k plans and how to start investing for retirement.",
+          "prerequisites": "None"
         }
       ],
-      model: "llama-3.3-70b-versatile",
-      temperature: 0.7,
-      max_tokens: 2048,
-      top_p: 1,
-      stream: false
-    });
-
-    // Parse the response and handle both direct array and wrapped object formats
-    function extractFirstJsonArray(text) {
-      const match = text.match(/\[\s*{[\s\S]*?}\s*\]/);
-      return match ? match[0] : null;
+      "specialEvents": [
+        {
+          "title": "Finance Hackathon",
+          "description": "A weekend competition to build the best investment strategy.",
+          "suggestedMonth": "October",
+          "color": "bg-pink-500"
+        }
+      ]
     }
 
-    function tryFixJsonArray(text) {
-      // Try to fix common JSON issues: unterminated strings, trailing commas, missing brackets
-      let fixed = text.trim();
-      // Remove trailing commas before closing array/object
-      fixed = fixed.replace(/,\s*([}\]])/g, '$1');
-      // Ensure it starts with [ and ends with ]
-      if (!fixed.startsWith('[')) {
-        const arrStart = fixed.indexOf('[');
-        if (arrStart !== -1) fixed = fixed.slice(arrStart);
-      }
-      if (!fixed.endsWith(']')) {
-        fixed += ']';
-      }
-      // Remove any text after the last closing bracket
-      const lastBracket = fixed.lastIndexOf(']');
-      if (lastBracket !== -1) fixed = fixed.slice(0, lastBracket + 1);
-      return fixed;
+    DO NOT include any explanatory text, error object, or any other text before or after the JSON object. Respond ONLY with a valid JSON object that can be parsed by JSON.parse().`;
+
+    async function getGroqResponse(promptText) {
+      const completion = await groq.chat.completions.create({
+        messages: [
+          {
+            role: "system",
+            content: "You are a club planning assistant that generates natural, human, and engaging meeting topics and always includes 2-3 creative, fun, or community-oriented special club events. You MUST respond with a JSON object as described, not wrapped in any other text. Never break strings across lines."
+          },
+          {
+            role: "user",
+            content: promptText
+          }
+        ],
+        model: "llama-3.3-70b-versatile",
+        temperature: 0.8,
+        max_tokens: 2048,
+        top_p: 1,
+        stream: false
+      });
+      return completion.choices[0]?.message?.content || '';
     }
 
-    // Remove the last incomplete object from a JSON array string and close the array
-    function trimIncompleteLastObject(jsonArrayStr) {
-      // Find the last complete object (ends with })
-      const lastObjEnd = jsonArrayStr.lastIndexOf('}');
-      if (lastObjEnd === -1) return '[]';
-      // Find the comma before the last object
-      const beforeLastObj = jsonArrayStr.lastIndexOf(',', lastObjEnd);
-      let trimmed = jsonArrayStr.slice(0, lastObjEnd + 1);
-      // If there's a comma before, remove it (trailing comma)
-      if (beforeLastObj !== -1 && beforeLastObj === trimmed.length - 2) {
-        trimmed = trimmed.slice(0, beforeLastObj);
-      }
-      // Close the array
-      if (!trimmed.endsWith(']')) trimmed += ']';
-      if (!trimmed.startsWith('[')) trimmed = '[' + trimmed;
-      return trimmed;
-    }
-
-    let topics;
-    const rawContent = completion.choices[0]?.message?.content || '';
+    let meetings = [], specialEvents = [];
+    let rawContent = await getGroqResponse(prompt);
     try {
       const parsedResponse = JSON.parse(rawContent);
-      topics = Array.isArray(parsedResponse) ? parsedResponse : parsedResponse.meetingTopics || [];
+      meetings = Array.isArray(parsedResponse.meetings) ? parsedResponse.meetings : [];
+      specialEvents = Array.isArray(parsedResponse.specialEvents) ? parsedResponse.specialEvents : [];
     } catch (error) {
-      // Try to extract the array if extra text is present
-      let arr = extractFirstJsonArray(rawContent);
-      if (!arr) {
-        // Try to fix common JSON issues
-        arr = tryFixJsonArray(rawContent);
-      }
+      // Try to extract the object if extra text is present
+      let objStr = rawContent;
       try {
-        topics = JSON.parse(arr);
-      } catch (fixError) {
-        // As a last resort, trim the last incomplete object and try again
+        objStr = objStr.trim();
+        const lastBracket = objStr.lastIndexOf('}');
+        if (lastBracket !== -1) objStr = objStr.slice(0, lastBracket + 1);
+        const parsed = JSON.parse(objStr);
+        meetings = Array.isArray(parsed.meetings) ? parsed.meetings : [];
+        specialEvents = Array.isArray(parsed.specialEvents) ? parsed.specialEvents : [];
+      } catch (finalError) {
+        console.error('Raw model output:', rawContent);
+        console.error('Error parsing Groq response:', error, finalError);
+        return NextResponse.json(
+          { meetings: [], specialEvents: [], error: 'Failed to parse Groq response', raw: rawContent },
+          { status: 200 }
+        );
+      }
+    }
+
+    // If specialEvents is empty, retry with a more explicit prompt
+    if (!specialEvents || specialEvents.length === 0) {
+      const retryPrompt = `You MUST include 2-3 creative, fun, or community-oriented special club events (e.g., hackathons, competitions, social events, outreach, etc) in the "specialEvents" array. Do not skip this. Format as before.`;
+      rawContent = await getGroqResponse(prompt + '\n' + retryPrompt);
+      try {
+        const parsedResponse = JSON.parse(rawContent);
+        meetings = Array.isArray(parsedResponse.meetings) ? parsedResponse.meetings : meetings;
+        specialEvents = Array.isArray(parsedResponse.specialEvents) ? parsedResponse.specialEvents : [];
+      } catch (error) {
+        // Try to extract the object if extra text is present
+        let objStr = rawContent;
         try {
-          const trimmed = trimIncompleteLastObject(arr);
-          topics = JSON.parse(trimmed);
+          objStr = objStr.trim();
+          const lastBracket = objStr.lastIndexOf('}');
+          if (lastBracket !== -1) objStr = objStr.slice(0, lastBracket + 1);
+          const parsed = JSON.parse(objStr);
+          meetings = Array.isArray(parsed.meetings) ? parsed.meetings : meetings;
+          specialEvents = Array.isArray(parsed.specialEvents) ? parsed.specialEvents : [];
         } catch (finalError) {
-          console.error('Raw model output:', rawContent);
-          console.error('Error parsing topics:', error, fixError, finalError);
-          return NextResponse.json(
-            { error: 'Failed to parse topics response', raw: rawContent },
-            { status: 500 }
-          );
+          console.error('Raw model output (retry):', rawContent);
+          console.error('Error parsing Groq response (retry):', error, finalError);
         }
       }
     }
 
-    // Combine dates with topics
-    const meetings = dates.map((date, index) => ({
+    // If still missing, add a default special event
+    if (!specialEvents || specialEvents.length === 0) {
+      specialEvents = [{
+        title: "Club Social Night",
+        description: "A fun evening for club members to socialize, play games, and build community.",
+        suggestedMonth: "November"
+      }];
+    }
+
+    // Combine dates with topics for meetings
+    const fullMeetings = dates.map((date, index) => ({
       date,
       time: meetingTime,
       duration: meetingDuration,
-      ...topics[index],
+      ...meetings[index],
     }));
 
+    // After parsing meetings, ensure every meeting has a topic
+    meetings = meetings.map(m => ({ ...m, topic: m.topic || 'Club Meeting' }));
+
     return NextResponse.json({
-      meetings,
+      meetings: fullMeetings,
+      specialEvents,
       semester: {
         start: startDate,
         end: endDate

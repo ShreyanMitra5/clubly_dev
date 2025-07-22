@@ -7,7 +7,7 @@ export async function GET(
   { params }: { params: { clubId: string } }
 ) {
   try {
-    const { clubId } = params;
+    const { clubId } = await params;
     
     const { data, error } = await supabaseServer
       .from('roadmaps')
@@ -36,31 +36,38 @@ export async function POST(
   { params }: { params: { clubId: string } }
 ) {
   try {
-    const { clubId } = params;
+    const { clubId } = await params;
     const body = await request.json();
     const { config, events } = body;
-
+    console.log('Received roadmap POST payload:', body);
+    if (!events || !Array.isArray(events) || events.length === 0) {
+      console.warn('No events provided in roadmap POST payload:', body);
+    }
     const now = new Date().toISOString();
-    
+    // Use upsert with conflict target on club_id to update if exists
     const { data, error } = await supabaseServer
       .from('roadmaps')
-      .upsert([{
-        club_id: clubId,
-        data: {
-          config: config,
-          events: events
-        },
-        created_at: now,
-        updated_at: now
-      }])
+      .upsert([
+        {
+          club_id: clubId,
+          events: events ?? [],
+          data: {
+            config: config ?? {},
+            events: events ?? []
+          },
+          created_at: now,
+          updated_at: now
+        }
+      ], { onConflict: 'club_id' })
       .select()
       .single();
-
     if (error) {
       console.error('Error saving roadmap:', error);
-      return NextResponse.json({ error: 'Failed to save roadmap data' }, { status: 500 });
+      if (error.code === '23505') {
+        return NextResponse.json({ error: 'A roadmap for this club already exists. Use PATCH to update.' }, { status: 409 });
+      }
+      return NextResponse.json({ error: 'Failed to save roadmap data', details: error }, { status: 500 });
     }
-
     return NextResponse.json({ success: true, data });
   } catch (error) {
     console.error('Roadmap POST error:', error);
@@ -74,7 +81,7 @@ export async function PATCH(
   { params }: { params: { clubId: string } }
 ) {
   try {
-    const { clubId } = params;
+    const { clubId } = await params;
     const body = await request.json();
     const { config, events } = body;
 
@@ -83,9 +90,10 @@ export async function PATCH(
     const { data, error } = await supabaseServer
       .from('roadmaps')
       .update({
+        events: events ?? [],
         data: {
-          config: config,
-          events: events
+          config: config ?? {},
+          events: events ?? []
         },
         updated_at: now
       })
