@@ -5,7 +5,7 @@ import { useUser } from '@clerk/nextjs';
 import saveAs from "file-saver";
 import { ProductionClubManager, ProductionClubData } from '../../../../utils/productionClubManager';
 import ReactMarkdown from 'react-markdown';
-import EmailModal from '../../../components/EmailModal';
+import EmailModal from '../../../../components/EmailModal';
 
 export default function AttendanceNotesResultPage() {
   const router = useRouter();

@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { supabase } from '../../../../utils/supabaseClient';
 import ClubLayout from '../../../components/ClubLayout';
-import EmailModal from '../../../components/EmailModal';
+import EmailModal from '../../../../components/EmailModal';
 
 export default function MeetingSummariesPage() {
   const params = useParams();
