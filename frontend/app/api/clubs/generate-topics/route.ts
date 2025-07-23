@@ -6,8 +6,13 @@ const groq = new Groq({
 });
 
 export async function POST(request: NextRequest) {
+  let clubTopic, clubGoals, meetingCount;
+  
   try {
-    const { clubTopic, clubGoals, meetingCount } = await request.json();
+    const requestBody = await request.json();
+    clubTopic = requestBody.clubTopic;
+    clubGoals = requestBody.clubGoals;
+    meetingCount = requestBody.meetingCount;
 
     if (!clubTopic || !clubGoals || !meetingCount) {
       return NextResponse.json(
