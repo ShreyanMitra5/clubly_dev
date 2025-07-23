@@ -775,7 +775,7 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
             </div>
               <div className="flex-1">
                 <h3 className="text-lg font-light text-gray-900 mb-2">
-                  Powered by {selectedClub?.clubName || clubName} Data
+                  Powered by {clubInfo?.name || 'your club'} Data
                 </h3>
                 <p className="text-gray-600 font-extralight leading-relaxed">
                   Your presentations will be personalized using your club's mission, goals, and audience information. 

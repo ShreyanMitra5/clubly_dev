@@ -6,7 +6,8 @@ import ClubLayout from '../../components/ClubLayout';
 
 export default function ClubPage() {
   const params = useParams();
-  const clubName = decodeURIComponent(params.clubName as string);
+  // Use clubId from params
+  const clubId = params.clubId as string;
 
   return (
     <ClubLayout>
@@ -16,17 +17,15 @@ export default function ClubPage() {
           {/* Background Pattern */}
           <div className="absolute inset-0 bg-[url('/background-section2.png')] bg-cover opacity-5" />
           <div className="absolute inset-0 bg-black/10" />
-          
           {/* Content */}
           <div className="relative z-10 px-8 py-12 flex items-center justify-between">
             <div className="max-w-2xl">
               <h1 className="text-4xl font-bold text-white mb-4">
-                Welcome to {clubName}
+                Welcome to your club
               </h1>
               <p className="text-white/90 text-lg mb-6">
                 Manage your club activities and stay organized with Clubly.
               </p>
-
             </div>
             <div className="w-64 h-64 flex-shrink-0">
               <img 
@@ -37,7 +36,6 @@ export default function ClubPage() {
             </div>
           </div>
         </div>
-
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-lg transition-all duration-200 group">
