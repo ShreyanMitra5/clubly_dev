@@ -178,8 +178,8 @@ Return ONLY the JSON object, no explanation.`;
     console.error('Error generating topics:', error);
     
     // Fallback topics if AI fails - generate specific topics based on club type
-    const generateFallbackTopics = (clubTopic: string, count: number) => {
-      const topicLower = clubTopic.toLowerCase();
+    const generateFallbackTopics = (topic: string, count: number) => {
+      const topicLower = topic.toLowerCase();
       let baseTopics = [];
       
       if (topicLower.includes('program') || topicLower.includes('code') || topicLower.includes('python') || topicLower.includes('java')) {
@@ -260,18 +260,18 @@ Return ONLY the JSON object, no explanation.`;
       } else {
         // Generic but specific topics for any club
         baseTopics = [
-          `${clubTopic} Fundamentals: Core Concepts and Basic Principles`,
-          `${clubTopic} Skills Development: Essential Techniques and Methods`,
-          `Hands-on ${clubTopic} Workshop: Practical Application`,
-          `${clubTopic} Tools and Technology: Industry-Standard Equipment`,
-          `Advanced ${clubTopic} Concepts: Complex Problem Solving`,
-          `${clubTopic} Project Planning: Strategy and Execution`,
+          `${topic} Fundamentals: Core Concepts and Basic Principles`,
+          `${topic} Skills Development: Essential Techniques and Methods`,
+          `Hands-on ${topic} Workshop: Practical Application`,
+          `${topic} Tools and Technology: Industry-Standard Equipment`,
+          `Advanced ${topic} Concepts: Complex Problem Solving`,
+          `${topic} Project Planning: Strategy and Execution`,
           `Guest Speaker Session: Industry Expert Insights`,
-          `${clubTopic} Collaboration: Team Projects and Communication`,
-          `${clubTopic} Innovation: Creative Problem Solving`,
-          `${clubTopic} Quality Assurance: Standards and Best Practices`,
-          `${clubTopic} Competition or Challenge: Skill Testing`,
-          `Final ${clubTopic} Project: Comprehensive Application`
+          `${topic} Collaboration: Team Projects and Communication`,
+          `${topic} Innovation: Creative Problem Solving`,
+          `${topic} Quality Assurance: Standards and Best Practices`,
+          `${topic} Competition or Challenge: Skill Testing`,
+          `Final ${topic} Project: Comprehensive Application`
         ];
       }
       
