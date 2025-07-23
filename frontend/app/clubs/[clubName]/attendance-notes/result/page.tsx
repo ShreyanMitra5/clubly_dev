@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { useUser } from '@clerk/nextjs';
 import saveAs from "file-saver";
@@ -7,7 +7,7 @@ import { ProductionClubManager, ProductionClubData } from '../../../../utils/pro
 import ReactMarkdown from 'react-markdown';
 import EmailModal from '../../../../components/EmailModal';
 
-export default function AttendanceNotesResultPage() {
+function AttendanceNotesResultPageContent() {
   const router = useRouter();
   const params = useParams();
   const { user } = useUser();
@@ -201,4 +201,23 @@ export default function AttendanceNotesResultPage() {
   );
 }
 
- 
+// Loading component for Suspense fallback
+function AttendanceNotesResultLoading() {
+  return (
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600">Loading attendance notes...</p>
+      </div>
+    </div>
+  );
+}
+
+// Main export with Suspense boundary
+export default function AttendanceNotesResultPage() {
+  return (
+    <Suspense fallback={<AttendanceNotesResultLoading />}>
+      <AttendanceNotesResultPageContent />
+    </Suspense>
+  );
+}
