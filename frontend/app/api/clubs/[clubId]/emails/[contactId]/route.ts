@@ -46,7 +46,7 @@ async function saveClubEmails(clubId: string, emails: ClubEmails): Promise<void>
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { clubId: string; contactId: string } }
+  { params }: { params: Promise<{ clubId: string; contactId: string }> }
 ) {
   try {
     const { clubId, contactId } = await params;
