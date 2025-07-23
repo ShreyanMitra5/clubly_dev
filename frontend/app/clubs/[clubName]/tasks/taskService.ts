@@ -23,7 +23,7 @@ export const taskService = {
       description: taskData.description || '',
       status: taskData.status || 'todo',
       priority: taskData.priority || 'medium',
-      due_date: taskData.due_date || null
+      due_date: taskData.dueDate || null
     };
 
     const { data, error } = await supabase
@@ -50,7 +50,7 @@ export const taskService = {
       description: taskData.description,
       status: taskData.status,
       priority: taskData.priority,
-      due_date: taskData.due_date
+      due_date: taskData.dueDate
     };
 
     const { data, error } = await supabase
