@@ -4,9 +4,7 @@ import { join } from 'path';
 import { uploadFileToS3 } from '../../../utils/s3uploader';
 import fetch from 'node-fetch';
 import os from 'os';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
+import { ProductionClubManager } from '../../../utils/productionClubManager';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,6 +13,15 @@ export async function POST(request: NextRequest) {
 
     if (!clubId || !topic || !prompt) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Check for required environment variables
+    if (!process.env.SLIDESGPT_API_KEY) {
+      return NextResponse.json({ error: 'SlidesGPT API key not configured' }, { status: 500 });
+    }
+    
+    if (!process.env.S3_BUCKET_NAME) {
+      return NextResponse.json({ error: 'S3 bucket not configured' }, { status: 500 });
     }
 
     // Get club data
@@ -73,17 +80,18 @@ export async function POST(request: NextRequest) {
 }
 
 async function getClubData(clubId: string): Promise<any> {
-  const { data, error } = await supabase
-    .from('clubs')
-    .select('*')
-    .eq('id', clubId)
-    .single();
-
-  if (error || !data) {
-    console.error('Error fetching club data from Supabase:', error);
+  try {
+    // Use ProductionClubManager to get club data
+    const clubData = await ProductionClubManager.getClubData(clubId);
+    if (!clubData) {
+      console.error('Club not found:', clubId);
+      return null;
+    }
+    return clubData;
+  } catch (error) {
+    console.error('Error fetching club data:', error);
     return null;
   }
-  return data;
 }
 
 async function callSlidesGPTAPI(prompt: string): Promise<any> {
