@@ -378,7 +378,6 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
   const [formData, setFormData] = useState({
     clubId: '',
     description: '',
-    week: '',
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -476,8 +475,7 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
     try {
       const result = await ProductionClubManager.generatePresentation(
         selectedClub.clubId,
-        formData.description,
-        formData.week ? parseInt(formData.week) : undefined
+        formData.description
       );
 
       setGenerationResult(result);
@@ -517,7 +515,6 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
               id: result.s3Url.split('/').pop()?.replace('.pptx', '') || Date.now().toString(),
               clubId: selectedClub.clubId,
               description: formData.description,
-              week: formData.week,
               generatedAt: result.generatedAt,
               s3Url: result.s3Url,
               viewerUrl: result.viewerUrl,
@@ -675,22 +672,7 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
                 />
               </div>
               
-              <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                  <label className="block text-lg font-light text-gray-900 mb-4">
-                    Week Number <span className="text-sm text-gray-500 font-extralight">(optional)</span>
-                  </label>
-                <input
-                  type="number"
-                  name="week"
-                  value={formData.week}
-                  onChange={handleInputChange}
-                  min="1"
-                    placeholder="1"
-                    className="w-full px-6 py-4 bg-white/50 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-extralight text-lg placeholder-gray-400 backdrop-blur-sm"
-                />
-              </div>
-                
+              <div className="flex justify-end">
                 <div className="flex items-end">
                   <motion.button
               type="submit"
@@ -2818,13 +2800,11 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
   const [eventColor, setEventColor] = useState('bg-purple-500');
   const [currentEvent, setCurrentEvent] = useState<ClubEvent | null>(null);
   const [formData, setFormData] = useState({
-    clubTopic: '',
     schoolYearStart: '',
     schoolYearEnd: '',
     meetingFrequency: 'weekly',
     meetingDays: ['monday'],
-    meetingTime: '15:00',
-    goals: ''
+    meetingTime: '15:00'
   });
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
@@ -2998,13 +2978,14 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          topic: formData.clubTopic,
+          topic: clubInfo.description || clubName, // Use club description from onboarding data
           startDate: formData.schoolYearStart,
           endDate: formData.schoolYearEnd,
           frequency: formData.meetingFrequency,
           meetingDays: formData.meetingDays,
           meetingTime: formData.meetingTime,
           clubName: clubName,
+          goals: clubInfo.goals || '', // Use club goals from onboarding data
         })
       });
       if (res.ok) {
@@ -3052,7 +3033,7 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
       if (holidayDates.has(eventDate.toDateString())) return null; // skip if holiday
       return {
         id: `groq-meeting-${i}`,
-        title: m.topic || `${formData.clubTopic || clubName} Meeting` || 'Meeting',
+        title: m.topic || `${clubName} Meeting` || 'Meeting',
         description: m.description || '',
         prerequisites: m.prerequisites || '',
         start: eventDate,
@@ -3150,10 +3131,6 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
             {onboardingStage === 'form' && (
               <form onSubmit={handleOnboardingSubmit} className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-orange-100 p-8 space-y-6">
                 <h2 className="text-2xl font-light text-gray-900 mb-4 text-center">Semester Setup</h2>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Club Topic</label>
-                  <input type="text" value={formData.clubTopic} onChange={e=>setFormData({...formData,clubTopic:e.target.value})} className="w-full p-3 border border-gray-200 rounded-lg" required />
-                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
@@ -3190,10 +3167,6 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
                   <label className="block text-sm font-medium text-gray-700 mb-2">Meeting Time</label>
                   <input type="time" value={formData.meetingTime} onChange={e=>setFormData({...formData,meetingTime:e.target.value})} className="w-full p-3 border border-gray-200 rounded-lg" />
                   </div>
-                  <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Club Goal</label>
-                  <textarea value={formData.goals} onChange={e=>setFormData({...formData,goals:e.target.value})} className="w-full p-3 border border-gray-200 rounded-lg" rows={3} placeholder="What is the main goal for this semester?" />
-                </div>
                 <div className="text-center pt-4">
                   <button type="submit" className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-3 rounded-lg font-light hover:from-orange-600 hover:to-orange-700 transition-all">Generate Roadmap</button>
                 </div>

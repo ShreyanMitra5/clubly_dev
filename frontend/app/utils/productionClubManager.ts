@@ -169,17 +169,15 @@ export class ProductionClubManager {
   /**
    * Create a comprehensive prompt for SlidesGPT using club data
    */
-  static async createSlidesGPTPrompt(clubId: string, topic: string, week?: number): Promise<string> {
+  static async createSlidesGPTPrompt(clubId: string, topic: string): Promise<string> {
     try {
       const clubData = await this.getClubData(clubId);
       if (!clubData) {
         throw new Error('Club data not found');
       }
-
-      const weekInfo = week ? ` (Week ${week})` : '';
       
       return `
-Create a professional presentation for ${clubData.clubName}${weekInfo} about: ${topic}
+Create a professional presentation for ${clubData.clubName} about: ${topic}
 
 Club Information:
 - Club Name: ${clubData.clubName}
@@ -214,9 +212,9 @@ Make sure the content is tailored specifically for ${clubData.clubName} and its 
   /**
    * Generate presentation using SlidesGPT API
    */
-  static async generatePresentation(clubId: string, topic: string, week?: number, theme: string = 'modern'): Promise<any> {
+  static async generatePresentation(clubId: string, topic: string, theme: string = 'modern'): Promise<any> {
     try {
-      const prompt = await this.createSlidesGPTPrompt(clubId, topic, week);
+      const prompt = await this.createSlidesGPTPrompt(clubId, topic);
       const response = await fetch('/api/slidesgpt/generate', {
         method: 'POST',
         headers: {
@@ -225,7 +223,6 @@ Make sure the content is tailored specifically for ${clubData.clubName} and its 
         body: JSON.stringify({
           clubId,
           topic,
-          week,
           theme,
           prompt
         })

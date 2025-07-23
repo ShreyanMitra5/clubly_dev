@@ -82,13 +82,11 @@ class ProductionSlidesGPTGenerator:
         
         raise FileNotFoundError(f"Club '{club_name}' not found in {data_directory}")
     
-    def create_presentation_prompt(self, club_data: ClubData, topic: str, week: Optional[int] = None) -> str:
+    def create_presentation_prompt(self, club_data: ClubData, topic: str) -> str:
         """Create a comprehensive prompt for SlidesGPT API"""
         
-        week_info = f" (Week {week})" if week else ""
-        
         prompt = f"""
-Create a professional presentation for {club_data.clubName}{week_info} about: {topic}
+Create a professional presentation for {club_data.clubName} about: {topic}
 
 Club Information:
 - Club Name: {club_data.clubName}
@@ -165,7 +163,6 @@ Make sure the content is tailored specifically for {club_data.clubName} and its 
     def generate_club_presentation(self, 
                                  club_name: str, 
                                  topic: str, 
-                                 week: Optional[int] = None,
                                  theme: str = "modern",
                                  slides_count: int = 10,
                                  output_path: Optional[str] = None,
@@ -182,7 +179,7 @@ Make sure the content is tailored specifically for {club_data.clubName} and its 
         print(f"User: {club_data.userName} ({club_data.userRole})")
         
         # Create prompt
-        prompt = self.create_presentation_prompt(club_data, topic, week)
+        prompt = self.create_presentation_prompt(club_data, topic)
         print(f"Created prompt for topic: {topic}")
         
         # Generate presentation
@@ -202,7 +199,6 @@ def main():
     parser = argparse.ArgumentParser(description='Generate presentations using SlidesGPT API with club data')
     parser.add_argument('--club', required=True, help='Name of the club')
     parser.add_argument('--topic', required=True, help='Presentation topic')
-    parser.add_argument('--week', type=int, help='Week number (optional)')
     parser.add_argument('--theme', default='modern', help='Presentation theme (default: modern)')
     parser.add_argument('--slides', type=int, default=10, help='Number of slides (default: 10)')
     parser.add_argument('--output', help='Output file path for downloaded presentation')
@@ -219,7 +215,6 @@ def main():
         result = generator.generate_club_presentation(
             club_name=args.club,
             topic=args.topic,
-            week=args.week,
             theme=args.theme,
             slides_count=args.slides,
             output_path=args.output,

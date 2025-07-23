@@ -92,7 +92,6 @@ export default function GeneratePage() {
   const [formData, setFormData] = useState({
     clubId: '',
     description: '',
-    week: '',
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -187,8 +186,7 @@ export default function GeneratePage() {
     try {
       const result = await ProductionClubManager.generatePresentation(
         selectedClub.clubId,
-        formData.description,
-        formData.week ? parseInt(formData.week) : undefined
+        formData.description
       );
 
       setGenerationResult(result);
@@ -220,7 +218,6 @@ export default function GeneratePage() {
             presentation: {
               clubId: selectedClub.clubId,
               description: formData.description,
-              week: formData.week,
               generatedAt: result.generatedAt,
               s3Url: result.s3Url,
               viewerUrl: result.viewerUrl,
@@ -320,15 +317,7 @@ export default function GeneratePage() {
                       className="input-field w-full min-h-[120px] rounded-lg border border-gray-300 p-4 text-base focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition resize-vertical shadow-sm bg-white"
                     />
                   </div>
-                  <InputField 
-                    label="Week Number" 
-                    name="week" 
-                    type="number" 
-                    value={formData.week} 
-                    onChange={handleInputChange} 
-                    placeholder="1"
-                    description="Which week of your program is this?"
-                  />
+
                 </div>
               </div>
               <div className="pt-8 border-t border-gray-200">

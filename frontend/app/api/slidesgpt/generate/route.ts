@@ -11,7 +11,7 @@ const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { clubId, topic, week, theme, prompt } = body;
+    const { clubId, topic, theme, prompt } = body;
 
     if (!clubId || !topic || !prompt) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });

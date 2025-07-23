@@ -41,13 +41,11 @@ class SlidesGPTGenerator:
         except json.JSONDecodeError:
             raise ValueError(f"Invalid JSON format in file: {json_file_path}")
     
-    def create_club_prompt(self, club_data: ClubData, topic: str, week: int = None, presentation_type: str = "general") -> str:
+    def create_club_prompt(self, club_data: ClubData, topic: str, presentation_type: str = "general") -> str:
         """Create a comprehensive prompt for SlidesGPT API using club data"""
         
-        week_info = f" (Week {week})" if week else ""
-        
         prompt = f"""
-Create a professional presentation for {club_data.name}{week_info} about: {topic}
+Create a professional presentation for {club_data.name} about: {topic}
 
 Club Information:
 - Club Name: {club_data.name}
@@ -125,7 +123,6 @@ Make sure the content is tailored specifically for {club_data.name} and its memb
     def generate_club_presentation(self, 
                                  json_file_path: str, 
                                  topic: str, 
-                                 week: Optional[int] = None,
                                  theme: str = "modern",
                                  slides_count: int = 10,
                                  output_path: str = None) -> Dict:
@@ -137,7 +134,7 @@ Make sure the content is tailored specifically for {club_data.name} and its memb
         club_data = self.load_club_data_from_json(json_file_path)
         
         # Create prompt
-        prompt = self.create_club_prompt(club_data, topic, week)
+        prompt = self.create_club_prompt(club_data, topic)
         
         # Generate presentation
         result = self.generate_presentation(prompt, theme, slides_count)
@@ -167,7 +164,6 @@ def main():
         result = generator.generate_club_presentation(
             json_file_path="club_data_example.json",
             topic="Introduction to Machine Learning",
-            week=1,
             theme="modern",
             slides_count=12,
             output_path="presentation.pptx"

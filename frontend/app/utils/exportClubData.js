@@ -138,15 +138,13 @@ export class ClubDataExporter {
   /**
    * Create a prompt-ready string from club data
    */
-  static createPromptFromClubData(clubName, userId, topic, week = null) {
+  static createPromptFromClubData(clubName, userId, topic) {
     try {
       const exportedData = this.exportClubData(clubName, userId);
       const clubData = exportedData.data;
       
-      const weekInfo = week ? ` (Week ${week})` : '';
-      
       return `
-Create a professional presentation for ${clubData.clubName}${weekInfo} about: ${topic}
+Create a professional presentation for ${clubData.clubName} about: ${topic}
 
 Club Information:
 - Club Name: ${clubData.clubName}
