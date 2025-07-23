@@ -5,6 +5,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { Task, TaskFormData, TaskPriority, TaskStatus } from '../../../types/task';
 import ClubLayout from '../../../components/ClubLayout';
+import { taskService } from './taskService';
+import { ProductionClubManager } from '../../../utils/productionClubManager';
 
 export default function TaskManager() {
   const { clubName } = useParams();
@@ -15,6 +17,7 @@ export default function TaskManager() {
   const [error, setError] = useState<string | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [clubId, setClubId] = useState<string | null>(null);
   const [formData, setFormData] = useState<TaskFormData>({
     title: '',
     description: '',
@@ -44,17 +47,38 @@ export default function TaskManager() {
     }
   }, [editingTask]);
 
-  // Fetch tasks when component mounts
+  // Get club ID when component mounts
   useEffect(() => {
-    if (!clubName) return;
-    fetchTasks();
-  }, [clubName]);
+    if (!user || !clubName) return;
+    getClubId();
+  }, [user, clubName]);
+
+  // Fetch tasks when clubId is available
+  useEffect(() => {
+    if (clubId) {
+      fetchTasks();
+    }
+  }, [clubId]);
+
+  const getClubId = async () => {
+    try {
+      const clubs = await ProductionClubManager.getUserClubs(user!.id);
+      const club = clubs.find(c => c.clubName === decodeURIComponent(clubName as string));
+      if (club) {
+        setClubId(club.clubId);
+      } else {
+        setError('Club not found');
+      }
+    } catch (err) {
+      setError('Failed to load club data');
+      console.error(err);
+    }
+  };
 
   const fetchTasks = async () => {
+    if (!clubId) return;
     try {
-      const response = await fetch(`/api/tasks?clubId=${encodeURIComponent(clubName as string)}`);
-      if (!response.ok) throw new Error('Failed to fetch tasks');
-      const data = await response.json();
+      const data = await taskService.getTasks(clubId);
       setTasks(data);
     } catch (err) {
       setError('Failed to load tasks');
@@ -66,37 +90,16 @@ export default function TaskManager() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!clubId) return;
+    
     try {
       if (editingTask) {
         // Update existing task
-        const response = await fetch('/api/tasks', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            clubId: clubName,
-            taskId: editingTask.id,
-            task: formData
-          })
-        });
-
-        if (!response.ok) throw new Error('Failed to update task');
-        
-        const updatedTask = await response.json();
+        const updatedTask = await taskService.updateTask(editingTask.id, formData);
         setTasks(tasks.map(t => t.id === editingTask.id ? updatedTask : t));
       } else {
         // Create new task
-        const response = await fetch('/api/tasks', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            clubId: clubName,
-            task: formData
-          })
-        });
-
-        if (!response.ok) throw new Error('Failed to create task');
-        
-        const newTask = await response.json();
+        const newTask = await taskService.createTask(clubId, formData);
         setTasks([newTask, ...tasks]);
       }
 
@@ -126,19 +129,7 @@ export default function TaskManager() {
 
   const handleUpdateTask = async (taskId: string, updates: Partial<Task>) => {
     try {
-      const response = await fetch('/api/tasks', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          clubId: clubName,
-          taskId,
-          task: updates
-        })
-      });
-
-      if (!response.ok) throw new Error('Failed to update task');
-      
-      const updatedTask = await response.json();
+      const updatedTask = await taskService.updateTask(taskId, updates);
       setTasks(tasks.map(t => t.id === taskId ? updatedTask : t));
     } catch (err) {
       setError('Failed to update task');
@@ -148,12 +139,7 @@ export default function TaskManager() {
 
   const handleDeleteTask = async (taskId: string) => {
     try {
-      const response = await fetch(`/api/tasks?clubId=${encodeURIComponent(clubName as string)}&taskId=${taskId}`, {
-        method: 'DELETE'
-      });
-
-      if (!response.ok) throw new Error('Failed to delete task');
-      
+      await taskService.deleteTask(taskId);
       setTasks(tasks.filter(t => t.id !== taskId));
     } catch (err) {
       setError('Failed to delete task');

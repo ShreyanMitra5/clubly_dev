@@ -70,31 +70,61 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
+      setLoading(true);
       try {
-        // Fetch presentation history for this user, then filter for this club
+        let totalMinutes = 0;
+        const clubId = clubInfo?.id || clubInfo?.clubId;
+        
+        // 1. Presentations for this club (1 hour each)
         const presentationsResponse = await fetch(`/api/presentations/history?userId=${user.id}`);
         if (presentationsResponse.ok) {
           const presentationsData = await presentationsResponse.json();
-          const clubId = clubInfo?.id || clubInfo?.clubId;
-          setHistory((presentationsData.history || []).filter((item: any) =>
+          const clubPresentations = (presentationsData.history || []).filter((item: any) =>
             (item.clubId && item.clubId === clubId) || (!item.clubId && item.clubName === clubName)
-          ));
+          );
+          setHistory(clubPresentations);
+          totalMinutes += clubPresentations.length * 60; // 1 hour per presentation
         }
-        // Fetch meeting notes history for this user, then filter for this club
+        
+        // 2. Meeting notes for this club (30 minutes each)
         const notesResponse = await fetch(`/api/attendance-notes/history?userId=${user.id}`);
         if (notesResponse.ok) {
           const notesData = await notesResponse.json();
-          const clubId = clubInfo?.id || clubInfo?.clubId;
-          const filteredNotes = (notesData.history || []).filter((note: any) =>
+          const clubNotes = (notesData.history || []).filter((note: any) =>
             (note.clubId && note.clubId === clubId) || (!note.clubId && note.clubName === clubName)
           );
-          setMeetingNotes(filteredNotes);
-          
-          // Calculate hours saved after data is loaded
-          const presentationHours = history.length * 1; // 1 hour per presentation
-          const notesHours = filteredNotes.length * 0.33; // 20 minutes per note
-          setHoursSaved(Math.round(presentationHours + notesHours));
+          setMeetingNotes(clubNotes);
+          totalMinutes += clubNotes.length * 30; // 30 minutes per meeting note
         }
+        
+        // 3. Roadmaps for this club (2 hours per roadmap)
+        if (clubId) {
+          const { data: roadmaps } = await supabase
+            .from('roadmaps')
+            .select('id')
+            .eq('club_id', clubId);
+          if (roadmaps) {
+            totalMinutes += roadmaps.length * 120; // 2 hours per roadmap
+          }
+        }
+        
+        // 4. Emails for this club (20 minutes each) - Note: Email API might not exist yet
+        try {
+          const emailResponse = await fetch(`/api/emails/history?userId=${user.id}`);
+          if (emailResponse.ok) {
+            const emailData = await emailResponse.json();
+            const clubEmails = (emailData.history || []).filter((email: any) =>
+              (email.clubId && email.clubId === clubId) || (!email.clubId && email.clubName === clubName)
+            );
+            totalMinutes += clubEmails.length * 20; // 20 minutes per email
+          }
+        } catch (error) {
+          // Email API might not exist yet, that's okay
+          console.log('Email history API not available yet');
+        }
+        
+        setHoursSaved(Math.round(totalMinutes / 60));
+        
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
@@ -819,7 +849,7 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
                       href={generationResult.viewerUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-block w-full text-center px-4 py-3 bg-black text-white font-semibold rounded-lg shadow hover:bg-gray-900 transition"
+                      className="inline-block w-full text-center px-4 py-3 bg-orange-500 text-white font-semibold rounded-lg shadow hover:bg-orange-600 transition"
                     >
                       View Presentation Online
                     </a>
@@ -831,7 +861,7 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
                       href={generationResult.slidesGPTResponse.download.startsWith('http') ? generationResult.slidesGPTResponse.download : `https://${generationResult.slidesGPTResponse.download}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-block w-full text-center px-4 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition"
+                      className="inline-block w-full text-center px-4 py-3 bg-black text-white font-semibold rounded-lg shadow hover:bg-gray-900 transition"
                     >
                       Download Presentation (.pptx)
                     </a>
@@ -841,7 +871,7 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
                   {selectedClub && (
                     <button
                       onClick={() => setShowEmailModal(true)}
-                      className="w-full text-center px-4 py-3 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 transition"
+                      className="w-full text-center px-4 py-3 bg-white text-black font-semibold rounded-lg shadow border border-gray-300 hover:bg-gray-50 transition"
                     >
                       📧 Send to Club Members
                     </button>
@@ -885,6 +915,7 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
           onSend={handleSendEmail}
           onClose={() => setShowEmailModal(false)}
           sending={sending}
+          presentationUrl={generationResult?.viewerUrl}
         />
       )}
 
@@ -909,11 +940,12 @@ interface EmailModalProps {
   onSend: (subject: string, content: string) => void;
   onClose: () => void;
   sending: boolean;
+  presentationUrl?: string;
 }
 
-function EmailModal({ clubName, topic, onSend, onClose, sending }: EmailModalProps) {
+function EmailModal({ clubName, topic, onSend, onClose, sending, presentationUrl }: EmailModalProps) {
   const [subject, setSubject] = useState(`[${clubName}] New Presentation Available`);
-  const [content, setContent] = useState(`Dear club members,\n\nA new presentation has been created for our club: "${topic}"\n\nYou can view and download the presentation from the link below.\n\nBest regards,\n${clubName} Team`);
+  const [content, setContent] = useState(`Dear club members,\n\nA new presentation has been created for our club: "${topic}"\n\n${presentationUrl ? `You can view the presentation here: ${presentationUrl}` : 'You can view and download the presentation from the link below.'}\n\nBest regards,\n${clubName} Team`);
 
   const handleSend = () => {
     if (!subject.trim() || !content.trim()) return;
@@ -5521,7 +5553,7 @@ function PresentationSuccessModal({ onClose, viewerUrl, downloadUrl, onSendToMem
             href={viewerUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center w-full bg-slate-900 text-white px-6 py-3 rounded-xl text-sm font-medium hover:bg-slate-800 transition-all duration-200"
+            className="flex items-center justify-center w-full bg-orange-500 text-white px-6 py-3 rounded-xl text-sm font-medium hover:bg-orange-600 transition-all duration-200"
             whileHover={{ scale: 1.005 }}
             whileTap={{ scale: 0.995 }}
           >
@@ -5532,7 +5564,7 @@ function PresentationSuccessModal({ onClose, viewerUrl, downloadUrl, onSendToMem
           <motion.a
             href={downloadUrl}
             download
-            className="flex items-center justify-center w-full bg-white text-slate-700 px-6 py-3 rounded-xl text-sm font-medium border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200"
+            className="flex items-center justify-center w-full bg-black text-white px-6 py-3 rounded-xl text-sm font-medium hover:bg-gray-900 transition-all duration-200"
             whileHover={{ scale: 1.005 }}
             whileTap={{ scale: 0.995 }}
           >
@@ -5542,7 +5574,7 @@ function PresentationSuccessModal({ onClose, viewerUrl, downloadUrl, onSendToMem
 
           <motion.button
             onClick={onSendToMembers}
-            className="flex items-center justify-center w-full bg-white text-slate-700 px-6 py-3 rounded-xl text-sm font-medium border border-slate-200 hover:bg-slate-50 hover:border-slate-300 transition-all duration-200"
+            className="flex items-center justify-center w-full bg-white text-black px-6 py-3 rounded-xl text-sm font-medium border border-gray-300 hover:bg-gray-50 transition-all duration-200"
             whileHover={{ scale: 1.005 }}
             whileTap={{ scale: 0.995 }}
           >

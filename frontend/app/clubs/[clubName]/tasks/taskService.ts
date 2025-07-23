@@ -1,6 +1,20 @@
 import { supabase } from '../../../../utils/supabaseClient';
 import { Task, TaskFormData } from '../../../types/task';
 
+// Helper function to transform database fields to frontend format
+function transformTaskFromDB(dbTask: any): Task {
+  return {
+    id: dbTask.id,
+    title: dbTask.title,
+    description: dbTask.description,
+    status: dbTask.status,
+    priority: dbTask.priority,
+    dueDate: dbTask.due_date,
+    createdAt: dbTask.created_at,
+    updatedAt: dbTask.updated_at
+  };
+}
+
 export const taskService = {
   async getTasks(clubId: string): Promise<Task[]> {
     const { data, error } = await supabase
@@ -13,7 +27,9 @@ export const taskService = {
       console.error('Error fetching tasks:', error);
       throw error;
     }
-    return data || [];
+    
+    // Transform tasks to frontend format
+    return (data || []).map(transformTaskFromDB);
   },
 
   async createTask(clubId: string, taskData: TaskFormData): Promise<Task> {
@@ -41,7 +57,8 @@ export const taskService = {
       throw new Error('No data returned after creating task');
     }
     
-    return data;
+    // Transform task to frontend format
+    return transformTaskFromDB(data);
   },
 
   async updateTask(taskId: string, taskData: Partial<TaskFormData>): Promise<Task> {
@@ -64,7 +81,9 @@ export const taskService = {
       console.error('Error updating task:', error);
       throw error;
     }
-    return data;
+    
+    // Transform task to frontend format
+    return transformTaskFromDB(data);
   },
 
   async deleteTask(taskId: string): Promise<void> {

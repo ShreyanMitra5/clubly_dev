@@ -56,7 +56,8 @@ export default function DashboardPage() {
     
     try {
       let totalMinutes = 0;
-      // 1. Events from roadmaps
+      
+      // 1. Roadmaps (2 hours per roadmap created)
       const { data: memberships, error: membershipsError } = await supabase
         .from('memberships')
         .select('club_id')
@@ -65,49 +66,45 @@ export default function DashboardPage() {
         const clubIds = memberships.map((m: any) => m.club_id);
         const { data: roadmaps } = await supabase
           .from('roadmaps')
-          .select('events')
+          .select('id')
           .in('club_id', clubIds);
         if (roadmaps) {
-          let eventsCount = 0;
-          roadmaps.forEach((r: any) => {
-            const arr = Array.isArray(r.events) ? r.events : [];
-            arr.forEach((evt: any) => {
-              if (evt && ['meeting', 'special'].includes(evt.type)) {
-                eventsCount += 1;
-              }
-            });
-          });
-          totalMinutes += eventsCount * 120; // assume 45 min saved per event planning
+          totalMinutes += roadmaps.length * 120; // 2 hours per roadmap created
         }
       }
-      // 2. Presentations history via API
+      
+      // 2. Presentations history via API (1 hour per presentation)
       const presRes = await fetch(`/api/presentations/history?userId=${user.id}`);
       if (presRes.ok) {
         const presData = await presRes.json();
         const presCount = (presData.history || []).length;
-        totalMinutes += presCount * 60; // 60 minutes saved per presentation
+        totalMinutes += presCount * 60; // 1 hour per presentation
       }
-      // 3. Meeting notes history via API
+      
+      // 3. Meeting notes history via API (30 minutes per meeting note)
       const notesRes = await fetch(`/api/attendance-notes/history?userId=${user.id}`);
       if (notesRes.ok) {
         const notesData = await notesRes.json();
         const notesCount = (notesData.history || []).length;
-        totalMinutes += notesCount * 30; // 20 minutes per meeting note
+        totalMinutes += notesCount * 30; // 30 minutes per meeting note
       }
-      // 4. Email history via API
+      
+      // 4. Email history via API (20 minutes per email)
       const emailRes = await fetch(`/api/emails/history?userId=${user.id}`);
       if (emailRes.ok) {
         const emailData = await emailRes.json();
         const emailCount = (emailData.history || []).length;
-        totalMinutes += emailCount * 30; // 30 minutes per email
+        totalMinutes += emailCount * 20; // 20 minutes per email
       }
-      // 5. Task history via API
+      
+      // 5. Task history via API (15 minutes per task)
       const taskRes = await fetch(`/api/tasks/history?userId=${user.id}`);
       if (taskRes.ok) {
         const taskData = await taskRes.json();
         const taskCount = (taskData.history || []).length;
         totalMinutes += taskCount * 15; // 15 minutes per task
       }
+      
       const hours = Math.round(totalMinutes / 60);
       setHoursSaved(hours);
     } catch (e) {

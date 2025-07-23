@@ -376,7 +376,7 @@ function GeneratePageContent() {
                           href={generationResult.viewerUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-block w-full text-center px-4 py-3 bg-black text-white font-semibold rounded-lg shadow hover:bg-gray-900 transition"
+                          className="inline-block w-full text-center px-4 py-3 bg-orange-500 text-white font-semibold rounded-lg shadow hover:bg-orange-600 transition"
                         >
                           View Presentation Online
                         </a>
@@ -388,7 +388,7 @@ function GeneratePageContent() {
                           href={generationResult.slidesGPTResponse.download.startsWith('http') ? generationResult.slidesGPTResponse.download : `https://${generationResult.slidesGPTResponse.download}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-block w-full text-center px-4 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition"
+                          className="inline-block w-full text-center px-4 py-3 bg-black text-white font-semibold rounded-lg shadow hover:bg-gray-900 transition"
                         >
                           Download Presentation (.pptx)
                         </a>
@@ -398,7 +398,7 @@ function GeneratePageContent() {
                       {selectedClub && (
                         <button
                           onClick={() => setShowEmailModal(true)}
-                          className="w-full text-center px-4 py-3 bg-green-600 text-white font-semibold rounded-lg shadow hover:bg-green-700 transition"
+                          className="w-full text-center px-4 py-3 bg-white text-black font-semibold rounded-lg shadow border border-gray-300 hover:bg-gray-50 transition"
                         >
                           📧 Send to Club Members
                         </button>
@@ -433,6 +433,7 @@ function GeneratePageContent() {
           onSend={handleSendEmail}
           onClose={() => setShowEmailModal(false)}
           sending={sending}
+          presentationUrl={generationResult?.viewerUrl}
         />
       )}
     </div>
@@ -445,11 +446,12 @@ interface EmailModalProps {
   onSend: (subject: string, content: string) => void;
   onClose: () => void;
   sending: boolean;
+  presentationUrl?: string;
 }
 
-function EmailModal({ clubName, topic, onSend, onClose, sending }: EmailModalProps) {
+function EmailModal({ clubName, topic, onSend, onClose, sending, presentationUrl }: EmailModalProps) {
   const [subject, setSubject] = useState(`[${clubName}] New Presentation Available`);
-  const [content, setContent] = useState(`Dear club members,\n\nA new presentation has been created for our club: "${topic}"\n\nYou can view and download the presentation from the link below.\n\nBest regards,\n${clubName} Team`);
+  const [content, setContent] = useState(`Dear club members,\n\nA new presentation has been created for our club: "${topic}"\n\n${presentationUrl ? `You can view the presentation here: ${presentationUrl}` : 'You can view and download the presentation from the link below.'}\n\nBest regards,\n${clubName} Team`);
 
   const handleSend = () => {
     if (!subject.trim() || !content.trim()) return;
