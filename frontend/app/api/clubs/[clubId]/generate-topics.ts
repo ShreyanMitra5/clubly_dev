@@ -4,9 +4,9 @@ const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
 
-export async function POST(request: NextRequest, { params }: { params: { clubId: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ clubId: string }> }) {
   try {
-    const clubId = params?.clubId;
+    const { clubId } = await params;
     console.log('[generate-topics] clubId:', clubId);
     if (!GROQ_API_KEY) {
       console.log('[generate-topics] Missing GROQ_API_KEY');

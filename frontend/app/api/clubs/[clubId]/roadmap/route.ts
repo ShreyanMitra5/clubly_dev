@@ -4,7 +4,7 @@ import { supabaseServer } from '../../../../../utils/supabaseServer';
 // GET roadmap data for a club
 export async function GET(
   request: NextRequest,
-  { params }: { params: { clubId: string } }
+  { params }: { params: Promise<{ clubId: string }> }
 ) {
   try {
     const { clubId } = await params;
@@ -33,7 +33,7 @@ export async function GET(
 // POST new roadmap data
 export async function POST(
   request: NextRequest,
-  { params }: { params: { clubId: string } }
+  { params }: { params: Promise<{ clubId: string }> }
 ) {
   try {
     const { clubId } = await params;
@@ -78,7 +78,7 @@ export async function POST(
 // PATCH update roadmap data
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { clubId: string } }
+  { params }: { params: Promise<{ clubId: string }> }
 ) {
   try {
     const { clubId } = await params;

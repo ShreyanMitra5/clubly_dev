@@ -42,7 +42,7 @@ async function saveClubEmails(clubId: string, emails: ClubEmails): Promise<void>
   await writeFile(filePath, JSON.stringify(emails, null, 2));
 }
 
-export async function GET(request: NextRequest, context: { params: { clubId: string } }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ clubId: string }> }) {
   try {
     const { clubId } = await context.params;
     if (!clubId) {
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest, context: { params: { clubId: str
   }
 }
 
-export async function POST(request: NextRequest, context: { params: { clubId: string } }) {
+export async function POST(request: NextRequest, context: { params: Promise<{ clubId: string }> }) {
   try {
     const { clubId } = await context.params;
     const body = await request.json();
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest, context: { params: { clubId: st
   }
 }
 
-export async function DELETE(request: NextRequest, context: { params: { clubId: string } }) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ clubId: string }> }) {
   try {
     const { clubId } = await context.params;
     const { searchParams } = new URL(request.url);
