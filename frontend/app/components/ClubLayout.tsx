@@ -5597,7 +5597,7 @@ function PresentationSuccessModal({ onClose, viewerUrl, downloadUrl, onSendToMem
         </div>
 
         {/* Close Button */}
-        <button
+        <button 
           onClick={onClose}
           className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-500 transition-colors duration-200"
         >
