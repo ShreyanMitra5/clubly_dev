@@ -109,7 +109,17 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
     
-    if (diffInSeconds < 60) return 'Just now';
+    // If the difference is very small (less than 10 seconds), show the actual time
+    if (diffInSeconds < 10) {
+      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    
+    // If the difference is negative (future date) or very large, show the actual date
+    if (diffInSeconds < 0 || diffInSeconds > 31536000) {
+      return date.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+    
+    if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
     if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)}d ago`;
@@ -119,7 +129,6 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
   const stats = [
     { icon: Presentation, value: history.length, label: "Presentations Created", color: "from-orange-500 to-orange-600" },
     { icon: Clock, value: meetingNotes.length, label: "Meeting Notes", color: "from-blue-500 to-blue-600" },
-    { icon: Users, value: 15, label: "Active Members", color: "from-green-500 to-green-600" },
     { icon: TrendingUp, value: hoursSaved, label: "Hours Saved", suffix: "h", color: "from-purple-500 to-purple-600" }
   ];
 
@@ -266,7 +275,7 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
 
         {/* Stats Grid */}
         <motion.div
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+          className="grid grid-cols-1 md:grid-cols-3 gap-6"
           initial={{ opacity: 0, y: 30 }}
           animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           transition={{ duration: 0.8, delay: 0.7 }}
@@ -284,7 +293,6 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
                 <div className={`w-12 h-12 bg-gradient-to-r ${stat.color} rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300`}>
                   <stat.icon className="w-6 h-6 text-white" />
             </div>
-                <ArrowRight className="w-5 h-5 text-gray-400 group-hover:text-gray-600 group-hover:translate-x-1 transition-all duration-300" />
           </div>
               
               <div className="text-3xl font-light text-gray-900 mb-1">
@@ -298,7 +306,7 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
         {/* Quick Actions */}
 
 
-        {/* Recent Activity */}
+        {/* Analytics Overview */}
         <motion.div
           className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl p-8 shadow-lg"
           initial={{ opacity: 0, y: 30 }}
@@ -306,62 +314,147 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
           transition={{ duration: 0.8, delay: 1.4 }}
         >
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-light text-gray-900">Recent Activity</h2>
-            <motion.button 
-              className="text-orange-500 font-light hover:text-orange-600 transition-colors duration-300 flex items-center space-x-2"
-              whileHover={{ x: 5 }}
-            >
-              <span>View All</span>
-              <ArrowRight className="w-4 h-4" />
-            </motion.button>
-            </div>
+            <h2 className="text-2xl font-light text-gray-900">Analytics Overview</h2>
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Productivity Metrics */}
+            <motion.div
+              className="bg-gradient-to-br from-orange-50 to-orange-100/50 border border-orange-200/50 rounded-xl p-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ delay: 1.6, duration: 0.6 }}
+            >
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-lg font-light text-gray-900">Productivity</h3>
+              </div>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Time Saved</span>
+                  <span className="text-lg font-light text-gray-900">{hoursSaved}h</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Efficiency</span>
+                  <span className="text-lg font-light text-gray-900">+{Math.round((hoursSaved / (history.length + meetingNotes.length)) * 10)}%</span>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Content Creation */}
+            <motion.div
+              className="bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50 rounded-xl p-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ delay: 1.7, duration: 0.6 }}
+            >
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center">
+                  <Presentation className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-lg font-light text-gray-900">Content</h3>
+              </div>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Presentations</span>
+                  <span className="text-lg font-light text-gray-900">{history.length}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Meeting Notes</span>
+                  <span className="text-lg font-light text-gray-900">{meetingNotes.length}</span>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Engagement Insights */}
+            <motion.div
+              className="bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200/50 rounded-xl p-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ delay: 1.8, duration: 0.6 }}
+            >
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg flex items-center justify-center">
+                  <BarChart3 className="w-5 h-5 text-white" />
+                </div>
+                <h3 className="text-lg font-light text-gray-900">Insights</h3>
+              </div>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Avg. Content/Month</span>
+                  <span className="text-lg font-light text-gray-900">{Math.round((history.length + meetingNotes.length) / 3)}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Growth Rate</span>
+                  <span className="text-lg font-light text-green-600">+{Math.min(history.length + meetingNotes.length, 25)}%</span>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+
+          {/* Recent Activity Summary */}
           {history.length > 0 || meetingNotes.length > 0 ? (
-            <div className="space-y-4">
-              {[...history, ...meetingNotes]
-                .sort((a, b) => new Date(b.createdAt || b.timestamp || Date.now()).getTime() - new Date(a.createdAt || a.timestamp || Date.now()).getTime())
-                .slice(0, 5)
-                .map((item, index) => {
-                  const isPresentation = 'topic' in item;
-                  const timestamp = new Date(item.createdAt || item.timestamp || Date.now());
-                  const timeAgo = getTimeAgo(timestamp);
-                  
-                  return (
-                <motion.div
-                  key={index}
-                  className="flex items-center space-x-4 p-4 bg-gray-50/50 rounded-xl hover:bg-gray-100/50 transition-colors duration-300"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={inView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
-                  transition={{ delay: 1.6 + index * 0.1, duration: 0.6 }}
-                >
-                      <div className={`w-10 h-10 bg-gradient-to-r ${isPresentation ? 'from-orange-500 to-orange-600' : 'from-blue-500 to-blue-600'} rounded-lg flex items-center justify-center`}>
-                        {isPresentation ? (
-                    <Presentation className="w-5 h-5 text-white" />
-                        ) : (
-                          <CheckSquare className="w-5 h-5 text-white" />
-                        )}
-          </div>
-                  <div className="flex-1">
-                        <h4 className="font-light text-gray-900">
-                          {isPresentation ? 'Presentation Created' : 'Meeting Notes Created'}
-                        </h4>
-                        <p className="text-sm text-gray-600 font-extralight">
-                          {isPresentation ? (item.topic || 'New presentation') : (item.title || 'Meeting notes')}
-                        </p>
-        </div>
-                      <span className="text-xs text-gray-500 font-extralight">{timeAgo}</span>
-                </motion.div>
-                  );
-                })}
-            </div>
+            <motion.div
+              className="mt-6 pt-6 border-t border-gray-200/50"
+              initial={{ opacity: 0 }}
+              animate={inView ? { opacity: 1 } : { opacity: 0 }}
+              transition={{ delay: 2.0, duration: 0.6 }}
+            >
+              <h4 className="text-lg font-light text-gray-900 mb-4">Recent Activity</h4>
+              <div className="space-y-3">
+                {[...history, ...meetingNotes]
+                  .sort((a, b) => {
+                    const dateA = new Date(a.createdAt || a.timestamp || a.date || Date.now());
+                    const dateB = new Date(b.createdAt || b.timestamp || b.date || Date.now());
+                    return dateB.getTime() - dateA.getTime();
+                  })
+                  .slice(0, 3)
+                  .map((item, index) => {
+                    const isPresentation = 'topic' in item;
+                    const timestamp = new Date(item.createdAt || item.timestamp || item.date || Date.now());
+                    const timeAgo = getTimeAgo(timestamp);
+                    
+                    return (
+                      <motion.div
+                        key={index}
+                        className="flex items-center space-x-3 p-3 bg-gray-50/30 rounded-lg"
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={inView ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }}
+                        transition={{ delay: 2.1 + index * 0.1, duration: 0.6 }}
+                      >
+                        <div className={`w-8 h-8 bg-gradient-to-r ${isPresentation ? 'from-orange-500 to-orange-600' : 'from-blue-500 to-blue-600'} rounded-lg flex items-center justify-center`}>
+                          {isPresentation ? (
+                            <Presentation className="w-4 h-4 text-white" />
+                          ) : (
+                            <CheckSquare className="w-4 h-4 text-white" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-light text-gray-900">
+                            {isPresentation ? (item.topic || 'New presentation') : (item.title || 'Meeting notes')}
+                          </p>
+                        </div>
+                        <span className="text-xs text-gray-500 font-extralight">{timeAgo}</span>
+                      </motion.div>
+                    );
+                  })}
+              </div>
+            </motion.div>
           ) : (
-            <div className="text-center py-12">
-              <div className="w-16 h-16 bg-gradient-to-r from-gray-400 to-gray-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Activity className="w-8 h-8 text-white" />
-          </div>
-              <h3 className="text-lg font-light text-gray-900 mb-2">No recent activity</h3>
-              <p className="text-gray-600 font-extralight">Start creating presentations and taking notes to see your activity here.</p>
-        </div>
+            <motion.div
+              className="mt-6 pt-6 border-t border-gray-200/50 text-center"
+              initial={{ opacity: 0 }}
+              animate={inView ? { opacity: 1 } : { opacity: 0 }}
+              transition={{ delay: 2.0, duration: 0.6 }}
+            >
+              <div className="w-12 h-12 bg-gradient-to-r from-gray-400 to-gray-500 rounded-xl flex items-center justify-center mx-auto mb-3">
+                <BarChart3 className="w-6 h-6 text-white" />
+              </div>
+              <h4 className="text-lg font-light text-gray-900 mb-2">No analytics data yet</h4>
+              <p className="text-gray-600 font-extralight">Start creating content to see your analytics insights.</p>
+            </motion.div>
           )}
         </motion.div>
       </div>
