@@ -117,10 +117,15 @@ export async function POST(req: Request) {
       meetingDays
     );
 
-    // Initialize Groq client
-    const groq = new Groq({
-      apiKey: process.env.GROQ_API_KEY
-    });
+    // Initialize Groq client only when needed
+    const getGroqClient = () => {
+      if (!process.env.GROQ_API_KEY) {
+        throw new Error('GROQ_API_KEY environment variable is missing');
+      }
+      return new Groq({
+        apiKey: process.env.GROQ_API_KEY
+      });
+    };
 
     // Generate meeting topics using Groq
     let prompt = `Generate a list of 8-12 specific, actionable, and engaging meeting topics for a ${topic} club. 
@@ -160,6 +165,7 @@ export async function POST(req: Request) {
     DO NOT include any explanatory text, error object, or any other text before or after the JSON object. Respond ONLY with a valid JSON object that can be parsed by JSON.parse().`;
 
     async function getGroqResponse(promptText) {
+      const groq = getGroqClient();
       const completion = await groq.chat.completions.create({
         messages: [
           {

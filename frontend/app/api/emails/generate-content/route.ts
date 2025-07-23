@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY
-});
+// Initialize Groq client only when needed
+const getGroqClient = () => {
+  if (!process.env.GROQ_API_KEY) {
+    throw new Error('GROQ_API_KEY environment variable is missing');
+  }
+  return new Groq({
+    apiKey: process.env.GROQ_API_KEY
+  });
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -76,6 +82,7 @@ Return ONLY the JSON object, no explanation.`;
       return NextResponse.json({ error: 'Invalid type. Must be "presentation" or "summary"' }, { status: 400 });
     }
 
+    const groq = getGroqClient();
     const completion = await groq.chat.completions.create({
       messages: [
         {

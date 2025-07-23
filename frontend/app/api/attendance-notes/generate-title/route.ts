@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Groq from 'groq-sdk';
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY
-});
+// Initialize Groq client only when needed
+const getGroqClient = () => {
+  if (!process.env.GROQ_API_KEY) {
+    throw new Error('GROQ_API_KEY environment variable is missing');
+  }
+  return new Groq({
+    apiKey: process.env.GROQ_API_KEY
+  });
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,6 +23,7 @@ export async function POST(request: NextRequest) {
     const prompt = `Generate a short, human-friendly, professional meeting title (max 8 words) for this meeting summary. Do NOT use generic words like 'Meeting' or 'Summary'. Make it sound like a real event or topic.\n\nSummary: ${summary}`;
 
     try {
+      const groq = getGroqClient();
       const completion = await groq.chat.completions.create({
         messages: [
           {
