@@ -528,9 +528,22 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
       if (club) {
         setSelectedClub(club);
         setFormData(prev => ({ ...prev, clubId: club.clubId }));
+        return;
       }
     }
-  }, [searchParams, userClubs]);
+    // If no clubId, try to match by clubName from URL
+    if (userClubs.length > 0) {
+      const clubByName = userClubs.find(c => c.clubName === clubName);
+      if (clubByName) {
+        setSelectedClub(clubByName);
+        setFormData(prev => ({ ...prev, clubId: clubByName.clubId }));
+        return;
+      }
+      // Fallback: select first club
+      setSelectedClub(userClubs[0]);
+      setFormData(prev => ({ ...prev, clubId: userClubs[0].clubId }));
+    }
+  }, [searchParams, userClubs, clubName]);
 
   // Remove auto-selection of first club if none selected
   useEffect(() => {
