@@ -12,7 +12,7 @@ import LandingSpecsSection from './components/LandingSpecsSection';
 import LandingFeatures from './components/LandingFeatures';
 import LandingPricing from './components/LandingPricing';
 import LandingFAQ from './components/LandingFAQ';
-import LandingMadeByHumans from './components/LandingMadeByHumans';
+
 import LandingFooter from './components/LandingFooter';
 import ErrorBoundary from './components/ErrorBoundary';
 import LoadingScreen from './components/LoadingScreen';
@@ -33,13 +33,17 @@ export default function HomePage() {
   };
 
   useEffect(() => {
+    // Show loading screen for minimum 2.5 seconds
+    const loadingTimer = setTimeout(() => {
+      setIsLoading(false);
+    }, 2500);
+
     async function checkUserStatus() {
       if (isSignedIn && user && sessionId) {
         // Check if user explicitly navigated to home
         const isExplicitHomeNavigation = sessionStorage.getItem('explicitHomeNavigation');
         if (isExplicitHomeNavigation) {
           sessionStorage.removeItem('explicitHomeNavigation');
-          setIsLoading(false);
           return;
         }
 
@@ -61,10 +65,11 @@ export default function HomePage() {
           router.push('/dashboard');
         }
       }
-      setIsLoading(false);
     }
 
     checkUserStatus();
+
+    return () => clearTimeout(loadingTimer);
   }, [isSignedIn, user, sessionId, router]);
 
   if (isLoading) {
@@ -77,11 +82,17 @@ export default function HomePage() {
         <LandingHero openSignInModal={openSignInModal} />
         <LandingHumanoidSection openSignInModal={openSignInModal} />
         <LandingSpecsSection />
-        <LandingFeatures openSignInModal={openSignInModal} />
+        <div id="features">
+          <LandingFeatures openSignInModal={openSignInModal} />
+        </div>
         <LandingAnalytics />
-        <LandingPricing openSignInModal={openSignInModal} />
-        <LandingFAQ />
-        <LandingMadeByHumans openSignInModal={openSignInModal} />
+        <div id="pricing">
+          <LandingPricing openSignInModal={openSignInModal} />
+        </div>
+        <div id="support">
+          <LandingFAQ />
+        </div>
+
         <LandingFooter />
       </main>
 

@@ -1,50 +1,69 @@
-"use client";
+"use client"
 
-import React, { useEffect, useState } from "react";
-import Lottie from "lottie-react";
+import { motion } from "framer-motion"
+import { useEffect, useState } from "react"
+import Image from "next/image"
 
 const LoadingScreen = () => {
-  const [animationData, setAnimationData] = useState<any>(null);
+  const [count, setCount] = useState(0)
 
   useEffect(() => {
-    fetch('/DataSphere.json')
-      .then(response => response.json())
-      .then(data => setAnimationData(data))
-      .catch(error => {
-        console.error("Error loading Lottie animation:", error);
-        setAnimationData(null);
-      });
-  }, []);
+    const timer = setInterval(() => {
+      setCount((prev) => {
+        if (prev >= 100) {
+          clearInterval(timer)
+          return 100
+        }
+        return prev + 1
+      })
+    }, 25)
 
-  if (!animationData) {
-    return (
-      <div className="fixed inset-0 bg-white flex items-center justify-center z-50">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-pulse-200 border-t-pulse-500 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-pulse-600 text-lg font-medium">Getting your space ready...</p>
-        </div>
-      </div>
-    );
-  }
+    return () => clearInterval(timer)
+  }, [])
 
   return (
-    <div className="fixed inset-0 bg-white flex items-center justify-center z-50">
-      <div className="text-center flex flex-col items-center justify-center">
-        <div className="w-16 h-16 mb-6 flex items-center justify-center">
-          <Lottie
-            animationData={animationData}
-            loop={true}
-            autoplay={true}
-            style={{ width: "100%", height: "100%" }}
-            rendererSettings={{
-              preserveAspectRatio: "xMidYMid slice",
-            }}
-          />
-        </div>
-        <p className="text-pulse-600 text-lg font-medium">Getting your space ready...</p>
-      </div>
-    </div>
-  );
-};
+    <motion.div
+      className="fixed inset-0 bg-black z-50 flex items-center justify-center"
+      exit={{ y: "-100%", transition: { duration: 1, ease: "easeInOut" } }}
+    >
+      <div className="text-center">
+        <motion.div
+          className="mb-8 flex items-center justify-center"
+          initial={{ scale: 0.5, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 1, ease: "easeOut" }}
+        >
+          <div className="w-20 h-20 mr-4 bg-white rounded-2xl flex items-center justify-center">
+            <Image src="/new_logo.png" alt="Clubly Logo" width={64} height={64} className="rounded-xl" />
+          </div>
+          <div className="text-6xl md:text-8xl font-light text-white">clubly</div>
+        </motion.div>
 
-export default LoadingScreen; 
+        <motion.div
+          className="w-64 h-1 bg-white/20 mx-auto mb-4"
+          initial={{ width: 0 }}
+          animate={{ width: 256 }}
+          transition={{ duration: 2, ease: "easeOut" }}
+        >
+          <motion.div
+            className="h-full bg-white"
+            initial={{ width: 0 }}
+            animate={{ width: `${count}%` }}
+            transition={{ duration: 0.1 }}
+          />
+        </motion.div>
+
+        <motion.div
+          className="text-white/60 text-lg"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5, duration: 0.5 }}
+        >
+          {count}%
+        </motion.div>
+      </div>
+    </motion.div>
+  )
+}
+
+export default LoadingScreen 

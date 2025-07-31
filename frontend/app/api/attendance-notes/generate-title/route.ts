@@ -1,18 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Groq from 'groq-sdk';
-
-// Initialize Groq client only when needed
-const getGroqClient = () => {
-  if (!process.env.GROQ_API_KEY) {
-    throw new Error('GROQ_API_KEY environment variable is missing');
-  }
-  return new Groq({
-    apiKey: process.env.GROQ_API_KEY
-  });
-};
+import { auth } from '@clerk/nextjs/server';
+import { canUseFeature, recordFeatureUsage } from '../../../../utils/userUsageManager';
+import { groqClient } from '../../../../utils/groqClient';
 
 export async function POST(request: NextRequest) {
   try {
+    const { userId } = await auth();
+    
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check if user can use title generation
+    const featureCheck = await canUseFeature(userId, 'titleGeneration');
+    
+    if (!featureCheck.allowed) {
+      return NextResponse.json({
+        error: 'Feature limit exceeded',
+        details: featureCheck.reason,
+        feature: 'titleGeneration',
+        currentUsage: featureCheck.remaining || 0,
+        limit: 2
+      }, { status: 429 });
+    }
+
     const { summary } = await request.json();
 
     if (!summary) {
@@ -23,8 +34,7 @@ export async function POST(request: NextRequest) {
     const prompt = `Generate a short, human-friendly, professional meeting title (max 8 words) for this meeting summary. Do NOT use generic words like 'Meeting' or 'Summary'. Make it sound like a real event or topic.\n\nSummary: ${summary}`;
 
     try {
-      const groq = getGroqClient();
-      const completion = await groq.chat.completions.create({
+      const completion = await groqClient.createChatCompletion({
         messages: [
           {
             role: 'system',
@@ -39,10 +49,16 @@ export async function POST(request: NextRequest) {
         temperature: 0.6,
         max_tokens: 32,
       });
+      
       const response = completion.choices[0]?.message?.content?.trim();
       if (response && response.length > 0) {
         // Remove quotes if Groq returns them
         const title = response.replace(/^"|"$/g, '');
+        
+        // Record usage
+        const tokensUsed = completion.usage?.total_tokens || 50;
+        await recordFeatureUsage(userId, 'titleGeneration', tokensUsed);
+        
         return NextResponse.json({ title });
       }
     } catch (err) {

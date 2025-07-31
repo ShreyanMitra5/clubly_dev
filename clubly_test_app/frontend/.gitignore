@@ -1,6 +1,0 @@
-
-# clerk configuration (can include secrets)
-/.clerk/
-
-.env.local
-frontend/.env.local

@@ -55,7 +55,7 @@ export default function LandingSpecsSection() {
             </div>
             
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-light text-black mb-6">
-              Empowering Student Communities
+              Supporting Student-led Clubs
             </h2>
           </motion.div>
 
@@ -74,9 +74,9 @@ export default function LandingSpecsSection() {
             <p className="text-2xl md:text-3xl lg:text-4xl text-black/80 font-light leading-relaxed mb-8">
               We believe every student organization deserves access to{' '}
               <span className="text-orange-500 font-normal">intelligent tools</span>{' '}
-              that amplify their impact. Our AI-powered platform transforms the way clubs operate, making complex tasks simple and{' '}
-              <span className="text-orange-500 font-normal">empowering leaders</span>{' '}
-              to focus on what matters most: building meaningful communities.
+              that amplify their impact. Our AI-powered platform simplifies the complex tasks of running a club, giving{' '}
+              <span className="text-orange-500 font-normal">leaders</span>{' '}
+              the freedom to focus on the real work—building a community that feels like a{' '} <span className="text-orange-500 font-normal">home</span>{''}.
             </p>
 
             {/* Closing Quote */}

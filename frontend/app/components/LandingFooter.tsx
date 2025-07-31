@@ -3,12 +3,23 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { useInView } from "react-intersection-observer";
+import { Linkedin, Instagram } from "lucide-react";
 
 const LandingFooter = () => {
   const [ref, inView] = useInView({
     threshold: 0.1,
     triggerOnce: true
   });
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ 
+        behavior: 'smooth',
+        block: 'start'
+      });
+    }
+  };
 
   return (
     <footer className="relative bg-gradient-to-b from-white to-orange-50/20 border-t border-black/5 overflow-hidden">
@@ -62,8 +73,8 @@ const LandingFooter = () => {
             transition={{ delay: 0.4, duration: 0.8 }}
             className="text-lg font-light text-black/60 max-w-2xl mx-auto mb-12"
           >
-            Empowering student organizations with AI-powered tools to build stronger communities, 
-            create engaging content, and make lasting impact.
+            We’re here to help student clubs bring people together, share what matters, and make a real difference—with AI tools that do the heavy lifting.
+
           </motion.p>
 
           {/* Links */}
@@ -74,37 +85,63 @@ const LandingFooter = () => {
             className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-8 mb-12"
           >
             <a 
-              href="https://www.clubly.tech" 
+              href="https://www.clubly.space" 
               target="_blank" 
               rel="noopener noreferrer" 
               className="group text-black/60 hover:text-orange-500 font-light transition-all duration-300 relative"
             >
-              Visit clubly.tech
+              Visit clubly.space
               <div className="absolute bottom-0 left-0 w-0 h-px bg-orange-500 transition-all duration-300 group-hover:w-full" />
             </a>
             
-            <a 
-              href="/features" 
-              className="group text-black/60 hover:text-orange-500 font-light transition-all duration-300 relative"
+            <button 
+              onClick={() => scrollToSection('features')}
+              className="group text-black/60 hover:text-orange-500 font-light transition-all duration-300 relative cursor-pointer"
             >
               Features
               <div className="absolute bottom-0 left-0 w-0 h-px bg-orange-500 transition-all duration-300 group-hover:w-full" />
-            </a>
+            </button>
             
-            <a 
-              href="/pricing" 
-              className="group text-black/60 hover:text-orange-500 font-light transition-all duration-300 relative"
+            <button 
+              onClick={() => scrollToSection('pricing')}
+              className="group text-black/60 hover:text-orange-500 font-light transition-all duration-300 relative cursor-pointer"
             >
               Pricing
               <div className="absolute bottom-0 left-0 w-0 h-px bg-orange-500 transition-all duration-300 group-hover:w-full" />
-            </a>
+            </button>
             
-            <a 
-              href="/support" 
-              className="group text-black/60 hover:text-orange-500 font-light transition-all duration-300 relative"
+            <button 
+              onClick={() => scrollToSection('support')}
+              className="group text-black/60 hover:text-orange-500 font-light transition-all duration-300 relative cursor-pointer"
             >
               Support
               <div className="absolute bottom-0 left-0 w-0 h-px bg-orange-500 transition-all duration-300 group-hover:w-full" />
+            </button>
+          </motion.div>
+
+          {/* Social Media Links */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ delay: 0.7, duration: 0.8 }}
+            className="flex items-center justify-center space-x-6 mb-8"
+          >
+            <a 
+              href="https://www.linkedin.com/company/get-clubly/posts/?feedView=all" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="group p-3 rounded-full bg-white/60 backdrop-blur-sm border border-black/5 hover:bg-orange-500/10 hover:border-orange-200 transition-all duration-300"
+            >
+              <Linkedin className="w-5 h-5 text-black/60 group-hover:text-orange-500 transition-colors duration-300" />
+            </a>
+            
+            <a 
+              href="https://www.instagram.com/clubly.tech/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="group p-3 rounded-full bg-white/60 backdrop-blur-sm border border-black/5 hover:bg-orange-500/10 hover:border-orange-200 transition-all duration-300"
+            >
+              <Instagram className="w-5 h-5 text-black/60 group-hover:text-orange-500 transition-colors duration-300" />
             </a>
           </motion.div>
 
@@ -124,9 +161,9 @@ const LandingFooter = () => {
             className="text-center"
           >
             <p className="text-sm font-light text-black/50">
-              © 2024 Clubly. Made by students, for students. 
+              © 2025 Clubly. Made by students, for students. 
               <br className="sm:hidden" />
-              <span className="sm:ml-2">Transforming student organizations with AI.</span>
+              <span className="sm:ml-2">Transforming student clubs with AI.</span>
             </p>
           </motion.div>
 

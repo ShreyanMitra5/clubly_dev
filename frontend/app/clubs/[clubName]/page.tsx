@@ -27,13 +27,7 @@ export default function ClubPage() {
                 Manage your club activities and stay organized with Clubly.
               </p>
             </div>
-            <div className="w-64 h-64 flex-shrink-0">
-              <img 
-                src="/lovable-uploads/5663820f-6c97-4492-9210-9eaa1a8dc415.png"
-                alt="Club Management"
-                className="w-full h-full object-contain"
-              />
-            </div>
+
           </div>
         </div>
         {/* Quick Stats */}

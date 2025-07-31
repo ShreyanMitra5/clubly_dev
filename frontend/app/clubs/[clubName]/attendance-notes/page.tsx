@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { useParams } from 'next/navigation';
 import ClubLayout from '../../../components/ClubLayout';
+import UpgradeModal from '../../../components/UpgradeModal';
+import { useUpgradeModal } from '../../../hooks/useUpgradeModal';
+import { apiWithUpgrade } from '../../../utils/apiWithUpgrade';
 
 // Dynamic import for docx only on client
 const { saveAs } = typeof window !== 'undefined' ? require('file-saver') : { saveAs: undefined };
@@ -34,6 +37,9 @@ export default function ClubAttendanceNotesPage() {
   const params = useParams();
   const clubName = decodeURIComponent(params.clubName as string);
   const [clubInfo, setClubInfo] = useState<any>(null);
+  
+  // Upgrade modal hook
+  const upgradeModal = useUpgradeModal();
 
   useEffect(() => {
     if (!user || !clubName) return;

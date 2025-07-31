@@ -11,28 +11,36 @@ export default function LandingFAQ() {
 
   const faqs = [
     {
-      question: "How does Clubly's AI help with presentations?",
-      answer: "Our AI analyzes your club's content and automatically generates professional presentations with relevant visuals, talking points, and structured layouts. It saves hours of manual work while ensuring consistency across all your club materials."
+      question: "How does the AI Club Advisor work?",
+      answer: "Our AI advisor learns from your club's specific context and helps with everything from event planning to member engagement strategies. It remembers your club's history and provides personalized recommendations."
     },
     {
-      question: "Is Clubly suitable for all types of student organizations?",
-      answer: "Yes! Clubly works for academic societies, hobby clubs, professional organizations, Greek life, sports clubs, and any student group. Our flexible platform adapts to your specific needs and organizational structure."
+      question: "Can I export my club data?",
+      answer: "Yes! Pro users can export all their club data including presentations, meeting notes, and member information. Your data belongs to you and we make it easy to take it with you."
     },
     {
-      question: "What makes Clubly different from other club management tools?",
-      answer: "Clubly is the only platform specifically designed for student organizations with built-in AI capabilities. We understand the unique challenges of student life, limited budgets, and the need for simple yet powerful tools."
+      question: "What happens if I exceed my monthly limits?",
+      answer: "You'll receive a friendly notification when you're close to your limits. For Pro users, most features are unlimited. Free users can upgrade anytime to continue using premium features."
     },
     {
-      question: "How secure is our club data?",
-      answer: "We use enterprise-grade security with end-to-end encryption, regular security audits, and FERPA compliance. Your data is stored securely and never shared with third parties."
+      question: "How accurate are the AI-generated presentations?",
+      answer: "Our AI creates professional presentations based on your club's context and goals. While they provide excellent starting points, we recommend reviewing and customizing them to match your specific needs."
     },
     {
-      question: "Can we integrate Clubly with other tools we use?",
-      answer: "Absolutely! Clubly integrates with popular tools like Google Workspace, Microsoft 365, Slack, Discord, Zoom, and many others. We also provide APIs for custom integrations."
+      question: "Can multiple people manage the same club?",
+      answer: "Currently, each club is managed by one account. We're working on team collaboration features for Pro users. For now, you can share login credentials with trusted team members."
     },
     {
-      question: "What support do you offer for student organizations?",
-      answer: "We provide 24/7 chat support, comprehensive documentation, video tutorials, and dedicated success managers for larger organizations. Plus, we offer special educational discounts."
+      question: "Is my club data secure?",
+      answer: "Absolutely. We use enterprise-grade security and encryption. Your club data is private and we never share it with third parties. We're built for students, by students, with privacy in mind."
+    },
+    {
+      question: "Can I cancel my Pro subscription anytime?",
+      answer: "Yes, you can cancel anytime with no penalties. You'll keep access to Pro features until the end of your billing period, then automatically return to the free tier."
+    },
+    {
+      question: "How do you handle meeting recordings?",
+      answer: "We process audio recordings to create summaries and notes, then delete the original files. Only the AI-generated content is stored, ensuring privacy while providing valuable insights."
     }
   ];
 

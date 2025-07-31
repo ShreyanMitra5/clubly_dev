@@ -138,43 +138,43 @@ const LandingFeatures = ({ openSignInModal }: { openSignInModal?: () => void }) 
   const features = [
     {
       icon: Presentation,
-      title: "AI-Powered Presentations",
-      description: "Generate stunning slides in seconds with our advanced AI. Custom visuals, engaging content, and interactive elements tailored to your club's needs.",
+      title: "AI Presentations",
+      description: "Create professional presentations instantly with AI. Generate slides, content, and visuals tailored to your club's needs in seconds.",
       gradient: "bg-gradient-to-br from-blue-500/10 to-purple-500/10",
       iconColor: "text-blue-500"
     },
     {
       icon: Calendar,
-      title: "Smart Semester Planning", 
-      description: "Plan your entire semester with intelligent suggestions. Our AI analyzes trends and creates optimal event schedules for maximum engagement.",
+      title: "Meeting Notes & Summaries", 
+      description: "Automatically transcribe, summarize, and organize your meeting notes. Never miss important details or action items again.",
       gradient: "bg-gradient-to-br from-green-500/10 to-emerald-500/10",
       iconColor: "text-green-500"
     },
     {
       icon: Brain,
-      title: "Intelligent Analytics",
-      description: "Get deep insights into member engagement, event performance, and growth opportunities with our advanced analytics engine.",
+      title: "AI Club Advisor",
+      description: "Get personalized advice and suggestions for your club. Our AI analyzes your data and provides actionable insights to improve engagement.",
       gradient: "bg-gradient-to-br from-orange-500/10 to-red-500/10", 
       iconColor: "text-orange-500"
     },
     {
       icon: Users,
-      title: "Member Management",
-      description: "Build stronger communities with intelligent member insights, engagement tracking, and personalized communication tools.",
+      title: "Email Management",
+      description: "Generate professional emails, announcements, and communications. Save hours on member outreach and event promotion.",
       gradient: "bg-gradient-to-br from-purple-500/10 to-pink-500/10",
       iconColor: "text-purple-500"
     },
     {
       icon: Zap,
-      title: "Automated Workflows",
-      description: "Streamline repetitive tasks with smart automation. From meeting reminders to content generation, let AI handle the routine work.",
+      title: "Task Management",
+      description: "Create, assign, and track tasks for your club. Keep everyone organized and ensure nothing falls through the cracks.",
       gradient: "bg-gradient-to-br from-cyan-500/10 to-blue-500/10",
       iconColor: "text-cyan-500"
     },
     {
       icon: Target,
-      title: "Goal Tracking",
-      description: "Set and track club objectives with intelligent progress monitoring. Get actionable insights to achieve your goals faster.",
+      title: "Semester Roadmap",
+      description: "Plan your entire semester with intelligent scheduling. Visualize your club's goals and track progress throughout the year.",
       gradient: "bg-gradient-to-br from-pink-500/10 to-rose-500/10",
       iconColor: "text-pink-500"
     }
@@ -253,8 +253,11 @@ const LandingFeatures = ({ openSignInModal }: { openSignInModal?: () => void }) 
             transition={{ delay: 0.6, duration: 0.8 }}
             className="text-xl sm:text-2xl font-light text-black/60 max-w-3xl mx-auto"
           >
-            From AI-powered presentations to intelligent analytics, 
-            Clubly provides everything modern student organizations need to thrive.
+Clubly helps student leaders create tasks, emails, meetings, presentations, and much more with ease.
+
+
+
+
           </motion.p>
         </motion.div>
 

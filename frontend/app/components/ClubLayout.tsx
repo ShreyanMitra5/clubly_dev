@@ -12,6 +12,9 @@ import Link from 'next/link';
 import { cn } from '../lib/utils';
 import { UserButton } from '@clerk/nextjs';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
+import UpgradeModal from './UpgradeModal';
+import { useUpgradeModal } from '../hooks/useUpgradeModal';
+import { apiWithUpgrade } from '../utils/apiWithUpgrade';
 import { 
   Users, 
   Presentation, 
@@ -259,8 +262,8 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
                 animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
               >
-                <Star className="w-4 h-4 text-orange-500 fill-orange-500" />
-                <span className="text-sm font-extralight text-white">AI-Powered Management</span>
+                                  <Star className="w-4 h-4 text-orange-500 fill-orange-500" />
+                  <span className="text-sm font-extralight text-white">Run Your Club Without the Burnout</span>
               </motion.div>
 
               <motion.h1 
@@ -280,26 +283,13 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
                 animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                 transition={{ duration: 0.8, delay: 0.4 }}
               >
-                Streamline your organization with AI-powered tools designed to amplify your impact and engage your community.
+                                  Built for the late nights, last-minute meetings, and making it all work.
               </motion.p>
 
 
             </div>
 
-            <motion.div 
-              className="w-80 h-80 flex-shrink-0"
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-              transition={{ duration: 0.8, delay: 0.6 }}
-            >
-              <div className="relative w-full h-full bg-gradient-to-br from-orange-100 to-orange-200 rounded-2xl overflow-hidden shadow-xl">
-            <img 
-              src="/lovable-uploads/5663820f-6c97-4492-9210-9eaa1a8dc415.png"
-              alt="Clubly Platform"
-                  className="w-full h-full object-contain p-8"
-            />
-          </div>
-            </motion.div>
+
         </div>
         </motion.div>
 
@@ -3841,16 +3831,14 @@ function AttendancePanel({ clubName, clubInfo }: { clubName: string; clubInfo: a
           // Generate AI title for the meeting
           let generatedTitle = '';
           try {
-            const titleRes = await fetch('/api/attendance-notes/generate-title', {
+            const titleData = await apiWithUpgrade({
+              url: '/api/attendance-notes/generate-title',
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ summary: data.summary }),
+              body: { summary: data.summary },
+              showUpgradeModal: upgradeModal.showUpgradeModal
             });
-            if (titleRes.ok) {
-              const titleData = await titleRes.json();
-              generatedTitle = titleData.title;
-              setMeetingTitle(titleData.title);
-            }
+            generatedTitle = titleData.title;
+            setMeetingTitle(titleData.title);
           } catch (err) {
             console.error('Error generating title:', err);
           }
@@ -4769,16 +4757,13 @@ function SummariesPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
 
   const generateTitle = async (summary: any) => {
     try {
-      const response = await fetch('/api/attendance-notes/generate-title', {
+      const data = await apiWithUpgrade({
+        url: '/api/attendance-notes/generate-title',
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ summary: summary.summary || summary.description }),
+        body: { summary: summary.summary || summary.description },
+        showUpgradeModal: upgradeModal.showUpgradeModal
       });
-      
-      if (response.ok) {
-        const data = await response.json();
-        return data.title;
-      }
+      return data.title;
     } catch (error) {
       console.error('Error generating title:', error);
     }
@@ -5213,6 +5198,9 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
   const router = useRouter();
   const clubName = decodeURIComponent(params.clubName as string);
   const [clubInfo, setClubInfo] = useState<any>(null);
+  
+  // Upgrade modal hook
+  const upgradeModal = useUpgradeModal();
 
   useEffect(() => {
     async function fetchClubInfo() {
@@ -5332,7 +5320,7 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
           {!sidebarCompressed && (
               <div>
                 <h1 className="text-xl font-extralight text-white">Clubly</h1>
-                <p className="text-xs text-gray-400 font-extralight">AI-Powered Management</p>
+                                  <p className="text-xs text-gray-400 font-extralight">Run Things Better</p>
               </div>
           )}
           </motion.div>
@@ -5466,6 +5454,15 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
           onClick={() => setSidebarOpen(false)}
         />
       )}
+
+      {/* Upgrade Modal */}
+      <UpgradeModal
+        isOpen={upgradeModal.isOpen}
+        onClose={upgradeModal.hideUpgradeModal}
+        featureName={upgradeModal.featureName}
+        currentUsage={upgradeModal.currentUsage}
+        limit={upgradeModal.limit}
+      />
     </div>
   );
 }
