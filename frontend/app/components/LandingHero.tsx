@@ -136,6 +136,23 @@ export default function LandingHero({
               </motion.button>
             </motion.div>
 
+            {/* Teacher Access Button */}
+            <motion.div
+              className="pt-2"
+              initial={{ opacity: 0, y: 20 }}
+              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ duration: 0.8, delay: 1.4 }}
+            >
+              <motion.button 
+                className="text-gray-600 hover:text-gray-800 text-sm font-light underline transition-colors duration-300"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => window.location.href = '/teacher-auth'}
+              >
+                Are you a teacher? Click here for teacher access
+              </motion.button>
+            </motion.div>
+
             {/* Trust indicators */}
             <motion.div
               className="pt-6"

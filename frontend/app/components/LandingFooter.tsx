@@ -94,6 +94,14 @@ const LandingFooter = () => {
               <div className="absolute bottom-0 left-0 w-0 h-px bg-orange-500 transition-all duration-300 group-hover:w-full" />
             </a>
             
+            <a 
+              href="/teacher-auth" 
+              className="group text-black/60 hover:text-orange-500 font-light transition-all duration-300 relative"
+            >
+              Teacher Access
+              <div className="absolute bottom-0 left-0 w-0 h-px bg-orange-500 transition-all duration-300 group-hover:w-full" />
+            </a>
+            
             <button 
               onClick={() => scrollToSection('features')}
               className="group text-black/60 hover:text-orange-500 font-light transition-all duration-300 relative cursor-pointer"
