@@ -57,16 +57,7 @@ import {
   XCircle,
   AlertTriangle,
   Save,
-  MessageSquare,
-  Presentation,
-  Calendar,
-  CheckCircle,
-  Users,
-  Mail,
-  Clock,
-  FileText,
-  Settings,
-  Square
+  MessageSquare
 } from 'lucide-react';
 
 interface ClubLayoutProps {
