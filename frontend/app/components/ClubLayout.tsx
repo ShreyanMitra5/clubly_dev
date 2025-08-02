@@ -1437,9 +1437,9 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
     setShowAdvisorRequest(false);
     setShowSuccessModal(true);
     
-    // CRITICAL FIX: Refresh advisor state to detect pending request
-    console.log('TeacherAdvisorPanel: Request sent, refreshing advisor state...');
-    checkAcceptedAdvisor();
+    // CRITICAL FIX: Force state refresh by triggering a re-render
+    console.log('TeacherAdvisorPanel: Request sent, forcing state refresh...');
+    setLoading(true); // This will trigger useEffect to run checkAcceptedAdvisor
     
     // Switch to messaging view after a brief delay
     setTimeout(() => {

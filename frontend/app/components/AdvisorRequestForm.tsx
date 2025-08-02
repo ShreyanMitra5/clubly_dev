@@ -349,6 +349,7 @@ export default function AdvisorRequestForm({ onRequestSent, clubInfo, user }: Ad
         teacherName={selectedTeacher.name}
         teacherAvailability={selectedTeacher.availability || []}
         studentInfo={formData}
+        clubInfo={clubInfo} // CRITICAL FIX: Pass clubInfo
         onRequestComplete={handleRequestComplete}
         onBack={handleBackToSearch}
       />

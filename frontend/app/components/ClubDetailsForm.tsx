@@ -16,6 +16,7 @@ interface ClubDetailsFormProps {
     school: string;
     district: string;
   };
+  clubInfo?: any; // NEW: Club information
   onRequestComplete: () => void;
   onBack: () => void;
 }
@@ -24,7 +25,8 @@ export default function ClubDetailsForm({
   teacherId, 
   teacherName, 
   teacherAvailability,
-  studentInfo, 
+  studentInfo,
+  clubInfo, // NEW: Accept clubInfo prop
   onRequestComplete, 
   onBack 
 }: ClubDetailsFormProps) {
@@ -63,6 +65,7 @@ export default function ClubDetailsForm({
       console.log('Creating advisor request with data:', {
         teacherId,
         studentId: user.id,
+        clubId: clubInfo?.id,
         clubName: formData.clubName,
         studentInfo
       });
@@ -71,7 +74,7 @@ export default function ClubDetailsForm({
       const { data: requestData, error: requestError } = await supabase
         .from('advisor_requests')
         .insert({
-          club_id: null, // Will be set when club is created
+          club_id: clubInfo?.id || null, // CRITICAL FIX: Use actual club ID
           teacher_id: teacherId,
           student_id: user.id,
           message: `Club: ${formData.clubName}\n\nDescription: ${formData.clubDescription}\n\nGoals: ${formData.clubGoals}\n\nMeeting Frequency: ${formData.meetingFrequency}\n\nExpected Members: ${formData.expectedMembers}\n\nAdditional Info: ${formData.additionalInfo}\n\nStudent: ${studentInfo.name} (Grade ${studentInfo.grade})\nSchool: ${studentInfo.school}, ${studentInfo.district}`,
