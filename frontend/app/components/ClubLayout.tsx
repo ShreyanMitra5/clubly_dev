@@ -1384,26 +1384,103 @@ function TaskCard({ task, onEdit, onDelete, onStatusChange }) {
   );
 }
 
-// AI Advisor Component - Modern Chat Interface
+// Teacher Advisor Component - Modern Teacher Advisor System
 function AdvisorPanel({ clubName, clubInfo, onNavigation }: { 
   clubName: string; 
   clubInfo: any; 
   onNavigation?: (item: any) => void;
 }) {
   const { user } = useUser();
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputValue, setInputValue] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [chatHistories, setChatHistories] = useState<any[]>([]);
-  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
-  const [editingChatId, setEditingChatId] = useState<string | null>(null);
-  const [editingTitle, setEditingTitle] = useState<string>('');
-  const [showDropdownId, setShowDropdownId] = useState<string | null>(null);
+  const [showAdvisorRequest, setShowAdvisorRequest] = useState(false);
+  const [showMessaging, setShowMessaging] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [acceptedAdvisor, setAcceptedAdvisor] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
+
+  const handleAdvisorRequestSent = (teacherId: string) => {
+    setShowAdvisorRequest(false);
+    setShowSuccessModal(true);
+  };
+
+  const handleCloseAdvisorRelationship = async () => {
+    if (!user || !acceptedAdvisor || !clubInfo?.id) return;
+    
+    try {
+      setLoading(true);
+      
+      // Update the advisor request status to 'closed'
+      const { error: updateError } = await supabase
+        .from('advisor_requests')
+        .update({ status: 'closed' })
+        .eq('id', acceptedAdvisor.id);
+
+      if (updateError) throw updateError;
+
+      // Create notification for teacher
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: acceptedAdvisor.teacher_id,
+          title: 'Advisor Relationship Ended',
+          message: `The advisor relationship for ${clubName} has been ended by the student.`,
+          type: 'advisor_closed',
+          related_id: acceptedAdvisor.id,
+          read: false
+        });
+
+      // Clear the accepted advisor state
+      setAcceptedAdvisor(null);
+      
+    } catch (err) {
+      console.error('Error closing advisor relationship:', err);
+      alert('Failed to end advisor relationship. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Check for accepted advisor for this specific club
+  useEffect(() => {
+    const checkAcceptedAdvisor = async () => {
+      if (!user || !clubInfo?.id) return;
+      
+      try {
+        console.log('Checking advisor for club:', {
+          clubId: clubInfo.id,
+          studentId: user.id
+        });
+
+        const { data, error } = await supabase
+          .from('advisor_requests')
+          .select(`
+            *,
+            teacher:teachers(name, subject, room_number, email)
+          `)
+          .eq('student_id', user.id)
+          .eq('club_id', clubInfo.id) // Filter by specific club ID
+          .eq('status', 'approved')
+          .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no data
+
+        console.log('Advisor query result:', { data, error });
+
+        if (!error && data) {
+          setAcceptedAdvisor(data);
+        } else {
+          setAcceptedAdvisor(null);
+        }
+      } catch (err) {
+        console.error('Error checking accepted advisor:', err);
+        setAcceptedAdvisor(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAcceptedAdvisor();
+  }, [user, clubInfo?.id]); // Add clubInfo.id as dependency
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
