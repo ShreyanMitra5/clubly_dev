@@ -1474,17 +1474,25 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
     }
   };
 
-  // Check for accepted advisor for this specific club
+    // Check for accepted advisor for this specific club
   useEffect(() => {
     const checkAcceptedAdvisor = async () => {
-      if (!user || !clubInfo?.id) return;
+      if (!user || !clubInfo?.id) {
+        console.log('TeacherAdvisorPanel: Missing user or clubInfo', { 
+          user: !!user, 
+          clubId: clubInfo?.id 
+        });
+        setLoading(false);
+        return;
+      }
       
       try {
-        console.log('Checking advisor for club:', {
+        console.log('TeacherAdvisorPanel: Checking advisor for club:', {
           clubId: clubInfo.id,
-          studentId: user.id
+          studentId: user.id,
+          clubName: clubInfo.name || 'Unknown'
         });
-
+      
         const { data, error } = await supabase
           .from('advisor_requests')
           .select(`
@@ -1496,15 +1504,17 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
           .eq('status', 'approved')
           .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no data
 
-        console.log('Advisor query result:', { data, error });
+        console.log('TeacherAdvisorPanel: Advisor query result:', { data, error });
 
         if (!error && data) {
+          console.log('TeacherAdvisorPanel: Found accepted advisor:', data.teacher?.name);
           setAcceptedAdvisor(data);
-    } else {
+        } else {
+          console.log('TeacherAdvisorPanel: No accepted advisor found');
           setAcceptedAdvisor(null);
         }
       } catch (err) {
-        console.error('Error checking accepted advisor:', err);
+        console.error('TeacherAdvisorPanel: Error checking accepted advisor:', err);
         setAcceptedAdvisor(null);
       } finally {
         setLoading(false);
@@ -1792,6 +1802,13 @@ function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Load chat histories on component mount
+  useEffect(() => {
+    if (user?.id && clubInfo?.id) {
+      loadChatHistories();
+    }
+  }, [user?.id, clubInfo?.id]);
 
   const loadChatMessages = async (chatId: string) => {
     try {
@@ -2311,6 +2328,30 @@ function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: {
 
         {/* Messages Area */}
         <div className="flex-1 overflow-y-auto px-8 py-6 space-y-6">
+          {messages.length === 0 && (
+            <motion.div
+              className="flex justify-start w-full"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
+              <div className="flex flex-col items-start max-w-[80%]">
+                <div className="bg-gradient-to-br from-gray-100 to-gray-200 text-gray-800 px-6 py-4 rounded-3xl rounded-bl-lg shadow-sm border border-gray-200/50">
+                  <div className="font-light text-[15px] leading-relaxed">
+                    👋 Hello! I'm your AI assistant for <strong>{clubName}</strong>. I can help you with:
+                    <br />• Club activity planning
+                    <br />• Member engagement ideas  
+                    <br />• Meeting organization
+                    <br />• Event coordination
+                    <br /><br />What would you like to know about managing your club?
+                  </div>
+                </div>
+                <div className="text-xs text-gray-500 mt-2 pl-2 font-extralight">
+                  AI Assistant
+                </div>
+              </div>
+            </motion.div>
+          )}
           {messages.map((message, idx) => (
             <motion.div 
               key={message.id} 
