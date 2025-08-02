@@ -33,6 +33,8 @@ export interface AdvisorRequest {
   teacher_id: string;
   student_id: string;
   message?: string;
+  meeting_day?: string;
+  meeting_time?: string;
   status: 'pending' | 'approved' | 'denied';
   created_at: string;
   updated_at: string;
@@ -105,6 +107,7 @@ export interface TeacherSearchFilters {
 export interface BookingRequest {
   club_id: string;
   teacher_id: string;
+  student_id: string;
   meeting_date: string;
   start_time: string;
   end_time: string;
@@ -115,7 +118,10 @@ export interface BookingRequest {
 export interface AdvisorRequestData {
   club_id: string;
   teacher_id: string;
+  student_id: string;
   message?: string;
+  meeting_day?: string;
+  meeting_time?: string;
 }
 
 export interface AvailabilityUpdate {

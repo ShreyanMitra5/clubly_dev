@@ -4383,7 +4383,7 @@ function AttendancePanel({ clubName, clubInfo }: { clubName: string; clubInfo: a
               url: '/api/attendance-notes/generate-title',
               method: 'POST',
               body: { summary: data.summary },
-              showUpgradeModal: upgradeModal.showUpgradeModal
+              showUpgradeModal: () => {}
             });
             generatedTitle = titleData.title;
             setMeetingTitle(titleData.title);
@@ -5309,7 +5309,7 @@ function SummariesPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
         url: '/api/attendance-notes/generate-title',
         method: 'POST',
         body: { summary: summary.summary || summary.description },
-        showUpgradeModal: upgradeModal.showUpgradeModal
+        showUpgradeModal: () => {}
       });
       return data.title;
     } catch (error) {

@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     let filteredTeachers = teachers as TeacherWithAvailability[];
     if (has_availability) {
       filteredTeachers = filteredTeachers.filter(teacher => 
-        teacher.teacher_availability && teacher.teacher_availability.length > 0
+        teacher.availability && teacher.availability.length > 0
       );
     }
 

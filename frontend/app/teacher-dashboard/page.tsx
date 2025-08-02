@@ -55,6 +55,8 @@ interface AdvisorRequest {
   student_id: string;
   student_name: string;
   message: string;
+  meeting_day?: string;
+  meeting_time?: string;
   status: 'pending' | 'approved' | 'denied';
   created_at: string;
 }
@@ -130,7 +132,8 @@ export default function TeacherDashboard() {
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-orange-50/20 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
-          <p className="text-gray-600 font-light">Loading...</p>
+          <p className="text-gray-600 font-light">Loading teacher dashboard...</p>
+          <p className="text-sm text-gray-500 mt-2">Please wait while we verify your credentials</p>
         </div>
       </div>
     );
@@ -252,10 +255,28 @@ export default function TeacherDashboard() {
             setAdvisorRequests([]);
           }
         } else {
-          setAdvisorRequests(requestsData?.map(req => ({
+          const advisorRequestsWithNames = requestsData?.map(req => ({
             ...req,
             club_name: req.clubs?.name || (req.club_id ? `Club ID: ${req.club_id}` : 'No Club Specified')
-          })) || []);
+          })) || [];
+          
+          setAdvisorRequests(advisorRequestsWithNames);
+          
+          // CRITICAL FIX: Calculate actual club count based on approved requests
+          const approvedClubs = advisorRequestsWithNames.filter(req => req.status === 'approved');
+          const actualClubCount = approvedClubs.length;
+          
+          console.log('Teacher Dashboard: Calculating club count', {
+            totalRequests: advisorRequestsWithNames.length,
+            approvedRequests: approvedClubs.length,
+            actualClubCount
+          });
+          
+          // Update teacher data with actual club count
+          setTeacherData(prevData => ({
+            ...prevData,
+            current_clubs_count: actualClubCount
+          }));
         }
       } catch (requestsErr) {
         console.error('Requests fetch error:', requestsErr);
@@ -351,19 +372,36 @@ export default function TeacherDashboard() {
 
       // If approved, send a welcome message
       if (action === 'approve') {
-        const { error: messageError } = await supabase
-          .from('messages')
-          .insert({
-            sender_id: teacherData?.id || '',
-            receiver_id: request.student_id,
-            message: `Hi! I'm excited to be your advisor for ${request.club_name}. I've reviewed your club details and I'm looking forward to helping you succeed. Let's schedule a time to discuss your goals and how I can best support you.`,
-            sender_name: teacherData?.name || 'Teacher',
-            receiver_name: request.student_name
-          });
+        try {
+          // Ensure we have teacher data
+          if (!teacherData?.id) {
+            console.error('Teacher ID not found for welcome message');
+            return;
+          }
 
-        if (messageError) {
-          console.error('Welcome message error:', messageError);
-          // Don't throw here as the main update was successful
+          const { error: messageError } = await supabase
+            .from('messages')
+            .insert({
+              sender_id: teacherData.id,
+              receiver_id: request.student_id,
+              message: `Hi! I'm excited to be your advisor for ${request.club_name}. I've reviewed your club details and I'm looking forward to helping you succeed. Let's schedule a time to discuss your goals and how I can best support you.`,
+              sender_name: teacherData.name || 'Teacher',
+              receiver_name: request.student_name
+            });
+
+          if (messageError) {
+            console.error('Welcome message error details:', {
+              code: messageError.code,
+              message: messageError.message,
+              details: messageError.details,
+              hint: messageError.hint
+            });
+            // Don't throw here as the main update was successful
+          } else {
+            console.log('Welcome message sent successfully');
+          }
+        } catch (messageErr) {
+          console.error('Welcome message exception:', messageErr);
         }
       }
 
@@ -484,6 +522,7 @@ export default function TeacherDashboard() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
           <p className="text-gray-600 font-light">Loading teacher dashboard...</p>
+          <p className="text-sm text-gray-500 mt-2">Fetching your profile and advisor requests</p>
         </div>
       </div>
     );
@@ -493,7 +532,19 @@ export default function TeacherDashboard() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-orange-50/20 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600 font-light">Teacher profile not found.</p>
+          <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+            <GraduationCap className="w-8 h-8 text-orange-600" />
+          </div>
+          <h2 className="text-2xl font-light text-gray-900 mb-4">Teacher Profile Setup Required</h2>
+          <p className="text-gray-600 font-light mb-6 max-w-md mx-auto">
+            We couldn't find your teacher profile. Please complete the registration process to access the dashboard.
+          </p>
+          <button
+            onClick={() => router.push('/teacher-registration')}
+            className="px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-light hover:from-orange-600 hover:to-orange-700 transition-all duration-200"
+          >
+            Complete Registration
+          </button>
         </div>
       </div>
     );
@@ -569,6 +620,62 @@ export default function TeacherDashboard() {
             </motion.div>
           </div>
         </motion.div>
+
+        {/* Advised Clubs Section */}
+        {advisorRequests.filter(req => req.status === 'approved').length > 0 && (
+          <motion.div
+            className="mb-12"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.5 }}
+          >
+            <div className="bg-gradient-to-r from-orange-50 to-white border border-orange-200/50 rounded-2xl p-8 shadow-lg">
+              <div className="flex items-center mb-6">
+                <div className="bg-gradient-to-r from-orange-500 to-orange-600 w-12 h-12 rounded-2xl flex items-center justify-center mr-4">
+                  <GraduationCap className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-light text-gray-900">Clubs You Advise</h2>
+                  <p className="text-gray-600 font-extralight">Your current club advisor responsibilities</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {advisorRequests
+                  .filter(req => req.status === 'approved')
+                  .map((club, index) => (
+                    <motion.div
+                      key={club.id}
+                      className="bg-white rounded-xl border border-orange-100 p-4 shadow-sm hover:shadow-md transition-all duration-200"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.1 }}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-medium text-gray-900 mb-1">
+                            {club.club_name}
+                          </h3>
+                          <p className="text-sm text-gray-600 mb-2">
+                            Since {formatDate(club.created_at)}
+                          </p>
+                          {club.meeting_day && club.meeting_time && (
+                            <div className="flex items-center text-sm text-orange-600">
+                              <Clock className="w-4 h-4 mr-1" />
+                              {club.meeting_day} at {club.meeting_time}
+                            </div>
+                          )}
+                        </div>
+                        <div className="bg-green-100 text-green-800 text-xs font-medium px-2 py-1 rounded-full">
+                          Active
+                        </div>
+                      </div>
+                    </motion.div>
+                  ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Navigation Tabs */}
         <motion.div
@@ -735,51 +842,134 @@ export default function TeacherDashboard() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <div className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl p-8 shadow-lg">
-                <h2 className="text-2xl font-light text-gray-900 mb-6">Advisor Requests</h2>
-                {advisorRequests.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-600 font-light">No advisor requests yet.</p>
+              <div className="bg-gradient-to-br from-white via-white to-blue-50/30 backdrop-blur-xl border border-gray-200/30 rounded-3xl shadow-2xl overflow-hidden">
+                {/* Modern Header */}
+                <div className="bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 px-8 py-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h2 className="text-2xl font-semibold text-white">Advisor Requests</h2>
+                      <p className="text-orange-100 mt-1">Manage student club advisor requests</p>
+                    </div>
+                    <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-4 py-2">
+                      <span className="text-white font-medium">{advisorRequests.length} Total</span>
+                    </div>
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    {advisorRequests.map((request) => (
-                      <div key={request.id} className="border border-gray-200 rounded-xl p-6">
-                        <div className="flex items-center justify-between mb-4">
-                          <div>
-                            <h3 className="text-lg font-light text-gray-900">{request.club_name}</h3>
-                            <p className="text-sm text-gray-600 font-extralight">
-                              Requested on {formatDate(request.created_at)}
-                            </p>
-                          </div>
-                          <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(request.status)}`}>
-                            {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                          </span>
-                        </div>
-                        {request.message && (
-                          <p className="text-gray-700 font-light mb-4">{request.message}</p>
-                        )}
-                        {request.status === 'pending' && (
-                          <div className="flex space-x-3">
-                            <button
-                              onClick={() => handleRequestAction(request.id, 'approve')}
-                              className="px-4 py-2 bg-green-500 text-white rounded-lg font-light hover:bg-green-600 transition-colors"
-                            >
-                              Approve
-                            </button>
-                            <button
-                              onClick={() => handleRequestAction(request.id, 'deny')}
-                              className="px-4 py-2 bg-red-500 text-white rounded-lg font-light hover:bg-red-600 transition-colors"
-                            >
-                              Deny
-                            </button>
-                          </div>
-                        )}
+                </div>
+
+                <div className="p-8">
+                  {advisorRequests.length === 0 ? (
+                    <div className="text-center py-16">
+                      <div className="bg-gradient-to-br from-orange-100 to-orange-200 w-24 h-24 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                        <Users className="w-12 h-12 text-orange-600" />
                       </div>
-                    ))}
-                  </div>
-                )}
+                      <h3 className="text-xl font-medium text-gray-900 mb-2">No Requests Yet</h3>
+                      <p className="text-gray-600 max-w-md mx-auto">
+                        Student advisor requests will appear here. You'll be notified when students request your guidance.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-6">
+                      {advisorRequests.map((request, index) => (
+                        <motion.div 
+                          key={request.id} 
+                          className="bg-white rounded-2xl border border-gray-100 shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden"
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: index * 0.1 }}
+                        >
+                          {/* Request Header */}
+                          <div className="bg-gradient-to-r from-gray-50 to-orange-50/50 px-6 py-4 border-b border-gray-100">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h3 className="text-xl font-semibold text-gray-900 mb-1">
+                                  {request.club_name || 'Club Request'}
+                                </h3>
+                                <div className="flex items-center text-sm text-gray-600 space-x-4">
+                                  <span className="flex items-center">
+                                    <Calendar className="w-4 h-4 mr-1" />
+                                    {formatDate(request.created_at)}
+                                  </span>
+                                  {request.meeting_day && (
+                                    <span className="flex items-center">
+                                      <ClockIcon className="w-4 h-4 mr-1" />
+                                      {request.meeting_day} {request.meeting_time}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <div className="flex items-center space-x-3">
+                                <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${getStatusColor(request.status)}`}>
+                                  {request.status === 'pending' && <Clock className="w-4 h-4 mr-2" />}
+                                  {request.status === 'approved' && <CheckCircle className="w-4 h-4 mr-2" />}
+                                  {request.status === 'denied' && <XCircle className="w-4 h-4 mr-2" />}
+                                  {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Request Content */}
+                          <div className="p-6">
+                            {request.message && (
+                              <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                                <h4 className="text-sm font-semibold text-gray-700 mb-2">Request Details:</h4>
+                                <p className="text-gray-700 leading-relaxed whitespace-pre-line">{request.message}</p>
+                              </div>
+                            )}
+                            
+                            {/* Action Buttons */}
+                            {request.status === 'pending' && (
+                              <div className="flex items-center justify-end space-x-4">
+                                <motion.button
+                                  onClick={() => handleRequestAction(request.id, 'deny')}
+                                  className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl font-medium hover:from-red-600 hover:to-red-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center"
+                                  whileHover={{ scale: 1.02 }}
+                                  whileTap={{ scale: 0.98 }}
+                                >
+                                  <XCircle className="w-5 h-5 mr-2" />
+                                  Decline Request
+                                </motion.button>
+                                <motion.button
+                                  onClick={() => handleRequestAction(request.id, 'approve')}
+                                  className="px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-medium hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center"
+                                  whileHover={{ scale: 1.02 }}
+                                  whileTap={{ scale: 0.98 }}
+                                >
+                                  <CheckCircle className="w-5 h-5 mr-2" />
+                                  Accept & Become Advisor
+                                </motion.button>
+                              </div>
+                            )}
+
+                            {request.status === 'approved' && (
+                              <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                                <div className="flex items-center">
+                                  <CheckCircle className="w-5 h-5 text-green-600 mr-3" />
+                                  <div>
+                                    <p className="font-medium text-green-800">You are now the advisor for this club</p>
+                                    <p className="text-green-600 text-sm mt-1">Students can now message you directly through the system</p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {request.status === 'denied' && (
+                              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                                <div className="flex items-center">
+                                  <XCircle className="w-5 h-5 text-red-600 mr-3" />
+                                  <div>
+                                    <p className="font-medium text-red-800">Request declined</p>
+                                    <p className="text-red-600 text-sm mt-1">You declined to become advisor for this club</p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
             </motion.div>
           )}
@@ -847,8 +1037,22 @@ export default function TeacherDashboard() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
+              className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-lg overflow-hidden"
             >
-              <TeacherMessaging />
+              <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-8 py-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-semibold text-white">Student Communications</h2>
+                    <p className="text-blue-100 mt-1">Manage conversations with your advisees</p>
+                  </div>
+                  <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-4 py-2">
+                    <MessageSquare className="w-6 h-6 text-white" />
+                  </div>
+                </div>
+              </div>
+              <div className="p-0">
+                <TeacherMessaging />
+              </div>
             </motion.div>
           )}
 

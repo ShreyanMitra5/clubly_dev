@@ -137,11 +137,11 @@ export async function getUserUsageSummary(userId: string) {
 
 // Middleware to check feature access
 export function withFeatureCheck(feature: keyof typeof TIER_LIMITS.free) {
-  return async (request: NextRequest, ...args: any[]) => {
+  return async (request: any, ...args: any[]) => {
     const { userId } = await auth();
     
     if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const featureCheck = await canUseFeature(userId, feature);

@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     // Validate teacher exists and has capacity
     const { data: teacher, error: teacherError } = await supabase
       .from('teachers')
-      .select('id, current_clubs_count, max_clubs, active')
+      .select('id, user_id, current_clubs_count, max_clubs, active')
       .eq('id', teacher_id)
       .single();
 

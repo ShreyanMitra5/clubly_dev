@@ -96,6 +96,8 @@ export default function ClubDetailsForm({
           teacher_id: teacherId,
           student_id: user.id,
           message: `Club: ${formData.clubName}\n\nDescription: ${formData.clubDescription}\n\nGoals: ${formData.clubGoals}\n\nMeeting Frequency: ${formData.meetingFrequency}\n\nExpected Members: ${formData.expectedMembers}\n\nAdditional Info: ${formData.additionalInfo}\n\nStudent: ${studentInfo.name} (Grade ${studentInfo.grade})\nSchool: ${studentInfo.school}, ${studentInfo.district}`,
+          meeting_day: formData.selectedDay, // NEW: Save selected meeting day
+          meeting_time: formData.selectedTime, // NEW: Save selected meeting time
           status: 'pending'
         })
         .select()

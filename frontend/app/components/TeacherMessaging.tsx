@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Send, MessageSquare, User, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { Send, MessageSquare, User, Clock, CheckCircle, XCircle, GraduationCap } from 'lucide-react';
 import { supabase } from '../../utils/supabaseClient';
 import { useUser } from '@clerk/nextjs';
 
@@ -79,14 +79,28 @@ export default function TeacherMessaging() {
     if (!user) return;
 
     try {
-      // Get teacher ID
+      console.log('TeacherMessaging: Fetching messages for student:', studentId);
+      
+      // Get teacher ID with error handling
       const { data: teacherData, error: teacherError } = await supabase
         .from('teachers')
         .select('id')
         .eq('user_id', user.id)
         .single();
 
-      if (teacherError) throw teacherError;
+      if (teacherError) {
+        console.error('TeacherMessaging: Error fetching teacher for messages:', teacherError);
+        setError('Unable to load teacher profile');
+        return;
+      }
+
+      if (!teacherData?.id) {
+        console.error('TeacherMessaging: Teacher ID not found');
+        setError('Teacher profile incomplete');
+        return;
+      }
+
+      console.log('TeacherMessaging: Fetching conversation between:', teacherData.id, 'and', studentId);
 
       const { data, error } = await supabase
         .from('messages')
@@ -94,11 +108,17 @@ export default function TeacherMessaging() {
         .or(`and(sender_id.eq.${teacherData.id},receiver_id.eq.${studentId}),and(sender_id.eq.${studentId},receiver_id.eq.${teacherData.id})`)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('TeacherMessaging: Error fetching messages:', error);
+        throw error;
+      }
+
+      console.log('TeacherMessaging: Messages fetched successfully:', data?.length || 0, 'messages');
       setMessages(data || []);
+      setError(''); // Clear any previous errors
     } catch (err: any) {
-      console.error('Error fetching messages:', err);
-      setError('Failed to load messages');
+      console.error('TeacherMessaging: Fetch messages error:', err);
+      setError('Failed to load messages. Please refresh and try again.');
     }
   };
 
@@ -109,16 +129,33 @@ export default function TeacherMessaging() {
     setError('');
 
     try {
-      // Get teacher ID
+      console.log('TeacherMessaging: Attempting to send message');
+      
+      // Get teacher ID with detailed error handling
       const { data: teacherData, error: teacherError } = await supabase
         .from('teachers')
         .select('id, name')
         .eq('user_id', user.id)
         .single();
 
-      if (teacherError) throw teacherError;
+      if (teacherError) {
+        console.error('TeacherMessaging: Error fetching teacher data:', teacherError);
+        throw new Error('Unable to find teacher profile. Please ensure your teacher account is properly set up.');
+      }
 
-      const { error } = await supabase
+      if (!teacherData?.id) {
+        console.error('TeacherMessaging: Teacher data found but ID is missing:', teacherData);
+        throw new Error('Teacher profile is incomplete. Please contact support.');
+      }
+
+      console.log('TeacherMessaging: Sending message with data:', {
+        senderId: teacherData.id,
+        receiverId: selectedRequest.student_id,
+        senderName: teacherData.name,
+        receiverName: selectedRequest.student_name
+      });
+
+      const { error: insertError } = await supabase
         .from('messages')
         .insert({
           sender_id: teacherData.id,
@@ -128,14 +165,22 @@ export default function TeacherMessaging() {
           receiver_name: selectedRequest.student_name
         });
 
-      if (error) throw error;
+      if (insertError) {
+        console.error('TeacherMessaging: Error inserting message:', insertError);
+        throw new Error(`Failed to send message: ${insertError.message}`);
+      }
 
+      console.log('TeacherMessaging: Message sent successfully');
       setNewMessage('');
-      // Refresh messages
+      
+      // Refresh messages to show the new message
       await fetchMessages(selectedRequest.student_id);
+      
+      // Show success feedback
+      console.log('TeacherMessaging: Message refresh completed');
     } catch (err: any) {
-      console.error('Error sending message:', err);
-      setError('Failed to send message');
+      console.error('TeacherMessaging: Send message error:', err);
+      setError(err.message || 'Failed to send message. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -172,13 +217,23 @@ export default function TeacherMessaging() {
 
       // If approved, send a welcome message
       if (action === 'approve') {
-        const { data: teacherData } = await supabase
-          .from('teachers')
-          .select('id, name')
-          .eq('user_id', user?.id)
-          .single();
+        try {
+          const { data: teacherData, error: teacherError } = await supabase
+            .from('teachers')
+            .select('id, name')
+            .eq('user_id', user?.id)
+            .single();
 
-        if (teacherData) {
+          if (teacherError) {
+            console.error('Error fetching teacher data for welcome message:', teacherError);
+            return;
+          }
+
+          if (!teacherData?.id) {
+            console.error('Teacher data not found for welcome message');
+            return;
+          }
+
           const { error: messageError } = await supabase
             .from('messages')
             .insert({
@@ -190,8 +245,19 @@ export default function TeacherMessaging() {
             });
 
           if (messageError) {
-            console.error('Welcome message error:', messageError);
+            console.error('Welcome message error details:', {
+              code: messageError.code,
+              message: messageError.message,
+              details: messageError.details,
+              hint: messageError.hint,
+              teacherId: teacherData.id,
+              studentId: request.student_id
+            });
+          } else {
+            console.log('Welcome message sent successfully from TeacherMessaging');
           }
+        } catch (messageErr) {
+          console.error('Welcome message exception in TeacherMessaging:', messageErr);
         }
       }
 
@@ -221,17 +287,20 @@ export default function TeacherMessaging() {
   };
 
   return (
-    <div className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-lg">
-      <div className="p-6 border-b border-gray-200/50">
-        <h2 className="text-2xl font-light text-gray-900 mb-2">Student Communication</h2>
-        <p className="text-gray-600 font-light">Manage advisor requests and communicate with students</p>
-      </div>
+    <div className="bg-white rounded-b-2xl shadow-sm">
+      {/* Remove header since it's now in the parent component */}
 
-      <div className="flex h-96">
-        {/* Advisor Requests Sidebar */}
-        <div className="w-1/3 border-r border-gray-200/50">
+      <div className="flex h-[500px]">
+        {/* Student List Sidebar */}
+        <div className="w-1/3 border-r border-gray-200 bg-gray-50">
+          <div className="p-6 border-b border-gray-200">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Students</h3>
+            <p className="text-sm text-gray-600">
+              {advisorRequests.filter(req => req.status === 'approved').length} active conversations
+            </p>
+          </div>
           <div className="p-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">Advisor Requests</h3>
+            <h4 className="text-sm font-medium text-gray-700 mb-3 uppercase tracking-wide">Advisor Requests</h4>
             <div className="space-y-3">
               {advisorRequests.map((request) => (
                 <motion.div
@@ -347,26 +416,35 @@ export default function TeacherMessaging() {
               </div>
 
               {/* Message Input */}
-              <div className="p-4 border-t border-gray-200/50">
-                <div className="flex space-x-3">
-                  <input
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
-                    placeholder="Type your message..."
-                    className="flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-light"
-                    disabled={loading}
-                  />
+              <div className="p-6 border-t border-gray-200 bg-white">
+                <div className="flex items-end space-x-4">
+                  <div className="flex-1">
+                    <textarea
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), sendMessage())}
+                      placeholder="Type your message to the student..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                      rows={3}
+                      disabled={loading}
+                    />
+                    <p className="text-xs text-gray-500 mt-2">Press Enter to send, Shift+Enter for new line</p>
+                  </div>
                   <button
                     onClick={sendMessage}
                     disabled={loading || !newMessage.trim()}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg font-light hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 shadow-lg hover:shadow-xl"
                   >
                     {loading ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <span>Sending...</span>
+                      </>
                     ) : (
-                      <Send className="w-4 h-4" />
+                      <>
+                        <Send className="w-4 h-4" />
+                        <span>Send</span>
+                      </>
                     )}
                   </button>
                 </div>

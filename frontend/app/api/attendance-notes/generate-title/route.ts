@@ -50,13 +50,13 @@ export async function POST(request: NextRequest) {
         max_tokens: 32,
       });
       
-      const response = completion.choices[0]?.message?.content?.trim();
+      const response = 'choices' in completion ? completion.choices[0]?.message?.content?.trim() : null;
       if (response && response.length > 0) {
         // Remove quotes if Groq returns them
         const title = response.replace(/^"|"$/g, '');
         
         // Record usage
-        const tokensUsed = completion.usage?.total_tokens || 50;
+        const tokensUsed = ('usage' in completion && completion.usage?.total_tokens) || 50;
         await recordFeatureUsage(userId, 'titleGeneration', tokensUsed);
         
         return NextResponse.json({ title });

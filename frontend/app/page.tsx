@@ -133,7 +133,7 @@ export default function HomePage() {
         </div>
         <LandingAnalytics />
         <div id="pricing">
-          <LandingPricing openSignInModal={openSignInModal} />
+          <LandingPricing />
         </div>
         <div id="support">
           <LandingFAQ />

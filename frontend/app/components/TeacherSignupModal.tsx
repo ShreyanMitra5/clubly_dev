@@ -166,7 +166,7 @@ export default function TeacherSignupModal({ isOpen, onClose, onSuccess }: Teach
     let isValid = false;
     switch (currentStep) {
       case 1:
-        isValid = formData.district && formData.school && formData.subject;
+        isValid = !!(formData.district && formData.school && formData.subject);
         break;
       case 2:
         isValid = formData.roomNumber && formData.maxClubs > 0 && formData.maxClubs <= 20;

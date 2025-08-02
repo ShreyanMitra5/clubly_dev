@@ -65,7 +65,7 @@ export class GroqClient {
       stream: false
     });
 
-    return completion.choices[0]?.message?.content || '';
+    return ('choices' in completion && completion.choices[0]?.message?.content) || '';
   }
 }
 

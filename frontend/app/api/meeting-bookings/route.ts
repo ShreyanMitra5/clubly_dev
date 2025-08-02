@@ -2,10 +2,59 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '../../../utils/supabaseClient';
 import { MeetingBooking, BookingRequest, BookingConflict } from '../../../types/teacher';
 
-// GET /api/meeting-bookings - List meeting bookings with filters
+// GET /api/meeting-bookings - Handle both listing bookings and checking conflicts
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    
+    // Check if this is a conflict check request
+    const conflictCheck = searchParams.get('action') === 'check-conflict';
+    
+    if (conflictCheck) {
+      // Handle conflict checking
+      const teacher_id = searchParams.get('teacher_id');
+      const meeting_date = searchParams.get('meeting_date');
+      const start_time = searchParams.get('start_time');
+      const end_time = searchParams.get('end_time');
+      const exclude_booking_id = searchParams.get('exclude_booking_id');
+
+      if (!teacher_id || !meeting_date || !start_time || !end_time) {
+        return NextResponse.json(
+          { error: 'Missing required parameters for conflict check' },
+          { status: 400 }
+        );
+      }
+
+      // Check for conflicts
+      let conflictQuery = supabase
+        .from('meeting_bookings')
+        .select('id, start_time, end_time, purpose')
+        .eq('teacher_id', teacher_id)
+        .eq('meeting_date', meeting_date)
+        .eq('status', 'confirmed')
+        .overlaps('time_range', `[${start_time},${end_time})`);
+
+      if (exclude_booking_id) {
+        conflictQuery = conflictQuery.neq('id', exclude_booking_id);
+      }
+
+      const { data: conflicts, error: conflictError } = await conflictQuery;
+
+      if (conflictError) {
+        console.error('Error checking conflicts:', conflictError);
+        return NextResponse.json(
+          { error: 'Failed to check for conflicts' },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({
+        hasConflict: conflicts && conflicts.length > 0,
+        conflicts: conflicts || []
+      });
+    }
+    
+    // Handle regular booking listing
     const teacher_id = searchParams.get('teacher_id');
     const club_id = searchParams.get('club_id');
     const student_id = searchParams.get('student_id');
@@ -295,58 +344,4 @@ export async function PATCH(request: NextRequest) {
     );
   }
 }
-
-// GET /api/meeting-bookings/check-conflict - Check for booking conflicts
-export async function GET(request: NextRequest) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const teacher_id = searchParams.get('teacher_id');
-    const meeting_date = searchParams.get('meeting_date');
-    const start_time = searchParams.get('start_time');
-    const end_time = searchParams.get('end_time');
-    const exclude_booking_id = searchParams.get('exclude_booking_id');
-
-    if (!teacher_id || !meeting_date || !start_time || !end_time) {
-      return NextResponse.json(
-        { error: 'teacher_id, meeting_date, start_time, and end_time are required' },
-        { status: 400 }
-      );
-    }
-
-    let query = supabase
-      .from('meeting_bookings')
-      .select('*')
-      .eq('teacher_id', teacher_id)
-      .eq('meeting_date', meeting_date)
-      .eq('status', 'confirmed')
-      .or(`start_time.lt.${end_time},end_time.gt.${start_time}`);
-
-    if (exclude_booking_id) {
-      query = query.neq('id', exclude_booking_id);
-    }
-
-    const { data: conflictingBookings, error } = await query;
-
-    if (error) {
-      console.error('Error checking booking conflicts:', error);
-      return NextResponse.json(
-        { error: 'Failed to check booking conflicts' },
-        { status: 500 }
-      );
-    }
-
-    const hasConflict = conflictingBookings && conflictingBookings.length > 0;
-
-    return NextResponse.json({
-      has_conflict: hasConflict,
-      conflicting_bookings: conflictingBookings || []
-    });
-
-  } catch (error) {
-    console.error('Error in check-conflict GET:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-} 
+ 
