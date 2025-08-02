@@ -54,12 +54,39 @@ export default function HomePage() {
           .eq('user_id', user.id);
 
         if (!data || data.length === 0) {
-          // New user - check if they came from sign up
-          const fromSignUp = sessionStorage.getItem('fromSignUp');
-          if (fromSignUp) {
-            sessionStorage.removeItem('fromSignUp');
-            router.push('/onboarding');
-          }
+                  // New user - check if they came from sign up
+        const fromSignUp = sessionStorage.getItem('fromSignUp');
+        const fromTeacherSignup = sessionStorage.getItem('fromTeacherSignup');
+        
+        if (fromTeacherSignup) {
+          sessionStorage.removeItem('fromTeacherSignup');
+          sessionStorage.removeItem('fromSignUp');
+          // Check if user is already a teacher
+          const checkTeacherStatus = async () => {
+            try {
+              const { data: existingTeacher, error } = await supabase
+                .from('teachers')
+                .select('id')
+                .eq('user_id', user.id)
+                .single();
+
+              if (existingTeacher && !error) {
+                // User is already a teacher, redirect to teacher dashboard
+                router.push('/teacher-dashboard');
+              } else {
+                // User is not a teacher, redirect to teacher registration
+                router.push('/teacher-registration');
+              }
+            } catch (error) {
+              // Teacher doesn't exist, redirect to registration
+              router.push('/teacher-registration');
+            }
+          };
+          checkTeacherStatus();
+        } else if (fromSignUp) {
+          sessionStorage.removeItem('fromSignUp');
+          router.push('/onboarding');
+        }
         } else {
           // Existing user - redirect to dashboard
           router.push('/dashboard');
@@ -69,7 +96,26 @@ export default function HomePage() {
 
     checkUserStatus();
 
-    return () => clearTimeout(loadingTimer);
+    // Listen for teacher signup event
+    const handleTeacherSignup = () => {
+      // Set flag for teacher signup and open Clerk modal
+      sessionStorage.setItem('fromTeacherSignup', 'true');
+      signUpButtonRef.current?.click();
+    };
+
+    // Listen for sign up modal event (for teacher flow)
+    const handleSignUpModal = () => {
+      signUpButtonRef.current?.click();
+    };
+
+    window.addEventListener('openTeacherSignup', handleTeacherSignup);
+    window.addEventListener('openSignUpModal', handleSignUpModal);
+
+    return () => {
+      clearTimeout(loadingTimer);
+      window.removeEventListener('openTeacherSignup', handleTeacherSignup);
+      window.removeEventListener('openSignUpModal', handleSignUpModal);
+    };
   }, [isSignedIn, user, sessionId, router]);
 
   if (isLoading) {
@@ -101,11 +147,21 @@ export default function HomePage() {
         <button
           ref={signUpButtonRef}
           className="hidden"
-          onClick={() => sessionStorage.setItem('fromSignUp', 'true')}
+          onClick={() => {
+            // Check if this is from teacher signup flow
+            const fromTeacherSignup = sessionStorage.getItem('fromTeacherSignup');
+            if (fromTeacherSignup) {
+              sessionStorage.setItem('fromSignUp', 'true');
+            } else {
+              sessionStorage.setItem('fromSignUp', 'true');
+            }
+          }}
         >
           Hidden Signup
         </button>
       </SignUpButton>
+
+
     </ErrorBoundary>
   );
 }

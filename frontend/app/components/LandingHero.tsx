@@ -147,7 +147,12 @@ export default function LandingHero({
                 className="text-gray-600 hover:text-gray-800 text-sm font-light underline transition-colors duration-300"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => window.location.href = '/teacher-auth'}
+                onClick={() => {
+                  // This will be handled by the parent component
+                  if (typeof window !== 'undefined') {
+                    window.dispatchEvent(new CustomEvent('openTeacherSignup'));
+                  }
+                }}
               >
                 Are you a teacher? Click here for teacher access
               </motion.button>

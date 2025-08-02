@@ -1,300 +1,534 @@
 "use client";
+
 import React, { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
-import { 
-  User, 
-  Mail, 
-  Building, 
-  Clock, 
-  CheckCircle,
-  AlertCircle
-} from 'lucide-react';
-import { TeacherRegistrationForm } from '../../types/teacher';
+import { motion } from 'framer-motion';
+import { GraduationCap, Building, Clock, Users, ArrowRight, Star } from 'lucide-react';
+import { supabase } from '../../utils/supabaseClient';
+
+interface TeacherFormData {
+  district: string;
+  school: string;
+  subject: string;
+  roomNumber: string;
+  maxClubs: number;
+  customMaxClubs: string;
+  availability: {
+    [key: string]: {
+      startTime: string;
+      endTime: string;
+      enabled: boolean;
+    };
+  };
+}
+
+const DAYS_OF_WEEK = [
+  { key: 'monday', label: 'Monday', value: 1 },
+  { key: 'tuesday', label: 'Tuesday', value: 2 },
+  { key: 'wednesday', label: 'Wednesday', value: 3 },
+  { key: 'thursday', label: 'Thursday', value: 4 },
+  { key: 'friday', label: 'Friday', value: 5 },
+];
 
 export default function TeacherRegistration() {
-  const { user, isSignedIn } = useUser();
+  const { user, isLoaded } = useUser();
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
-  const [formData, setFormData] = useState<TeacherRegistrationForm>({
-    name: '',
-    email: '',
-    school_email: '',
-    room_number: '',
-    max_clubs: 3
+  
+  const [formData, setFormData] = useState<TeacherFormData>({
+    district: '',
+    school: '',
+    subject: '',
+    roomNumber: '',
+    maxClubs: 3,
+    customMaxClubs: '',
+    availability: {
+      monday: { startTime: '15:00', endTime: '16:00', enabled: false },
+      tuesday: { startTime: '15:00', endTime: '16:00', enabled: false },
+      wednesday: { startTime: '15:00', endTime: '16:00', enabled: false },
+      thursday: { startTime: '15:00', endTime: '16:00', enabled: false },
+      friday: { startTime: '15:00', endTime: '16:00', enabled: false },
+    }
   });
 
+  // Redirect to home if user is not authenticated
   useEffect(() => {
-    if (!isSignedIn || !user) {
+    if (isLoaded && !user) {
       router.push('/');
-      return;
     }
+  }, [isLoaded, user, router]);
 
-    // Pre-fill form with user data
-    if (user) {
-      setFormData(prev => ({
-        ...prev,
-        name: user.fullName || '',
-        email: user.emailAddresses?.[0]?.emailAddress || ''
-      }));
+  // Check if user is already a teacher and load stored form data
+  useEffect(() => {
+    if (isLoaded && user) {
+      // First, check if user is already a teacher
+      const checkExistingTeacher = async () => {
+        try {
+          const { data: existingTeacher, error } = await supabase
+            .from('teachers')
+            .select('id')
+            .eq('user_id', user.id)
+            .single();
+
+          if (existingTeacher && !error) {
+            // User is already a teacher, redirect to dashboard
+            router.push('/teacher-dashboard');
+            return;
+          }
+        } catch (error) {
+          // Teacher doesn't exist, continue with registration
+          console.log('No existing teacher found, proceeding with registration');
+        }
+
+        // Check if there's stored teacher registration data
+        const storedData = sessionStorage.getItem('teacherRegistrationData');
+        if (storedData) {
+          try {
+            const parsedData = JSON.parse(storedData);
+            setFormData(parsedData);
+            sessionStorage.removeItem('teacherRegistrationData');
+          } catch (error) {
+            console.error('Error parsing stored teacher data:', error);
+          }
+        }
+      };
+
+      checkExistingTeacher();
     }
-  }, [isSignedIn, user]);
+  }, [isLoaded, user, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user) return;
+  // Show loading state while Clerk is loading or redirecting
+  if (!isLoaded || !user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-orange-50/20 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-600 font-light">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
-    setLoading(true);
-    setError('');
-
-    try {
-      const res = await fetch('/api/teachers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          user_id: user.id
-        })
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        setSuccess(true);
-        setTimeout(() => {
-          router.push('/teacher-portal');
-        }, 2000);
-      } else {
-        setError(data.error || 'Failed to register teacher');
-      }
-    } catch (error) {
-      console.error('Error registering teacher:', error);
-      setError('Failed to register teacher');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleInputChange = (field: keyof TeacherRegistrationForm, value: string | number) => {
+  const handleInputChange = (field: keyof TeacherFormData, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  if (!isSignedIn || !user) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  const handleAvailabilityChange = (day: string, field: string, value: string | boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      availability: {
+        ...prev.availability,
+        [day]: {
+          ...prev.availability[day],
+          [field]: value
+        }
+      }
+    }));
+  };
 
-  if (success) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full">
-          <div className="text-center">
-            <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Registration Successful!</h2>
-            <p className="text-gray-600 mb-6">
-              Welcome to Clubly's Teacher Advisor System. You'll be redirected to your portal shortly.
-            </p>
-            <div className="animate-pulse">
-              <div className="h-2 bg-gray-200 rounded w-3/4 mx-auto"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const handleSubmit = async () => {
+    if (!user) return;
+    
+    setIsLoading(true);
+    setError('');
+
+    try {
+      // First check if teacher already exists
+      const { data: existingTeacher, error: checkError } = await supabase
+        .from('teachers')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
+
+      if (existingTeacher) {
+        // Teacher already exists, redirect to dashboard
+        router.push('/teacher-dashboard');
+        return;
+      }
+
+      // Create teacher record
+      const { data: teacherData, error: teacherError } = await supabase
+        .from('teachers')
+        .insert({
+          user_id: user.id,
+          email: user.primaryEmailAddress?.emailAddress || '',
+          name: user.fullName || user.firstName || '',
+          school_email: user.primaryEmailAddress?.emailAddress || '',
+          district: formData.district,
+          school: formData.school,
+          subject: formData.subject,
+          max_clubs: formData.maxClubs,
+          room_number: formData.roomNumber,
+          active: true
+        })
+        .select()
+        .single();
+
+      if (teacherError) {
+        if (teacherError.code === '23505') {
+          // Unique constraint violation - teacher already exists
+          router.push('/teacher-dashboard');
+          return;
+        }
+        throw teacherError;
+      }
+
+      // Create availability records
+      const availabilityRecords = DAYS_OF_WEEK
+        .filter(day => formData.availability[day.key].enabled)
+        .map(day => ({
+          teacher_id: teacherData.id,
+          day_of_week: day.value,
+          start_time: formData.availability[day.key].startTime,
+          end_time: formData.availability[day.key].endTime,
+          room_number: formData.roomNumber,
+          is_recurring: true,
+          is_active: true
+        }));
+
+      if (availabilityRecords.length > 0) {
+        const { error: availabilityError } = await supabase
+          .from('teacher_availability')
+          .insert(availabilityRecords);
+
+        if (availabilityError) throw availabilityError;
+      }
+
+      // Redirect to teacher dashboard
+      router.push('/teacher-dashboard');
+    } catch (err: any) {
+      console.error('Error creating teacher profile:', err);
+      setError(err.message || 'Failed to create teacher profile');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const nextStep = () => {
+    if (currentStep < 3) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const isStepValid = () => {
+    switch (currentStep) {
+      case 1:
+        return formData.district && formData.school && formData.subject;
+      case 2:
+        return formData.roomNumber && formData.maxClubs > 0 && formData.maxClubs <= 20;
+      case 3:
+        return Object.values(formData.availability).some(day => day.enabled);
+      default:
+        return false;
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center">
-          <h2 className="text-3xl font-bold text-gray-900">Teacher Registration</h2>
-          <p className="mt-2 text-gray-600">
-            Join Clubly as a teacher advisor and help students manage their clubs
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-orange-50/20">
+      {/* Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-20 left-20 w-96 h-96 bg-gradient-to-r from-orange-500/5 to-orange-400/3 rounded-full blur-3xl"
+          animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute bottom-20 right-20 w-80 h-80 bg-gradient-to-r from-gray-400/3 to-gray-300/2 rounded-full blur-3xl"
+          animate={{ scale: [1.2, 1, 1.2], opacity: [0.2, 0.4, 0.2] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+        />
+      </div>
+
+      <div className="relative z-10 max-w-4xl mx-auto px-6 lg:px-8 pt-32 pb-20">
+        {/* Header */}
+        <motion.div
+          className="text-center mb-16"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+        >
+          <motion.div
+            className="inline-flex items-center space-x-2 bg-white/80 backdrop-blur-xl border border-orange-200/50 rounded-full px-4 py-2 mb-6"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <Star className="w-4 h-4 text-orange-500 fill-orange-500" />
+            <span className="text-sm font-extralight text-gray-700">Teacher Registration</span>
+          </motion.div>
+          
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-extralight text-gray-900 mb-4 leading-tight">
+            Complete Your
+            <br />
+            <span className="text-orange-500 font-light">Teacher Profile</span>
+          </h1>
+          
+          <p className="text-xl text-gray-600 font-extralight max-w-2xl mx-auto leading-relaxed">
+            Set up your teacher profile to start advising student clubs and organizations.
           </p>
-        </div>
+        </motion.div>
 
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                <div className="flex">
-                  <AlertCircle className="h-5 w-5 text-red-400" />
-                  <div className="ml-3">
-                    <p className="text-sm text-red-800">{error}</p>
-                  </div>
+        {/* Progress Steps */}
+        <motion.div
+          className="mb-12"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
+        >
+          <div className="flex items-center justify-center space-x-4">
+            {[1, 2, 3].map((step) => (
+              <div key={step} className="flex items-center">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg font-light ${
+                  step <= currentStep 
+                    ? 'bg-orange-500 text-white' 
+                    : 'bg-gray-200 text-gray-600'
+                }`}>
+                  {step}
+                </div>
+                {step < 3 && (
+                  <div className={`w-16 h-px mx-4 ${
+                    step < currentStep ? 'bg-orange-500' : 'bg-gray-200'
+                  }`} />
+                )}
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Form Container */}
+        <motion.div
+          className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-3xl p-8 shadow-xl"
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.6 }}
+        >
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+              <p className="text-red-600 text-sm font-light">{error}</p>
+            </div>
+          )}
+
+          {/* Step 1: Basic Information */}
+          {currentStep === 1 && (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-8"
+            >
+              <div className="text-center">
+                <h3 className="text-2xl font-light text-gray-900 mb-4">School Information</h3>
+                <p className="text-gray-600 font-extralight">Tell us about your school and teaching role</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">School District</label>
+                  <input
+                    type="text"
+                    value={formData.district}
+                    onChange={(e) => handleInputChange('district', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                    placeholder="e.g., Los Angeles Unified"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">School Name</label>
+                  <input
+                    type="text"
+                    value={formData.school}
+                    onChange={(e) => handleInputChange('school', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                    placeholder="e.g., Lincoln High School"
+                  />
                 </div>
               </div>
-            )}
 
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Full Name
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <User className="h-5 w-5 text-gray-400" />
-                </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Subject/Department</label>
                 <input
-                  id="name"
-                  name="name"
                   type="text"
-                  required
-                  value={formData.name}
-                  onChange={(e) => handleInputChange('name', e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter your full name"
+                  value={formData.subject}
+                  onChange={(e) => handleInputChange('subject', e.target.value)}
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                  placeholder="e.g., Computer Science, Mathematics"
                 />
               </div>
-            </div>
+            </motion.div>
+          )}
 
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email Address
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  required
-                  value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter your email address"
-                />
+          {/* Step 2: Classroom Details */}
+          {currentStep === 2 && (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-8"
+            >
+              <div className="text-center">
+                <h3 className="text-2xl font-light text-gray-900 mb-4">Classroom & Availability</h3>
+                <p className="text-gray-600 font-extralight">Set up your classroom and club capacity</p>
               </div>
-            </div>
 
-            <div>
-              <label htmlFor="school_email" className="block text-sm font-medium text-gray-700">
-                School Email (Optional)
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Room Number</label>
+                  <input
+                    type="text"
+                    value={formData.roomNumber}
+                    onChange={(e) => handleInputChange('roomNumber', e.target.value)}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                    placeholder="e.g., Room 201"
+                  />
                 </div>
-                <input
-                  id="school_email"
-                  name="school_email"
-                  type="email"
-                  value={formData.school_email}
-                  onChange={(e) => handleInputChange('school_email', e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter your school email (optional)"
-                />
+
+                                 <div>
+                   <label className="block text-sm font-medium text-gray-700 mb-2">Max Clubs to Advise</label>
+                   <div className="space-y-2">
+                                           <select
+                        value={formData.maxClubs === 0 ? 'custom' : formData.maxClubs}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === 'custom') {
+                            handleInputChange('maxClubs', 0);
+                          } else {
+                            handleInputChange('maxClubs', parseInt(value));
+                            handleInputChange('customMaxClubs', '');
+                          }
+                        }}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                      >
+                        {[1, 2, 3, 4, 5].map(num => (
+                          <option key={num} value={num}>{num} club{num !== 1 ? 's' : ''}</option>
+                        ))}
+                        <option value="custom">Custom number</option>
+                      </select>
+                      {formData.maxClubs === 0 && (
+                        <input
+                          type="number"
+                          min="1"
+                          max="20"
+                          value={formData.customMaxClubs}
+                          placeholder="Enter number of clubs"
+                          onChange={(e) => {
+                            handleInputChange('customMaxClubs', e.target.value);
+                            handleInputChange('maxClubs', parseInt(e.target.value) || 1);
+                          }}
+                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                        />
+                      )}
+                   </div>
+                 </div>
               </div>
-              <p className="mt-1 text-xs text-gray-500">
-                For Google Workspace integration and school notifications
-              </p>
-            </div>
+            </motion.div>
+          )}
 
-            <div>
-              <label htmlFor="room_number" className="block text-sm font-medium text-gray-700">
-                Room Number (Optional)
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Building className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="room_number"
-                  name="room_number"
-                  type="text"
-                  value={formData.room_number}
-                  onChange={(e) => handleInputChange('room_number', e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="e.g., Room 201"
-                />
+          {/* Step 3: Availability */}
+          {currentStep === 3 && (
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-8"
+            >
+              <div className="text-center">
+                <h3 className="text-2xl font-light text-gray-900 mb-4">Meeting Availability</h3>
+                <p className="text-gray-600 font-extralight">Set your available times for club meetings</p>
               </div>
-            </div>
 
-            <div>
-              <label htmlFor="max_clubs" className="block text-sm font-medium text-gray-700">
-                Maximum Number of Clubs
-              </label>
-              <div className="mt-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Clock className="h-5 w-5 text-gray-400" />
-                </div>
-                <select
-                  id="max_clubs"
-                  name="max_clubs"
-                  value={formData.max_clubs}
-                  onChange={(e) => handleInputChange('max_clubs', parseInt(e.target.value))}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value={1}>1 club</option>
-                  <option value={2}>2 clubs</option>
-                  <option value={3}>3 clubs</option>
-                  <option value={4}>4 clubs</option>
-                  <option value={5}>5 clubs</option>
-                </select>
-              </div>
-              <p className="mt-1 text-xs text-gray-500">
-                How many clubs are you willing to advise?
-              </p>
-            </div>
-
-            <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <CheckCircle className="h-5 w-5 text-blue-400" />
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-blue-800">What happens next?</h3>
-                  <div className="mt-2 text-sm text-blue-700">
-                    <ul className="list-disc list-inside space-y-1">
-                      <li>Students can request you as an advisor</li>
-                      <li>You can set your weekly availability</li>
-                      <li>Students can book meetings with you</li>
-                      <li>You'll receive notifications for requests and bookings</li>
-                    </ul>
+              <div className="space-y-4">
+                {DAYS_OF_WEEK.map((day) => (
+                  <div key={day.key} className="border border-gray-200 rounded-xl p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <label className="flex items-center space-x-3">
+                        <input
+                          type="checkbox"
+                          checked={formData.availability[day.key].enabled}
+                          onChange={(e) => handleAvailabilityChange(day.key, 'enabled', e.target.checked)}
+                          className="w-5 h-5 text-orange-500 border-gray-300 rounded focus:ring-orange-500"
+                        />
+                        <span className="font-light text-gray-900 text-lg">{day.label}</span>
+                      </label>
+                    </div>
+                    
+                    {formData.availability[day.key].enabled && (
+                      <div className="grid grid-cols-2 gap-6">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">Start Time</label>
+                          <input
+                            type="time"
+                            value={formData.availability[day.key].startTime}
+                            onChange={(e) => handleAvailabilityChange(day.key, 'startTime', e.target.value)}
+                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">End Time</label>
+                          <input
+                            type="time"
+                            value={formData.availability[day.key].endTime}
+                            onChange={(e) => handleAvailabilityChange(day.key, 'endTime', e.target.value)}
+                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
+                ))}
               </div>
-            </div>
+            </motion.div>
+          )}
 
-            <div>
+          {/* Navigation Buttons */}
+          <div className="flex justify-between mt-12">
+            <button
+              onClick={prevStep}
+              disabled={currentStep === 1}
+              className="px-8 py-4 border border-gray-200 text-gray-700 rounded-xl font-light hover:bg-gray-50 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+
+            {currentStep < 3 ? (
               <button
-                type="submit"
-                disabled={loading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={nextStep}
+                disabled={!isStepValid()}
+                className="px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-light hover:from-orange-600 hover:to-orange-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
               >
-                {loading ? (
+                <span>Next</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            ) : (
+              <button
+                onClick={handleSubmit}
+                disabled={!isStepValid() || isLoading}
+                className="px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-light hover:from-orange-600 hover:to-orange-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              >
+                {isLoading ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Registering...
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span>Creating Profile...</span>
                   </>
                 ) : (
-                  'Register as Teacher'
+                  <>
+                    <GraduationCap className="w-5 h-5" />
+                    <span>Complete Registration</span>
+                  </>
                 )}
               </button>
-            </div>
-          </form>
-        </div>
-
-        <div className="text-center">
-          <p className="text-sm text-gray-600">
-            Already registered?{' '}
-            <button
-              onClick={() => router.push('/teacher-portal')}
-              className="font-medium text-blue-600 hover:text-blue-500"
-            >
-              Go to Teacher Portal
-            </button>
-          </p>
-        </div>
+            )}
+          </div>
+        </motion.div>
       </div>
     </div>
   );

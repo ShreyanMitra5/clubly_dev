@@ -7,7 +7,8 @@ import Image from 'next/image';
 import { supabase } from '../../utils/supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
 import { motion, useInView } from 'framer-motion';
-import { Plus, Users, TrendingUp, Calendar, Brain, Sparkles, ArrowRight, Star, Clock, Target, Zap, BarChart3, Activity } from 'lucide-react';
+import { Plus, Users, TrendingUp, Calendar, Brain, Sparkles, ArrowRight, Star, Clock, Target, Zap, BarChart3, Activity, MessageSquare, Bell } from 'lucide-react';
+import NotificationCenter from '../components/NotificationCenter';
 
 interface Club {
   id: string;
@@ -34,6 +35,8 @@ export default function DashboardPage() {
   const [clubToDelete, setClubToDelete] = useState<Club | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
 
   const [clubFormData, setClubFormData] = useState<ClubFormData>({
     name: '',
@@ -55,6 +58,7 @@ export default function DashboardPage() {
     if (!user) return;
     fetchClubs();
     fetchHoursSaved();
+    fetchUnreadNotifications();
     setName(user.fullName || user.firstName || '');
   }, [user]);
 
@@ -135,6 +139,29 @@ export default function DashboardPage() {
     }
     
     setClubs((data || []).map((m: any) => ({ id: m.club_id, name: m.clubs?.name })).filter(c => c.id && c.name));
+  };
+
+  const fetchUnreadNotifications = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('read', false);
+      
+      if (error) {
+        console.error('Error fetching unread notifications:', error);
+        setUnreadNotifications(0);
+        return;
+      }
+      
+      setUnreadNotifications(data?.length || 0);
+    } catch (err) {
+      console.error('Error fetching unread notifications:', err);
+      setUnreadNotifications(0);
+    }
   };
 
   const handleClubClick = (club: Club) => {
@@ -241,6 +268,8 @@ export default function DashboardPage() {
     }
   };
 
+
+
   // Show loading state while Clerk is loading or redirecting
   if (!isLoaded || !user) {
     return (
@@ -312,18 +341,39 @@ export default function DashboardPage() {
               </p>
             </div>
 
-            <motion.button
-              onClick={() => setShowAddModal(true)}
-              className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-xl font-light text-lg flex items-center space-x-3 hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg group"
-              whileHover={{ scale: 1.02, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              initial={{ opacity: 0, x: 30 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.4 }}
-            >
-              <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
-              <span>Create New Club</span>
-            </motion.button>
+            <div className="flex items-center space-x-4">
+              <motion.button
+                onClick={() => setShowNotifications(true)}
+                className="relative p-3 bg-white/80 backdrop-blur-xl border border-gray-200/50 rounded-xl hover:bg-white transition-all duration-200 shadow-lg group"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+              >
+                <Bell className="w-5 h-5 text-gray-700 group-hover:text-orange-500 transition-colors" />
+                {unreadNotifications > 0 && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full flex items-center justify-center">
+                    <span className="text-xs text-white font-medium">
+                      {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                    </span>
+                  </div>
+                )}
+              </motion.button>
+              
+              <motion.button
+                onClick={() => setShowAddModal(true)}
+                className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-xl font-light text-lg flex items-center space-x-3 hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg group"
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                initial={{ opacity: 0, x: 30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.8, delay: 0.4 }}
+              >
+                <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
+                <span>Create New Club</span>
+              </motion.button>
+            </div>
           </div>
         </motion.div>
 
@@ -356,6 +406,8 @@ export default function DashboardPage() {
             </motion.div>
           ))}
         </motion.div>
+
+
 
         {/* Main Content */}
         <div className="grid lg:grid-cols-3 gap-8">
@@ -473,6 +525,8 @@ export default function DashboardPage() {
             </motion.div>
           </div>
         </div>
+
+
       </div>
 
       {/* Create Club Modal */}
@@ -623,6 +677,15 @@ export default function DashboardPage() {
           </motion.div>
         </div>
       )}
+
+            {/* Notification Center */}
+      <NotificationCenter
+        isOpen={showNotifications}
+        onClose={() => {
+          setShowNotifications(false);
+          fetchUnreadNotifications(); // Refresh unread count when closing
+        }}
+      />
     </div>
   );
 } 

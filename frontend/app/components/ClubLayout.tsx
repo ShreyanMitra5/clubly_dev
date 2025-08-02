@@ -15,6 +15,9 @@ import { motion, useInView, AnimatePresence } from 'framer-motion';
 import UpgradeModal from './UpgradeModal';
 import { useUpgradeModal } from '../hooks/useUpgradeModal';
 import { apiWithUpgrade } from '../utils/apiWithUpgrade';
+import AdvisorRequestForm from './AdvisorRequestForm';
+import StudentMessaging from './StudentMessaging';
+import SuccessModal from './SuccessModal';
 import { 
   Users, 
   Presentation, 
@@ -53,7 +56,8 @@ import {
       Edit2,
     XCircle,
     AlertTriangle,
-    Save
+  Save,
+  MessageSquare
   } from 'lucide-react';
 
 interface ClubLayoutProps {
@@ -1009,6 +1013,15 @@ function EmailModal({ clubName, topic, onSend, onClose, sending, presentationUrl
 import { Task, TaskFormData, TaskPriority, TaskStatus } from '../types/task';
 
 function TasksPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any }) {
+  // Get the actual club ID from clubInfo
+  const clubId = clubInfo?.id || clubInfo?.clubId || clubName;
+  
+  console.log('TasksPanel Debug:', {
+    clubName,
+    clubInfo,
+    clubId,
+    clubInfoKeys: clubInfo ? Object.keys(clubInfo) : 'no clubInfo'
+  });
   const { user } = useUser();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -1052,7 +1065,7 @@ function TasksPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
 
   const fetchTasks = async () => {
     try {
-      const response = await fetch(`/api/tasks?clubId=${encodeURIComponent(clubName as string)}`);
+      const response = await fetch(`/api/tasks?clubId=${encodeURIComponent(clubId as string)}`);
       if (!response.ok) throw new Error('Failed to fetch tasks');
       const data = await response.json();
       setTasks(data);
@@ -1066,19 +1079,27 @@ function TasksPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('handleSubmit called with:', { editingTask, formData, clubId });
     try {
       if (editingTask) {
         // Update existing task
+        console.log('Updating task:', editingTask.id, 'with data:', formData);
         const response = await fetch('/api/tasks', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            clubId: clubName,
+            clubId: clubId,
             taskId: editingTask.id,
             task: formData
           })
         });
-        if (!response.ok) throw new Error('Failed to update task');
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('API Error Response:', errorData);
+          console.error('Response status:', response.status);
+          console.error('Response statusText:', response.statusText);
+          throw new Error(`Failed to update task: ${errorData.error || 'Unknown error'}`);
+        }
         const updatedTask = await response.json();
         setTasks(tasks.map(t => t.id === editingTask.id ? updatedTask : t));
       } else {
@@ -1087,18 +1108,22 @@ function TasksPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            clubId: clubName,
+            clubId: clubId,
             task: formData
           })
         });
-        if (!response.ok) throw new Error('Failed to create task');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`Failed to create task: ${errorData.error || 'Unknown error'}`);
+        }
         const newTask = await response.json();
         setTasks([newTask, ...tasks]);
       }
       handleCloseForm();
     } catch (err) {
-      setError(editingTask ? 'Failed to update task' : 'Failed to create task');
-      console.error(err);
+      const errorMessage = editingTask ? 'Failed to update task' : 'Failed to create task';
+      setError(`${errorMessage}: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      console.error('Task operation error:', err);
     }
   };
 
@@ -1116,6 +1141,13 @@ function TasksPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
 
   const handleEditTask = (task: Task) => {
     setEditingTask(task);
+    setFormData({
+      title: task.title,
+      description: task.description || '',
+      status: task.status,
+      priority: task.priority,
+      dueDate: task.dueDate || ''
+    });
     setIsFormOpen(true);
   };
 
@@ -1125,7 +1157,7 @@ function TasksPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          clubId: clubName,
+          clubId: clubId,
           taskId,
           task: updates
         })
@@ -1141,7 +1173,7 @@ function TasksPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
 
   const handleDeleteTask = async (taskId: string) => {
     try {
-      const response = await fetch(`/api/tasks?clubId=${encodeURIComponent(clubName as string)}&taskId=${taskId}`, {
+      const response = await fetch(`/api/tasks?clubId=${encodeURIComponent(clubId as string)}&taskId=${taskId}`, {
         method: 'DELETE'
       });
       if (!response.ok) throw new Error('Failed to delete task');
@@ -1384,8 +1416,8 @@ function TaskCard({ task, onEdit, onDelete, onStatusChange }) {
   );
 }
 
-// Teacher Advisor Component - Modern Teacher Advisor System
-function AdvisorPanel({ clubName, clubInfo, onNavigation }: { 
+// Teacher Advisor Component - Modern Teacher Advisor System  
+function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
   clubName: string; 
   clubInfo: any; 
   onNavigation?: (item: any) => void;
@@ -1468,7 +1500,7 @@ function AdvisorPanel({ clubName, clubInfo, onNavigation }: {
 
         if (!error && data) {
           setAcceptedAdvisor(data);
-        } else {
+    } else {
           setAcceptedAdvisor(null);
         }
       } catch (err) {
@@ -1482,6 +1514,354 @@ function AdvisorPanel({ clubName, clubInfo, onNavigation }: {
     checkAcceptedAdvisor();
   }, [user, clubInfo?.id]); // Add clubInfo.id as dependency
 
+  const handleCloseAdvisorRelationship = async () => {
+    if (!user || !acceptedAdvisor || !clubInfo?.id) return;
+    
+    try {
+      setLoading(true);
+      
+      // Update the advisor request status to 'closed'
+      const { error: updateError } = await supabase
+        .from('advisor_requests')
+        .update({ status: 'closed' })
+        .eq('id', acceptedAdvisor.id);
+
+      if (updateError) throw updateError;
+
+      // Create notification for teacher
+      await supabase
+        .from('notifications')
+        .insert({
+          user_id: acceptedAdvisor.teacher_id,
+          title: 'Advisor Relationship Ended',
+          message: `The advisor relationship for ${clubName} has been ended by the student.`,
+          type: 'advisor_closed',
+          related_id: acceptedAdvisor.id,
+          read: false
+        });
+
+      // Clear the accepted advisor state
+      setAcceptedAdvisor(null);
+      
+    } catch (err) {
+      console.error('Error closing advisor relationship:', err);
+      alert('Failed to end advisor relationship. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Check for accepted advisor for this specific club
+  useEffect(() => {
+    const checkAcceptedAdvisor = async () => {
+      if (!user || !clubInfo?.id) return;
+      
+      try {
+        console.log('Checking advisor for club:', {
+          clubId: clubInfo.id,
+          studentId: user.id
+        });
+      
+      const { data, error } = await supabase
+          .from('advisor_requests')
+          .select(`
+            *,
+            teacher:teachers(name, subject, room_number, email)
+          `)
+          .eq('student_id', user.id)
+          .eq('club_id', clubInfo.id) // Filter by specific club ID
+          .eq('status', 'approved')
+          .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no data
+
+        console.log('Advisor query result:', { data, error });
+
+        if (!error && data) {
+          setAcceptedAdvisor(data);
+    } else {
+          setAcceptedAdvisor(null);
+        }
+      } catch (err) {
+        console.error('Error checking accepted advisor:', err);
+        setAcceptedAdvisor(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAcceptedAdvisor();
+  }, [user, clubInfo?.id]); // Add clubInfo.id as dependency
+
+  return (
+    <div ref={ref} className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+        transition={{ duration: 0.8 }}
+        className="max-w-6xl mx-auto px-6 py-8"
+      >
+        {/* Header */}
+        <div className="text-center mb-12">
+          <motion.h1 
+            className="text-4xl font-light text-gray-900 mb-4"
+            initial={{ opacity: 0, y: 20 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.6 }}
+          >
+            Teacher Advisor System
+          </motion.h1>
+          <motion.p 
+            className="text-xl text-gray-600 font-light max-w-3xl mx-auto"
+            initial={{ opacity: 0, y: 20 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+          >
+            Find teachers to advise your {clubName} and communicate with them directly.
+          </motion.p>
+        </div>
+
+        {/* Content */}
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center animate-spin">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+              </div>
+              <p className="text-gray-600 font-extralight">Loading advisor information...</p>
+            </div>
+          </div>
+        ) : showMessaging ? (
+          <StudentMessaging 
+            onBack={() => setShowMessaging(false)} 
+            clubInfo={clubInfo}
+            user={user}
+          />
+        ) : showAdvisorRequest ? (
+          <AdvisorRequestForm 
+            onRequestSent={handleAdvisorRequestSent} 
+            clubInfo={clubInfo}
+            user={user}
+          />
+        ) : acceptedAdvisor ? (
+          // Show accepted advisor UI - Modern AI SAAS Design
+          <motion.div 
+            className="space-y-8"
+            initial={{ opacity: 0, y: 30 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            {/* Modern Advisor Header */}
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 rounded-2xl mb-4 shadow-lg">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h2 className="text-3xl font-light text-gray-900 mb-2">Club Advisor</h2>
+              <p className="text-gray-600 font-light">Your dedicated mentor for {clubName}</p>
+            </div>
+
+            {/* Advisor Profile Card - Modern Design */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-gray-200/50 shadow-xl overflow-hidden">
+              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 p-6 border-b border-gray-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl flex items-center justify-center">
+                      <span className="text-white font-medium text-xl">
+                        {acceptedAdvisor.teacher?.name?.charAt(0) || 'T'}
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-medium text-gray-900">{acceptedAdvisor.teacher?.name}</h3>
+                      <p className="text-emerald-600 font-medium">{acceptedAdvisor.teacher?.subject} Teacher</p>
+                    </div>
+                  </div>
+                  
+                  {/* Close Advisor Option */}
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      if (confirm('Are you sure you want to end the advisor relationship? This action cannot be undone.')) {
+                        handleCloseAdvisorRelationship();
+                      }
+                    }}
+                    className="px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all duration-200 text-sm font-medium"
+                  >
+                    End Relationship
+                  </motion.button>
+                </div>
+              </div>
+
+              <div className="p-6 space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                        <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 3v18m6-18v18" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 font-medium">Room</p>
+                        <p className="text-gray-900 font-medium">{acceptedAdvisor.teacher?.room_number || 'Not specified'}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                        <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 font-medium">Email</p>
+                        <p className="text-gray-900 font-medium break-all text-sm">{acceptedAdvisor.teacher?.email}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                        <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 font-medium">Status</p>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                          Active Advisor
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                        <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a4 4 0 118 0v4m-4 6v6m-4-6h8m-8 0a4 4 0 00-4 4v2a2 2 0 002 2h8a2 2 0 002-2v-2a4 4 0 00-4-4z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500 font-medium">Since</p>
+                        <p className="text-gray-900 font-medium text-sm">{new Date(acceptedAdvisor.created_at).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="bg-gray-50/50 px-6 py-4 border-t border-gray-100">
+                <motion.button
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setShowMessaging(true)}
+                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-8 py-4 rounded-xl font-medium text-lg flex items-center justify-center space-x-3 hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 shadow-lg group"
+                >
+                  <MessageSquare className="w-5 h-5" />
+                  <span>Open Messages</span>
+                  <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div 
+            className="text-center space-y-8"
+            initial={{ opacity: 0, y: 30 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200/50">
+              <div className="max-w-md mx-auto space-y-6">
+                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto">
+                  <Users className="w-8 h-8 text-white" />
+                </div>
+                
+                <div>
+                  <h3 className="text-2xl font-light text-gray-900 mb-2">Find an Advisor</h3>
+                  <p className="text-gray-600 font-light">
+                    Search for teachers in your school and district who can advise your club.
+                  </p>
+                </div>
+
+                <motion.button
+                  onClick={() => setShowAdvisorRequest(true)}
+                  className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white px-8 py-4 rounded-xl font-light text-lg flex items-center justify-center space-x-3 hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg group"
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <Users className="w-5 h-5" />
+                  <span>Find an Advisor</span>
+                </motion.button>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200/50">
+              <div className="max-w-md mx-auto space-y-6">
+                <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto">
+                  <MessageSquare className="w-8 h-8 text-white" />
+                </div>
+                
+                <div>
+                  <h3 className="text-2xl font-light text-gray-900 mb-2">View Messages</h3>
+                  <p className="text-gray-600 font-light">
+                    Check your existing conversations with club advisors.
+                  </p>
+                </div>
+
+                <motion.button
+                  onClick={() => setShowMessaging(true)}
+                  className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white px-8 py-4 rounded-xl font-light text-lg flex items-center justify-center space-x-3 hover:from-green-600 hover:to-green-700 transition-all duration-300 shadow-lg group"
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <MessageSquare className="w-5 h-5" />
+                  <span>View Messages</span>
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </motion.div>
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onClose={() => {
+          setShowSuccessModal(false);
+          setShowMessaging(true);
+        }}
+        title="Request Sent Successfully!"
+        message="Your advisor request has been submitted. You can now view messages to communicate with your advisor."
+      />
+    </div>
+  );
+}
+
+// AI Advisor Panel - Chat-based AI Interface
+function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: { 
+  clubName: string; 
+  clubInfo: any; 
+  onNavigation?: (item: any) => void;
+}) {
+  const { user } = useUser();
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputValue, setInputValue] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [chatHistories, setChatHistories] = useState<any[]>([]);
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+  const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState<string>('');
+  const [showDropdownId, setShowDropdownId] = useState<string | null>(null);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
+  const inView = useInView(ref, { once: true, margin: "-100px" });
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -1489,66 +1869,6 @@ function AdvisorPanel({ clubName, clubInfo, onNavigation }: {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setShowDropdownId(null);
-    };
-    
-    if (showDropdownId) {
-      document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
-    }
-  }, [showDropdownId]);
-
-  // Load chat histories from Supabase
-  useEffect(() => {
-    if (!user?.id || !clubInfo?.id) return;
-    loadChatHistories();
-  }, [user?.id, clubInfo?.id]);
-
-  // Load current chat messages
-  useEffect(() => {
-    if (currentChatId) {
-      loadChatMessages(currentChatId);
-    } else {
-      // Start with welcome message if no chat selected
-      setMessages([{
-        id: '1',
-        content: `Hello! I'm your AI Club Advisor for ${clubName}. I'm here to help you plan exciting events, manage your club activities, and provide strategic guidance. What would you like to discuss today?`,
-        isUser: false,
-        timestamp: new Date()
-      }]);
-    }
-  }, [currentChatId, clubName]);
-
-  const loadChatHistories = async () => {
-    try {
-      const clubId = clubInfo?.id || clubInfo?.clubId || clubInfo?.club_id;
-      console.log('Loading chat histories for:', { user_id: user?.id, club_id: clubId });
-      
-      if (!user?.id || !clubId) {
-        console.log('Missing user ID or club ID for loading histories');
-        return;
-      }
-      
-      const { data, error } = await supabase
-        .from('advisor_chats')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('club_id', clubId)
-        .order('updated_at', { ascending: false });
-
-      console.log('Chat histories response:', { data, error });
-
-      if (error) throw error;
-      setChatHistories(data || []);
-      console.log('Chat histories loaded:', data?.length || 0, 'chats');
-    } catch (error) {
-      console.error('Error loading chat histories:', JSON.stringify(error, null, 2));
-    }
-  };
 
   const loadChatMessages = async (chatId: string) => {
     try {
@@ -5258,7 +5578,8 @@ const panels = {
   Presentations: PresentationsPanel,
   Roadmap: RoadmapPanel,
   Attendance: AttendancePanel,
-  Advisor: AdvisorPanel,
+  Advisor: TeacherAdvisorPanel,  // Human Teacher Advisor System
+  'AI Assistant': AIAdvisorPanel,   // AI Chat Advisor System
   Tasks: TasksPanel,
   Email: EmailPanel,
   History: HistoryPanel,
@@ -5354,7 +5675,10 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
         </svg>
-    ), label: 'AI Advisor' },
+    ), label: 'Teacher Advisor' },
+    { key: 'AI Assistant', icon: (
+        <Brain className="w-5 h-5" />
+    ), label: 'AI Assistant' },
     { key: 'Tasks', icon: (
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />

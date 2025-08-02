@@ -82,40 +82,90 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  console.log('PUT /api/tasks - Starting request processing...');
+  
   try {
+    console.log('PUT /api/tasks - Parsing request body...');
     const body = await request.json();
     const { clubId, taskId, task } = body;
 
+    console.log('PUT /api/tasks - Request body:', JSON.stringify({ clubId, taskId, task }, null, 2));
+
     if (!clubId || !taskId || !task) {
+      console.error('Missing required fields:', { clubId, taskId, task });
       return NextResponse.json({ error: 'Club ID, task ID, and task data are required' }, { status: 400 });
     }
 
-    // Update task in Supabase
+    // Simplify the update - remove all the extra checks for now
+    console.log('PUT /api/tasks - Attempting direct update...');
+    
+    const updateData = {
+      title: task.title,
+      description: task.description || '',
+      status: task.status,
+      priority: task.priority,
+      due_date: task.dueDate || null,
+      updated_at: new Date().toISOString()
+    };
+    
+    console.log('PUT /api/tasks - Update data:', JSON.stringify(updateData, null, 2));
+
+    // Try updating with just the task ID first (remove club_id filter temporarily)
+    console.log('PUT /api/tasks - Trying update with task ID only...');
+    
     const { data: updatedTask, error } = await supabase
       .from('tasks')
-      .update({
-        title: task.title,
-        description: task.description,
-        status: task.status,
-        priority: task.priority,
-        due_date: task.dueDate,
-        updated_at: new Date().toISOString()
-      })
+      .update(updateData)
       .eq('id', taskId)
-      .eq('club_id', clubId)
       .select()
       .single();
-
-    if (error) {
-      console.error('Error updating task:', error);
-      return NextResponse.json({ error: 'Failed to update task' }, { status: 500 });
+      
+    // If that works, let's also check what the actual club_id is
+    if (updatedTask) {
+      console.log('PUT /api/tasks - Update successful! Task club_id is:', updatedTask.club_id);
+      console.log('PUT /api/tasks - Frontend sent club_id:', clubId);
+      console.log('PUT /api/tasks - Club IDs match:', updatedTask.club_id === clubId);
     }
 
+    console.log('PUT /api/tasks - Supabase response:', { data: updatedTask, error });
+
+    if (error) {
+      console.error('PUT /api/tasks - Supabase error:', JSON.stringify(error, null, 2));
+      return NextResponse.json({ 
+        error: 'Database update failed',
+        supabaseError: error,
+        details: {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        }
+      }, { status: 500 });
+    }
+
+    if (!updatedTask) {
+      console.error('PUT /api/tasks - No task returned after update');
+      return NextResponse.json({ 
+        error: 'Task update succeeded but no data returned. Task may not exist.',
+        searchParams: { taskId, clubId }
+      }, { status: 404 });
+    }
+
+    console.log('PUT /api/tasks - Task updated successfully:', updatedTask);
+
     // Transform task to frontend format
-    return NextResponse.json(transformTaskFromDB(updatedTask));
-  } catch (error) {
-    console.error('Error updating task:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const transformedTask = transformTaskFromDB(updatedTask);
+    console.log('PUT /api/tasks - Transformed task:', transformedTask);
+    
+    return NextResponse.json(transformedTask);
+  } catch (error: any) {
+    console.error('PUT /api/tasks - Caught exception:', error);
+    console.error('PUT /api/tasks - Error stack:', error.stack);
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      message: error.message,
+      stack: error.stack
+    }, { status: 500 });
   }
 }
 
