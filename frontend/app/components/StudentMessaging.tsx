@@ -58,9 +58,10 @@ export default function StudentMessaging({ onBack, clubInfo, user: propUser }: S
   }, [selectedRequest]);
 
   const fetchAdvisorRequests = async () => {
-    if (!user) return;
+    if (!user || !clubInfo?.id) return;
 
     try {
+      console.log('StudentMessaging: Fetching advisor requests for club:', clubInfo.id);
       const { data, error } = await supabase
         .from('advisor_requests')
         .select(`
@@ -68,9 +69,11 @@ export default function StudentMessaging({ onBack, clubInfo, user: propUser }: S
           teacher:teachers(name, subject)
         `)
         .eq('student_id', user.id)
+        .eq('club_id', clubInfo.id) // FILTER BY CLUB ID
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+      console.log('StudentMessaging: Club-specific advisor requests:', data);
       setAdvisorRequests(data || []);
     } catch (err: any) {
       console.error('Error fetching advisor requests:', err);
