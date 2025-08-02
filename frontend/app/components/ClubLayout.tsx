@@ -1474,12 +1474,25 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
     }
   };
 
-    // Check for accepted advisor for this specific club
+    // Force loading to complete after timeout
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      console.log('TeacherAdvisorPanel: FORCE LOADING COMPLETE after 10 seconds');
+      setLoading(false);
+    }, 10000);
+    
+    return () => clearTimeout(timeout);
+  }, []);
+
+  // Check for accepted advisor for this specific club
   useEffect(() => {
     const checkAcceptedAdvisor = async () => {
+      console.log('TeacherAdvisorPanel: Starting checkAcceptedAdvisor...');
+      
       if (!user || !clubInfo?.id) {
         console.log('TeacherAdvisorPanel: Missing user or clubInfo', { 
           user: !!user, 
+          userId: user?.id,
           clubId: clubInfo?.id 
         });
         setLoading(false);
@@ -1505,12 +1518,15 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
           .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no data
 
         console.log('TeacherAdvisorPanel: Advisor query result:', { data, error });
+        console.log('TeacherAdvisorPanel: Raw data details:', JSON.stringify(data, null, 2));
+        console.log('TeacherAdvisorPanel: Error details:', JSON.stringify(error, null, 2));
 
         if (!error && data) {
           console.log('TeacherAdvisorPanel: Found accepted advisor:', data.teacher?.name);
+          console.log('TeacherAdvisorPanel: Setting acceptedAdvisor state to:', data);
           setAcceptedAdvisor(data);
         } else {
-          console.log('TeacherAdvisorPanel: No accepted advisor found');
+          console.log('TeacherAdvisorPanel: No accepted advisor found, clearing state');
           setAcceptedAdvisor(null);
         }
       } catch (err) {
@@ -1523,6 +1539,21 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
 
     checkAcceptedAdvisor();
   }, [user, clubInfo?.id]); // Add clubInfo.id as dependency
+
+  // Debug logging for UI state
+  console.log('TeacherAdvisorPanel RENDER:', {
+    loading,
+    showMessaging,
+    showAdvisorRequest, 
+    acceptedAdvisor: !!acceptedAdvisor,
+    acceptedAdvisorDetails: acceptedAdvisor ? {
+      teacher_name: acceptedAdvisor.teacher?.name,
+      status: acceptedAdvisor.status,
+      club_id: acceptedAdvisor.club_id
+    } : null,
+    clubId: clubInfo?.id,
+    clubName
+  });
 
   return (
     <div ref={ref} className="min-h-screen bg-gradient-to-b from-white to-gray-50">
@@ -1560,6 +1591,15 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
                 <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
               </div>
               <p className="text-gray-600 font-extralight">Loading advisor information...</p>
+              <button 
+                onClick={() => {
+                  console.log('Manual loading override');
+                  setLoading(false);
+                }}
+                className="mt-4 px-4 py-2 bg-red-500 text-white rounded"
+              >
+                DEBUG: Force Complete Loading
+              </button>
             </div>
           </div>
         ) : showMessaging ? (
@@ -5668,7 +5708,12 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
         </svg>
     ), label: 'Teacher Advisor' },
     { key: 'AI Assistant', icon: (
-        <Brain className="w-5 h-5" />
+        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M12 2a3 3 0 0 0-3 3v1a9 9 0 0 0 18 0V5a3 3 0 0 0-3-3z" />
+          <path d="M8 11v-1a4 4 0 0 1 8 0v1" />
+          <circle cx="12" cy="17" r="3" />
+          <path d="M12 14v.01" />
+        </svg>
     ), label: 'AI Assistant' },
     { key: 'Tasks', icon: (
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
