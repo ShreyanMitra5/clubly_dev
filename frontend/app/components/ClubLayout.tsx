@@ -1505,6 +1505,36 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
           studentId: user.id,
           clubName: clubInfo.name || 'Unknown'
         });
+
+        // Debug: First check if advisor_requests table has ANY data
+        console.log('DEBUG: Checking if advisor_requests table has any data...');
+        const { data: allRequests, error: allError } = await supabase
+          .from('advisor_requests')
+          .select('*')
+          .limit(5);
+        
+        console.log('DEBUG: All advisor requests (first 5):', allRequests);
+        console.log('DEBUG: All requests error:', allError);
+
+        // Debug: Check if there are any requests for this student
+        console.log('DEBUG: Checking requests for this student...');
+        const { data: studentRequests, error: studentError } = await supabase
+          .from('advisor_requests')
+          .select('*')
+          .eq('student_id', user.id);
+        
+        console.log('DEBUG: Student requests:', studentRequests);
+        console.log('DEBUG: Student requests error:', studentError);
+
+        // Debug: Check if there are any requests for this club
+        console.log('DEBUG: Checking requests for this club...');
+        const { data: clubRequests, error: clubError } = await supabase
+          .from('advisor_requests')
+          .select('*')
+          .eq('club_id', clubInfo.id);
+        
+        console.log('DEBUG: Club requests:', clubRequests);
+        console.log('DEBUG: Club requests error:', clubError);
       
         const { data, error } = await supabase
           .from('advisor_requests')
