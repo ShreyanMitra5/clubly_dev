@@ -1514,83 +1514,6 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
     checkAcceptedAdvisor();
   }, [user, clubInfo?.id]); // Add clubInfo.id as dependency
 
-  const handleCloseAdvisorRelationship = async () => {
-    if (!user || !acceptedAdvisor || !clubInfo?.id) return;
-    
-    try {
-      setLoading(true);
-      
-      // Update the advisor request status to 'closed'
-      const { error: updateError } = await supabase
-        .from('advisor_requests')
-        .update({ status: 'closed' })
-        .eq('id', acceptedAdvisor.id);
-
-      if (updateError) throw updateError;
-
-      // Create notification for teacher
-      await supabase
-        .from('notifications')
-        .insert({
-          user_id: acceptedAdvisor.teacher_id,
-          title: 'Advisor Relationship Ended',
-          message: `The advisor relationship for ${clubName} has been ended by the student.`,
-          type: 'advisor_closed',
-          related_id: acceptedAdvisor.id,
-          read: false
-        });
-
-      // Clear the accepted advisor state
-      setAcceptedAdvisor(null);
-      
-    } catch (err) {
-      console.error('Error closing advisor relationship:', err);
-      alert('Failed to end advisor relationship. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Check for accepted advisor for this specific club
-  useEffect(() => {
-    const checkAcceptedAdvisor = async () => {
-      if (!user || !clubInfo?.id) return;
-      
-      try {
-        console.log('Checking advisor for club:', {
-          clubId: clubInfo.id,
-          studentId: user.id
-        });
-      
-      const { data, error } = await supabase
-          .from('advisor_requests')
-          .select(`
-            *,
-            teacher:teachers(name, subject, room_number, email)
-          `)
-          .eq('student_id', user.id)
-          .eq('club_id', clubInfo.id) // Filter by specific club ID
-          .eq('status', 'approved')
-          .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no data
-
-        console.log('Advisor query result:', { data, error });
-
-        if (!error && data) {
-          setAcceptedAdvisor(data);
-    } else {
-          setAcceptedAdvisor(null);
-        }
-      } catch (err) {
-        console.error('Error checking accepted advisor:', err);
-        setAcceptedAdvisor(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkAcceptedAdvisor();
-  }, [user, clubInfo?.id]); // Add clubInfo.id as dependency
-
   return (
     <div ref={ref} className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       <motion.div
@@ -1890,6 +1813,33 @@ function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: {
       setMessages(formattedMessages);
     } catch (error) {
       console.error('Error loading chat messages:', error);
+    }
+  };
+
+  const loadChatHistories = async () => {
+    try {
+      const clubId = clubInfo?.id || clubInfo?.clubId || clubInfo?.club_id;
+      console.log('Loading chat histories for:', { user_id: user?.id, club_id: clubId });
+      
+      if (!user?.id || !clubId) {
+        console.log('Missing user ID or club ID for loading histories');
+        return;
+      }
+      
+      const { data, error } = await supabase
+        .from('advisor_chats')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('club_id', clubId)
+        .order('updated_at', { ascending: false });
+
+      console.log('Chat histories response:', { data, error });
+
+      if (error) throw error;
+      setChatHistories(data || []);
+      console.log('Chat histories loaded:', data?.length || 0, 'chats');
+    } catch (error) {
+      console.error('Error loading chat histories:', JSON.stringify(error, null, 2));
     }
   };
 
