@@ -25,7 +25,7 @@ interface ClubFormData {
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { user } = useUser();
+  const { user, isLoaded } = useUser();
   const [clubs, setClubs] = useState<Club[]>([]);
   const [hoursSaved, setHoursSaved] = useState(0);
   const [name, setName] = useState('');
@@ -43,6 +43,13 @@ export default function DashboardPage() {
     audience: '',
     role: ''
   });
+
+  // Redirect to home if user is not authenticated
+  useEffect(() => {
+    if (isLoaded && !user) {
+      router.push('/');
+    }
+  }, [isLoaded, user, router]);
 
   useEffect(() => {
     if (!user) return;
@@ -233,6 +240,18 @@ export default function DashboardPage() {
       setIsLoading(false);
     }
   };
+
+  // Show loading state while Clerk is loading or redirecting
+  if (!isLoaded || !user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-orange-50/20 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+          <p className="text-gray-600 font-light">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   const stats = [
     { icon: Users, value: clubs.length, label: "Active Clubs", color: "from-orange-500 to-orange-600" },
