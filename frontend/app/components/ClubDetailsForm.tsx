@@ -70,6 +70,24 @@ export default function ClubDetailsForm({
         studentInfo
       });
 
+      // Check for existing requests first
+      const { data: existingRequest, error: checkError } = await supabase
+        .from('advisor_requests')
+        .select('id, status')
+        .eq('club_id', clubInfo?.id)
+        .eq('teacher_id', teacherId)
+        .eq('student_id', user.id)
+        .in('status', ['pending', 'approved'])
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('Error checking existing requests:', checkError);
+      }
+
+      if (existingRequest) {
+        throw new Error(`You already have a ${existingRequest.status} request for this teacher and club. Please wait for a response.`);
+      }
+
       // Create advisor request
       const { data: requestData, error: requestError } = await supabase
         .from('advisor_requests')
@@ -92,6 +110,12 @@ export default function ClubDetailsForm({
           details: requestError.details,
           hint: requestError.hint
         });
+        
+        // Handle specific errors with user-friendly messages
+        if (requestError.code === '23505') { // Unique constraint violation
+          throw new Error('You already have a request for this teacher and club. Please wait for a response or contact the teacher directly.');
+        }
+        
         throw requestError;
       }
 
