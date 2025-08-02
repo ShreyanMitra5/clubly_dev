@@ -1518,12 +1518,12 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
 
         // Debug: First check if advisor_requests table has ANY data
         console.log('DEBUG: Checking if advisor_requests table has any data...');
-        const { data: allRequests, error: allError } = await supabase
+        const { data: debugRequests, error: allError } = await supabase
           .from('advisor_requests')
           .select('*')
           .limit(5);
         
-        console.log('DEBUG: All advisor requests (first 5):', allRequests);
+        console.log('DEBUG: All advisor requests (first 5):', debugRequests);
         console.log('DEBUG: All requests error:', allError);
 
         // Debug: Check if there are any requests for this student
@@ -1596,7 +1596,7 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
     }, 10000); // Check every 10 seconds
     
     return () => clearInterval(interval);
-  }, [user, clubInfo?.id, checkAcceptedAdvisor]); // Add checkAcceptedAdvisor to dependencies
+  }, [user, clubInfo?.id]); // Remove checkAcceptedAdvisor to avoid dependency cycle
 
   // Debug logging for UI state
   console.log('TeacherAdvisorPanel RENDER:', {
