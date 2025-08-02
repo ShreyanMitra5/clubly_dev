@@ -75,4 +75,8 @@ FROM pg_indexes
 WHERE tablename = 'advisor_requests' 
 AND indexname LIKE '%unique%';
 
-RAISE NOTICE 'Constraint fix completed. You can now send new advisor requests after removing previous ones.';
+-- Final completion message
+DO $$
+BEGIN
+    RAISE NOTICE 'Constraint fix completed. You can now send new advisor requests after removing previous ones.';
+END $$;
