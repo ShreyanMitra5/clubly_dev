@@ -1427,6 +1427,7 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
   const [showMessaging, setShowMessaging] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [acceptedAdvisor, setAcceptedAdvisor] = useState<any>(null);
+  const [pendingRequest, setPendingRequest] = useState<any>(null); // NEW: Track pending requests
   const [loading, setLoading] = useState(true);
 
   const ref = useRef<HTMLDivElement>(null);
@@ -1435,6 +1436,15 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
   const handleAdvisorRequestSent = (teacherId: string) => {
     setShowAdvisorRequest(false);
     setShowSuccessModal(true);
+    
+    // CRITICAL FIX: Refresh advisor state to detect pending request
+    console.log('TeacherAdvisorPanel: Request sent, refreshing advisor state...');
+    checkAcceptedAdvisor();
+    
+    // Switch to messaging view after a brief delay
+    setTimeout(() => {
+      setShowMessaging(true);
+    }, 2000);
   };
 
   const handleCloseAdvisorRelationship = async () => {
@@ -1536,7 +1546,8 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
         console.log('DEBUG: Club requests:', clubRequests);
         console.log('DEBUG: Club requests error:', clubError);
       
-        const { data, error } = await supabase
+        // Check for both pending and approved requests
+        const { data: allRequests, error } = await supabase
           .from('advisor_requests')
           .select(`
             *,
@@ -1544,20 +1555,29 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
           `)
           .eq('student_id', user.id)
           .eq('club_id', clubInfo.id) // Filter by specific club ID
-          .eq('status', 'approved')
-          .maybeSingle(); // Use maybeSingle instead of single to avoid errors when no data
+          .in('status', ['pending', 'approved'])
+          .order('created_at', { ascending: false }); // Get most recent first
 
-        console.log('TeacherAdvisorPanel: Advisor query result:', { data, error });
-        console.log('TeacherAdvisorPanel: Raw data details:', JSON.stringify(data, null, 2));
-        console.log('TeacherAdvisorPanel: Error details:', JSON.stringify(error, null, 2));
+        console.log('TeacherAdvisorPanel: All requests query result:', { allRequests, error });
+        console.log('TeacherAdvisorPanel: Raw data details:', JSON.stringify(allRequests, null, 2));
 
-        if (!error && data) {
-          console.log('TeacherAdvisorPanel: Found accepted advisor:', data.teacher?.name);
-          console.log('TeacherAdvisorPanel: Setting acceptedAdvisor state to:', data);
-          setAcceptedAdvisor(data);
+        if (!error && allRequests && allRequests.length > 0) {
+          const approvedRequest = allRequests.find(req => req.status === 'approved');
+          const pendingRequestData = allRequests.find(req => req.status === 'pending');
+          
+          if (approvedRequest) {
+            console.log('TeacherAdvisorPanel: Found approved advisor:', approvedRequest.teacher?.name);
+            setAcceptedAdvisor(approvedRequest);
+            setPendingRequest(null);
+          } else if (pendingRequestData) {
+            console.log('TeacherAdvisorPanel: Found pending request:', pendingRequestData.teacher?.name);
+            setAcceptedAdvisor(null);
+            setPendingRequest(pendingRequestData);
+          }
         } else {
-          console.log('TeacherAdvisorPanel: No accepted advisor found, clearing state');
+          console.log('TeacherAdvisorPanel: No requests found, clearing state');
           setAcceptedAdvisor(null);
+          setPendingRequest(null);
         }
       } catch (err) {
         console.error('TeacherAdvisorPanel: Error checking accepted advisor:', err);
@@ -1568,7 +1588,15 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
     };
 
     checkAcceptedAdvisor();
-  }, [user, clubInfo?.id]); // Add clubInfo.id as dependency
+    
+    // Set up periodic checking for advisor status updates
+    const interval = setInterval(() => {
+      console.log('TeacherAdvisorPanel: Periodic check for advisor updates...');
+      checkAcceptedAdvisor();
+    }, 10000); // Check every 10 seconds
+    
+    return () => clearInterval(interval);
+  }, [user, clubInfo?.id, checkAcceptedAdvisor]); // Add checkAcceptedAdvisor to dependencies
 
   // Debug logging for UI state
   console.log('TeacherAdvisorPanel RENDER:', {
@@ -1576,10 +1604,16 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
     showMessaging,
     showAdvisorRequest, 
     acceptedAdvisor: !!acceptedAdvisor,
+    pendingRequest: !!pendingRequest, // NEW: Debug pending state
     acceptedAdvisorDetails: acceptedAdvisor ? {
       teacher_name: acceptedAdvisor.teacher?.name,
       status: acceptedAdvisor.status,
       club_id: acceptedAdvisor.club_id
+    } : null,
+    pendingRequestDetails: pendingRequest ? {
+      teacher_name: pendingRequest.teacher?.name,
+      status: pendingRequest.status,
+      club_id: pendingRequest.club_id
     } : null,
     clubId: clubInfo?.id,
     clubName
@@ -1644,6 +1678,62 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
             clubInfo={clubInfo}
             user={user}
           />
+        ) : pendingRequest ? (
+          // Show pending request UI
+          <motion.div 
+            className="space-y-8"
+            initial={{ opacity: 0, y: 30 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+          >
+            {/* Pending Status Header */}
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 rounded-2xl mb-4 shadow-lg animate-pulse">
+                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h2 className="text-3xl font-light text-gray-900 mb-2">Request Pending</h2>
+              <p className="text-gray-600 font-light">Your advisor request for {clubName} is being reviewed</p>
+            </div>
+
+            {/* Pending Request Card */}
+            <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-orange-200/50 shadow-xl overflow-hidden">
+              <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-6 border-b border-orange-100">
+                <div className="flex items-center space-x-4">
+                  <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-amber-500 rounded-2xl flex items-center justify-center">
+                    <span className="text-white font-medium text-xl">
+                      {pendingRequest.teacher?.name?.charAt(0) || 'T'}
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-medium text-gray-900">{pendingRequest.teacher?.name}</h3>
+                    <p className="text-orange-600 font-medium">{pendingRequest.teacher?.subject} Teacher</p>
+                    <div className="flex items-center mt-1">
+                      <div className="w-2 h-2 bg-orange-500 rounded-full mr-2 animate-pulse"></div>
+                      <span className="text-sm text-orange-600 font-medium">Pending Approval</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-6">
+                <div className="text-center">
+                  <p className="text-gray-600 mb-6">We've sent your request to {pendingRequest.teacher?.name}. You'll be notified when they respond.</p>
+                  
+                  {/* Messages Button */}
+                  <motion.button
+                    onClick={() => setShowMessaging(true)}
+                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-8 py-3 rounded-2xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    💬 View Messages
+                  </motion.button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         ) : acceptedAdvisor ? (
           // Show accepted advisor UI - Modern AI SAAS Design
           <motion.div 
