@@ -6,6 +6,7 @@ import { Teacher, TeacherWithAvailability, TeacherSearchFilters } from '../../..
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
     const active_only = searchParams.get('active_only') === 'true';
     const has_availability = searchParams.get('has_availability') === 'true';
     const max_clubs_available = searchParams.get('max_clubs_available');
@@ -19,6 +20,10 @@ export async function GET(request: NextRequest) {
       `);
 
     // Apply filters
+    if (id) {
+      query = query.eq('id', id);
+    }
+    
     if (active_only) {
       query = query.eq('active', true);
     }

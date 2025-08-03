@@ -30,6 +30,21 @@ export default function ClubDetailsForm({
   onRequestComplete, 
   onBack 
 }: ClubDetailsFormProps) {
+
+  const formatTime = (time: string) => {
+    if (!time) return '';
+    // Convert HH:MM:SS to 12-hour format
+    try {
+      return new Date(`2000-01-01T${time}`).toLocaleTimeString([], { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
+      });
+    } catch (error) {
+      // Fallback to original time if parsing fails
+      return time;
+    }
+  };
   const { user } = useUser();
   const [formData, setFormData] = useState({
     clubName: '',
@@ -38,9 +53,10 @@ export default function ClubDetailsForm({
     meetingFrequency: '',
     expectedMembers: '',
     additionalInfo: '',
-    agreedToTimes: false,
-    selectedDay: '',
-    selectedTime: ''
+    preferredDay: '',
+    preferredTime: '',
+    startTime: '',
+    endTime: ''
   });
   
   const [isLoading, setIsLoading] = useState(false);
@@ -53,8 +69,8 @@ export default function ClubDetailsForm({
   const handleSubmit = async () => {
     if (!user) return;
     
-    if (!formData.clubName || !formData.clubDescription) {
-      setError('Please fill in at least the club name and description');
+    if (!formData.clubName || !formData.clubDescription || !formData.meetingFrequency || !formData.preferredDay || !formData.startTime || !formData.endTime) {
+      setError('Please fill in all required fields including meeting schedule');
       return;
     }
 
@@ -95,9 +111,7 @@ export default function ClubDetailsForm({
           club_id: clubInfo?.id || null, // CRITICAL FIX: Use actual club ID
           teacher_id: teacherId,
           student_id: user.id,
-          message: `Club: ${formData.clubName}\n\nDescription: ${formData.clubDescription}\n\nGoals: ${formData.clubGoals}\n\nMeeting Frequency: ${formData.meetingFrequency}\n\nExpected Members: ${formData.expectedMembers}\n\nAdditional Info: ${formData.additionalInfo}\n\nStudent: ${studentInfo.name} (Grade ${studentInfo.grade})\nSchool: ${studentInfo.school}, ${studentInfo.district}`,
-          meeting_day: formData.selectedDay, // NEW: Save selected meeting day
-          meeting_time: formData.selectedTime, // NEW: Save selected meeting time
+          message: `Club: ${formData.clubName}\n\nDescription: ${formData.clubDescription}\n\nGoals: ${formData.clubGoals}\n\nMeeting Schedule:\n- Frequency: ${formData.meetingFrequency}\n- Preferred Day: ${formData.preferredDay}\n- Start Time: ${formData.startTime}\n- End Time: ${formData.endTime}\n\nExpected Members: ${formData.expectedMembers}\n\nAdditional Info: ${formData.additionalInfo}\n\nStudent: ${studentInfo.name} (Grade ${studentInfo.grade})\nSchool: ${studentInfo.school}, ${studentInfo.district}`,
           status: 'pending'
         })
         .select()
@@ -204,52 +218,7 @@ export default function ClubDetailsForm({
         </div>
       </div>
 
-      {/* Teacher Availability */}
-      {teacherAvailability && teacherAvailability.length > 0 && (
-        <div className="bg-green-50/50 border border-green-200/50 rounded-xl p-4 mb-6">
-          <h3 className="text-sm font-medium text-green-900 mb-3">Advisor Availability:</h3>
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            {teacherAvailability.map((slot: any, index: number) => (
-              <div key={index} className="text-green-700">
-                <span className="font-medium">{slot.day_of_week}:</span> {slot.start_time} - {slot.end_time}
-              </div>
-            ))}
-          </div>
-          
-          {/* Meeting Time Selection */}
-          <div className="mt-4 pt-4 border-t border-green-200/50">
-            <h4 className="text-sm font-medium text-green-900 mb-2">Select Meeting Time:</h4>
-            <div className="grid grid-cols-2 gap-3">
-              <select
-                value={formData.selectedDay}
-                onChange={(e) => handleInputChange('selectedDay', e.target.value)}
-                className="px-3 py-2 border border-green-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              >
-                <option value="">Select Day</option>
-                {teacherAvailability.map((slot: any) => (
-                  <option key={slot.day_of_week} value={slot.day_of_week}>
-                    {slot.day_of_week}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={formData.selectedTime}
-                onChange={(e) => handleInputChange('selectedTime', e.target.value)}
-                className="px-3 py-2 border border-green-200 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              >
-                <option value="">Select Time</option>
-                {teacherAvailability
-                  .filter((slot: any) => slot.day_of_week === formData.selectedDay)
-                  .map((slot: any) => (
-                    <option key={slot.start_time} value={slot.start_time}>
-                      {slot.start_time} - {slot.end_time}
-                    </option>
-                  ))}
-              </select>
-            </div>
-          </div>
-        </div>
-      )}
+
 
       {/* Club Details Form */}
       <div className="space-y-6">
@@ -293,7 +262,7 @@ export default function ClubDetailsForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Meeting Frequency
+              Meeting Frequency *
             </label>
             <select
               value={formData.meetingFrequency}
@@ -302,7 +271,7 @@ export default function ClubDetailsForm({
             >
               <option value="">Select frequency</option>
               <option value="Weekly">Weekly</option>
-              <option value="Bi-weekly">Bi-weekly</option>
+              <option value="Bi-weekly">Bi-weekly (Every 2 weeks)</option>
               <option value="Monthly">Monthly</option>
               <option value="As needed">As needed</option>
             </select>
@@ -323,6 +292,50 @@ export default function ClubDetailsForm({
           </div>
         </div>
 
+        {/* NEW: Meeting Schedule */}
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Preferred Meeting Day *
+            </label>
+            <input
+              type="text"
+              value={formData.preferredDay}
+              onChange={(e) => handleInputChange('preferredDay', e.target.value)}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+              placeholder="e.g., Monday, Tuesday, Wednesday, etc."
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Start Time *
+              </label>
+              <input
+                type="text"
+                value={formData.startTime || ''}
+                onChange={(e) => handleInputChange('startTime', e.target.value)}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                placeholder="e.g., 3:00 PM"
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                End Time *
+              </label>
+              <input
+                type="text"
+                value={formData.endTime || ''}
+                onChange={(e) => handleInputChange('endTime', e.target.value)}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                placeholder="e.g., 4:00 PM"
+              />
+            </div>
+          </div>
+        </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Additional Information
@@ -336,28 +349,7 @@ export default function ClubDetailsForm({
         </div>
       </div>
 
-      {/* Agreement Checkbox */}
-      {teacherAvailability && teacherAvailability.length > 0 && (
-        <div className="mt-6 p-4 bg-yellow-50/50 border border-yellow-200/50 rounded-xl">
-          <div className="flex items-start space-x-3">
-            <input
-              type="checkbox"
-              id="agreeToTimes"
-              checked={formData.agreedToTimes}
-              onChange={(e) => handleInputChange('agreedToTimes', e.target.checked.toString())}
-              className="mt-1 w-4 h-4 text-orange-600 border-gray-300 rounded focus:ring-orange-500"
-            />
-            <label htmlFor="agreeToTimes" className="text-sm text-yellow-800 font-light">
-              I agree to meet with my advisor during their available times. 
-              {formData.selectedDay && formData.selectedTime && (
-                <span className="block mt-1 font-medium">
-                  Selected: {formData.selectedDay} at {formData.selectedTime}
-                </span>
-              )}
-            </label>
-          </div>
-        </div>
-      )}
+
 
       {/* Error Message */}
       {error && (

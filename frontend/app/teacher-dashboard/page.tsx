@@ -224,7 +224,7 @@ export default function TeacherDashboard() {
           .from('advisor_requests')
           .select(`
             *,
-            clubs (name)
+            clubs(name)
           `)
           .eq('teacher_id', teacher.id)
           .order('created_at', { ascending: false });
@@ -248,7 +248,7 @@ export default function TeacherDashboard() {
           if (!basicError) {
             setAdvisorRequests(basicRequestsData?.map(req => ({
               ...req,
-              club_name: req.club_id ? `Club ID: ${req.club_id}` : 'No Club Specified'
+                              club_name: req.clubs?.name || (req.club_id ? `Club ID: ${req.club_id}` : 'No Club Specified')
             })) || []);
           } else {
             console.error('Basic requests fetch also failed:', basicError);
@@ -386,7 +386,7 @@ export default function TeacherDashboard() {
               receiver_id: request.student_id,
               message: `Hi! I'm excited to be your advisor for ${request.club_name}. I've reviewed your club details and I'm looking forward to helping you succeed. Let's schedule a time to discuss your goals and how I can best support you.`,
               sender_name: teacherData.name || 'Teacher',
-              receiver_name: request.student_name
+              receiver_name: 'Student' // Use default since we don't have student name in advisor_requests
             });
 
           if (messageError) {
@@ -882,7 +882,7 @@ export default function TeacherDashboard() {
                             <div className="flex items-center justify-between">
                               <div>
                                 <h3 className="text-xl font-semibold text-gray-900 mb-1">
-                                  {request.club_name || 'Club Request'}
+                                  {request.clubs?.name || request.club_name || 'Club Request'}
                                 </h3>
                                 <div className="flex items-center text-sm text-gray-600 space-x-4">
                                   <span className="flex items-center">

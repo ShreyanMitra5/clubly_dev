@@ -518,18 +518,10 @@ export default function AdvisorRequestForm({ onRequestSent, clubInfo, user }: Ad
                       <h5 className="text-sm font-medium text-blue-900 mb-2">Available Times:</h5>
                       {teacher.availability && teacher.availability.length > 0 ? (
                         <div className="space-y-1 text-xs">
-                          {Object.entries(
-                            teacher.availability.reduce((acc: any, slot: any) => {
-                              if (!acc[slot.day_of_week]) acc[slot.day_of_week] = [];
-                              acc[slot.day_of_week].push(`${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}`);
-                              return acc;
-                            }, {} as Record<string, string[]>)
-                          ).map(([day, times]: [string, string[]]) => (
-                            <div key={day} className="text-blue-700">
-                              <span className="font-medium">{day}:</span>
-                              <div className="ml-4 text-xs break-words">
-                                {times.join(', ')}
-                              </div>
+                          {teacher.availability.map((slot: any, index: number) => (
+                            <div key={index} className="text-blue-700 flex justify-between">
+                              <span className="font-medium">{slot.day_of_week}:</span>
+                              <span>{formatTime(slot.start_time)} - {formatTime(slot.end_time)}</span>
                             </div>
                           ))}
                         </div>

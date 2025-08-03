@@ -245,27 +245,37 @@ export default function StudentMessaging({ onBack, clubInfo, user: propUser }: S
 
               {/* Messages List */}
               <div className="flex-1 p-6 overflow-y-auto space-y-4 bg-gray-50/30">
-                {messages.map((message) => (
-                  <motion.div
-                    key={message.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div className={`max-w-xs lg:max-w-md px-4 py-3 rounded-xl shadow-sm ${
-                      message.sender_id === user?.id 
-                        ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white' 
-                        : 'bg-white text-gray-900 border border-gray-200/50'
-                    }`}>
-                      <p className="text-sm font-light leading-relaxed">{message.message}</p>
-                      <p className={`text-xs mt-2 ${
-                        message.sender_id === user?.id ? 'text-orange-100' : 'text-gray-500'
+                {messages.map((message) => {
+                  const isStudentMessage = message.sender_id === user?.id;
+                  return (
+                    <motion.div
+                      key={message.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`flex ${isStudentMessage ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div className={`max-w-xs lg:max-w-md px-4 py-3 rounded-xl shadow-sm ${
+                        isStudentMessage 
+                          ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white' 
+                          : 'bg-white text-gray-900 border border-gray-200/50'
                       }`}>
-                        {formatDate(message.created_at)}
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
+                        <div className="flex items-center space-x-2 mb-1">
+                          <span className={`text-xs font-medium ${
+                            isStudentMessage ? 'text-orange-100' : 'text-gray-600'
+                          }`}>
+                            {message.sender_name || (isStudentMessage ? 'You' : 'Teacher')}
+                          </span>
+                        </div>
+                        <p className="text-sm font-light leading-relaxed">{message.message}</p>
+                        <p className={`text-xs mt-2 ${
+                          isStudentMessage ? 'text-orange-100' : 'text-gray-500'
+                        }`}>
+                          {formatDate(message.created_at)}
+                        </p>
+                      </div>
+                    </motion.div>
+                  );
+                })}
                 
                 {messages.length === 0 && (
                   <div className="text-center py-12 text-gray-500">

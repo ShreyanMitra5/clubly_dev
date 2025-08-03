@@ -176,25 +176,29 @@ export default function TeacherRegistration() {
         throw teacherError;
       }
 
-      // Create availability records
-      const availabilityRecords = DAYS_OF_WEEK
+      // Create availability records using the new API
+      const enabledSlots = DAYS_OF_WEEK
         .filter(day => formData.availability[day.key].enabled)
         .map(day => ({
-          teacher_id: teacherData.id,
-          day_of_week: day.value,
-          start_time: formData.availability[day.key].startTime,
-          end_time: formData.availability[day.key].endTime,
-          room_number: formData.roomNumber,
-          is_recurring: true,
-          is_active: true
+          day: day.value,
+          start: formData.availability[day.key].startTime + ':00',
+          end: formData.availability[day.key].endTime + ':00'
         }));
 
-      if (availabilityRecords.length > 0) {
-        const { error: availabilityError } = await supabase
-          .from('teacher_availability')
-          .insert(availabilityRecords);
+      if (enabledSlots.length > 0) {
+        const availabilityRes = await fetch(`/api/teachers/${teacherData.id}/availability`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            slots: enabledSlots,
+            room: formData.roomNumber
+          })
+        });
 
-        if (availabilityError) throw availabilityError;
+        if (!availabilityRes.ok) {
+          const errorData = await availabilityRes.json();
+          throw new Error(errorData.error || 'Failed to save availability');
+        }
       }
 
       // Redirect to teacher dashboard

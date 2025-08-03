@@ -1,9 +1,10 @@
-'use client';
+"use client";
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, User, MapPin, GraduationCap, MessageSquare } from 'lucide-react';
+import { Search, MapPin, User, GraduationCap, MessageSquare } from 'lucide-react';
 import { supabase } from '../../utils/supabaseClient';
+import ClubDetailsForm from './ClubDetailsForm';
 
 interface Teacher {
   id: string;
@@ -33,73 +34,90 @@ interface StudentInfo {
 }
 
 export default function AdvisorRequestForm({ onRequestSent, clubInfo, user }: AdvisorRequestFormProps) {
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [error, setError] = useState('');
-  const [existingRequest, setExistingRequest] = useState<any>(null);
-  const [formData, setFormData] = useState<StudentInfo>({
-    name: user?.fullName || '',
-    grade: '',
+  const [formData, setFormData] = useState({
     school: '',
-    district: ''
+    district: '',
+    name: '',
+    grade: ''
   });
 
-  useEffect(() => {
-    if (clubInfo) {
-      setFormData(prev => ({
-        ...prev,
-        school: clubInfo.school || '',
-        district: clubInfo.district || ''
-      }));
-    }
-  }, [clubInfo]);
+
+  
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [error, setError] = useState('');
+  const [selectedTeacher, setSelectedTeacher] = useState<Teacher | null>(null);
+  const [showClubDetails, setShowClubDetails] = useState(false);
+  const [existingRequest, setExistingRequest] = useState<any>(null);
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const checkExistingRequest = async () => {
-    if (!user?.id) return;
+  // Check for existing requests when component loads
+  useEffect(() => {
+    checkExistingRequest();
+  }, [user, clubInfo]);
 
+  // Check for existing advisor request for this specific club
+  const checkExistingRequest = async () => {
+    if (!user?.id || !clubInfo?.id) return;
+    
     try {
       const { data, error } = await supabase
         .from('advisor_requests')
         .select('*')
         .eq('student_id', user.id)
-        .eq('status', 'pending')
-        .single();
+        .eq('club_id', clubInfo.id)
+        .in('status', ['pending', 'approved']) // Check for both pending and approved requests
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') {
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
         console.error('Error checking existing request:', error);
+      } else if (data) {
+        setExistingRequest(data);
+        if (data.status === 'pending') {
+          setError('You already have a pending advisor request for this club. Please wait for a response.');
+        } else if (data.status === 'approved') {
+          setError('This club already has an approved advisor. Only one advisor per club is allowed.');
+        }
+      } else {
+        setExistingRequest(null);
+        setError('');
       }
-
-      setExistingRequest(data);
-    } catch (error) {
-      console.error('Error checking existing request:', error);
+    } catch (err) {
+      console.error('Error checking existing request:', err);
     }
   };
 
+  // Fetch teacher availability
   const fetchTeacherAvailability = async (teacherId: string) => {
     try {
+      console.log('Fetching availability for teacher:', teacherId);
       const { data, error } = await supabase
         .from('teacher_availability')
         .select('*')
         .eq('teacher_id', teacherId)
-        .eq('is_active', true)
-        .order('day_of_week', { ascending: true })
-        .order('start_time', { ascending: true });
+        .order('day_of_week');
+
+      console.log('Availability query result:', { data, error });
 
       if (error) {
         console.error('Error fetching teacher availability:', error);
         return [];
       }
 
-      return data || [];
-    } catch (error) {
-      console.error('Error fetching teacher availability:', error);
+      // Convert integer day_of_week to string names
+      const availabilityWithDayNames = (data || []).map(slot => ({
+        ...slot,
+        day_of_week: getDayName(slot.day_of_week)
+      }));
+
+      console.log('Teacher availability data with day names:', availabilityWithDayNames);
+      return availabilityWithDayNames;
+    } catch (err) {
+      console.error('Error fetching teacher availability:', err);
       return [];
     }
   };
@@ -138,6 +156,8 @@ export default function AdvisorRequestForm({ onRequestSent, clubInfo, user }: Ad
     // Clear any existing data to ensure fresh results
     setTeachers([]);
     setError('');
+
+
 
     setSearching(true);
     setError('');
@@ -249,6 +269,13 @@ export default function AdvisorRequestForm({ onRequestSent, clubInfo, user }: Ad
           return;
         }
         
+        console.log('Capacity filter result:', { capacityData, capacityError });
+        
+        if (capacityError) {
+          console.error('Capacity filter failed:', capacityError);
+          throw capacityError;
+        }
+        
         // Step 6: Get teacher availability for filtered teachers
         console.log('Step 6: Getting teacher availability');
         const teacherIds = filteredData.map(teacher => teacher.id);
@@ -328,33 +355,59 @@ export default function AdvisorRequestForm({ onRequestSent, clubInfo, user }: Ad
         // Check for existing request
         await checkExistingRequest();
       } catch (queryError: any) {
-        console.error('Query error:', queryError);
-        setError('Failed to search for teachers. Please try again.');
+        console.error('Query execution error:', queryError);
+        console.error('Query error details:', {
+          message: queryError.message,
+          code: queryError.code,
+          details: queryError.details,
+          hint: queryError.hint,
+          stack: queryError.stack
+        });
+        throw queryError;
       }
-    } catch (error: any) {
-      console.error('Search error:', error);
-      setError('An error occurred while searching for teachers. Please try again.');
+    } catch (err: any) {
+      console.error('Error searching teachers:', err);
+      console.error('Error details:', {
+        code: err.code,
+        message: err.message,
+        details: err.details,
+        hint: err.hint,
+        stack: err.stack
+      });
+      setError('Failed to search for teachers. Please try again.');
     } finally {
       setSearching(false);
     }
   };
 
   const handleRequestAdvisor = (teacher: Teacher) => {
-    // This will be handled by the parent component
-    onRequestSent(teacher.id);
+    setSelectedTeacher(teacher);
+    setShowClubDetails(true);
   };
 
   const handleRequestComplete = () => {
-    // Reset form after successful request
-    setTeachers([]);
-    setError('');
+    onRequestSent(selectedTeacher!.id);
   };
 
   const handleBackToSearch = () => {
-    setTeachers([]);
-    setError('');
-    setExistingRequest(null);
+    setShowClubDetails(false);
+    setSelectedTeacher(null);
   };
+
+  // Show club details form if teacher is selected
+  if (showClubDetails && selectedTeacher) {
+    return (
+      <ClubDetailsForm
+        teacherId={selectedTeacher.id}
+        teacherName={selectedTeacher.name}
+        teacherAvailability={selectedTeacher.availability || []}
+        studentInfo={formData}
+        clubInfo={clubInfo} // CRITICAL FIX: Pass clubInfo
+        onRequestComplete={handleRequestComplete}
+        onBack={handleBackToSearch}
+      />
+    );
+  }
 
   return (
     <div className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl p-8 shadow-lg">
@@ -472,96 +525,87 @@ export default function AdvisorRequestForm({ onRequestSent, clubInfo, user }: Ad
                     : 'bg-gray-50/50 border border-gray-200/50'
                 }`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-3">
-                      <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                        <User className="w-5 h-5 text-orange-600" />
-                      </div>
-                      <div>
-                        <h4 className="text-lg font-medium text-gray-900">{teacher.name}</h4>
-                        <p className="text-sm text-gray-600">{teacher.subject}</p>
-                      </div>
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                      <User className="w-5 h-5 text-orange-600" />
                     </div>
-                    
-                    {teacher.current_clubs_count >= teacher.max_clubs && (
-                      <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg">
-                        <div className="flex items-center space-x-2">
-                          <div className="w-4 h-4 bg-red-500 rounded-full"></div>
-                          <span className="text-red-800 font-medium text-sm">
-                            This teacher is at full capacity and cannot accept new clubs
-                          </span>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
-                      <div className="flex items-center space-x-2">
-                        <MapPin className="w-4 h-4 text-gray-400" />
-                        <span className="text-gray-600">Room {teacher.room_number}</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <GraduationCap className="w-4 h-4 text-gray-400" />
-                        <span className={`${
-                          teacher.current_clubs_count >= teacher.max_clubs 
-                            ? 'text-red-600 font-medium' 
-                            : 'text-gray-600'
-                        }`}>
-                          {teacher.current_clubs_count}/{teacher.max_clubs} clubs
-                          {teacher.current_clubs_count >= teacher.max_clubs && ' (FULL)'}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Availability Section */}
-                    <div className="mt-4 p-3 bg-blue-50/50 border border-blue-200/50 rounded-lg">
-                      <h5 className="text-sm font-medium text-blue-900 mb-2">Available Times:</h5>
-                      {teacher.availability && teacher.availability.length > 0 ? (
-                        <div className="space-y-1 text-xs">
-                          {Object.entries(
-                            teacher.availability.reduce((acc: any, slot: any) => {
-                              if (!acc[slot.day_of_week]) acc[slot.day_of_week] = [];
-                              acc[slot.day_of_week].push(`${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}`);
-                              return acc;
-                            }, {} as Record<string, string[]>)
-                          ).map(([day, times]: [string, string[]]) => (
-                            <div key={day} className="text-blue-700">
-                              <span className="font-medium">{day}:</span>
-                              <div className="ml-4 text-xs break-words">
-                                {times.join(', ')}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-blue-600 text-xs italic">No availability set yet</p>
-                      )}
+                    <div>
+                      <h4 className="text-lg font-medium text-gray-900">{teacher.name}</h4>
+                      <p className="text-sm text-gray-600">{teacher.subject}</p>
                     </div>
                   </div>
                   
-                  <button
-                    onClick={() => handleRequestAdvisor(teacher)}
-                    disabled={!!existingRequest || teacher.current_clubs_count >= teacher.max_clubs}
-                    className={`ml-4 px-4 py-2 rounded-lg font-light transition-colors flex items-center space-x-2 ${
-                      existingRequest || teacher.current_clubs_count >= teacher.max_clubs
-                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
-                        : 'bg-orange-500 text-white hover:bg-orange-600'
-                    }`}
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                    <span>
-                      {existingRequest 
-                        ? 'Request Pending' 
-                        : teacher.current_clubs_count >= teacher.max_clubs 
-                          ? 'Full' 
-                          : 'Request Advisor'
-                      }
-                    </span>
-                  </button>
+                  {teacher.current_clubs_count >= teacher.max_clubs && (
+                    <div className="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-4 h-4 bg-red-500 rounded-full"></div>
+                        <span className="text-red-800 font-medium text-sm">
+                          This teacher is at full capacity and cannot accept new clubs
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm mb-4">
+                    <div className="flex items-center space-x-2">
+                      <MapPin className="w-4 h-4 text-gray-400" />
+                      <span className="text-gray-600">Room {teacher.room_number}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <GraduationCap className="w-4 h-4 text-gray-400" />
+                      <span className={`${
+                        teacher.current_clubs_count >= teacher.max_clubs 
+                          ? 'text-red-600 font-medium' 
+                          : 'text-gray-600'
+                      }`}>
+                        {teacher.current_clubs_count}/{teacher.max_clubs} clubs
+                        {teacher.current_clubs_count >= teacher.max_clubs && ' (FULL)'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Availability Section */}
+                  <div className="mt-4 p-3 bg-blue-50/50 border border-blue-200/50 rounded-lg">
+                    <h5 className="text-sm font-medium text-blue-900 mb-2">Available Times:</h5>
+                    {teacher.availability && teacher.availability.length > 0 ? (
+                      <div className="space-y-1 text-xs">
+                        {teacher.availability.map((slot: any, index: number) => (
+                          <div key={index} className="text-blue-700 flex justify-between">
+                            <span className="font-medium">{slot.day_of_week}:</span>
+                            <span>{formatTime(slot.start_time)} - {formatTime(slot.end_time)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-blue-600 text-xs italic">No availability set yet</p>
+                    )}
+                  </div>
                 </div>
-              </motion.div>
-            ))}
-          </div>
+                
+                <button
+                  onClick={() => handleRequestAdvisor(teacher)}
+                  disabled={!!existingRequest || teacher.current_clubs_count >= teacher.max_clubs}
+                  className={`ml-4 px-4 py-2 rounded-lg font-light transition-colors flex items-center space-x-2 ${
+                    existingRequest || teacher.current_clubs_count >= teacher.max_clubs
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                      : 'bg-orange-500 text-white hover:bg-orange-600'
+                  }`}
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  <span>
+                    {existingRequest 
+                      ? 'Request Pending' 
+                      : teacher.current_clubs_count >= teacher.max_clubs 
+                        ? 'Full' 
+                        : 'Request Advisor'
+                    }
+                  </span>
+                </button>
+              </div>
+            </motion.div>
+          ))}
         </div>
       )}
     </div>

@@ -249,6 +249,27 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
+    // Update teacher's club count based on status change
+    const currentTeacherId = teacher_id || advisorRequest.teacher_id;
+    
+    if (status === 'approved' && advisorRequest.status !== 'approved') {
+      // Increment club count when approving a non-approved request
+      const { error: incrementError } = await supabase
+        .rpc('increment_teacher_clubs', { teacher_id_param: currentTeacherId });
+
+      if (incrementError) {
+        console.error('Error incrementing teacher club count:', incrementError);
+      }
+    } else if ((status === 'denied' || status === 'closed') && advisorRequest.status === 'approved') {
+      // Decrement club count when denying/closing a previously approved request
+      const { error: decrementError } = await supabase
+        .rpc('decrement_teacher_clubs', { teacher_id_param: currentTeacherId });
+
+      if (decrementError) {
+        console.error('Error decrementing teacher club count:', decrementError);
+      }
+    }
+
     // Create notification for student
     await supabase
       .from('notifications')
@@ -264,6 +285,79 @@ export async function PATCH(request: NextRequest) {
 
   } catch (error) {
     console.error('Error in advisor-requests PATCH:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE /api/advisor-requests - Remove advisor request (also decrements club count)
+export async function DELETE(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const requestId = searchParams.get('requestId');
+
+    if (!requestId) {
+      return NextResponse.json(
+        { error: 'Request ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Get request details before deletion
+    const { data: requestToDelete, error: getRequestError } = await supabase
+      .from('advisor_requests')
+      .select('id, status, teacher_id')
+      .eq('id', requestId)
+      .single();
+
+    if (getRequestError) {
+      console.error('Error fetching request to delete:', getRequestError);
+      return NextResponse.json(
+        { error: 'Request not found' },
+        { status: 404 }
+      );
+    }
+
+    // Delete the advisor request
+    const { error: deleteError } = await supabase
+      .from('advisor_requests')
+      .delete()
+      .eq('id', requestId);
+
+    if (deleteError) {
+      console.error('Error deleting advisor request:', deleteError);
+      return NextResponse.json(
+        { error: 'Failed to delete request' },
+        { status: 500 }
+      );
+    }
+
+    // If the request was approved, decrement teacher's club count
+    if (requestToDelete.status === 'approved') {
+      const { error: decrementError } = await supabase
+        .rpc('decrement_teacher_clubs', { teacher_id_param: requestToDelete.teacher_id });
+
+      if (decrementError) {
+        console.error('Error decrementing teacher club count after deletion:', decrementError);
+        // Try manual decrement as fallback
+        await supabase
+          .from('teachers')
+          .update({ 
+            current_clubs_count: supabase.sql`GREATEST(current_clubs_count - 1, 0)` 
+          })
+          .eq('id', requestToDelete.teacher_id);
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Advisor request removed successfully'
+    });
+
+  } catch (error) {
+    console.error('Error removing advisor request:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

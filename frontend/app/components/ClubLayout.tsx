@@ -16,6 +16,7 @@ import UpgradeModal from './UpgradeModal';
 import { useUpgradeModal } from '../hooks/useUpgradeModal';
 import { apiWithUpgrade } from '../utils/apiWithUpgrade';
 import AdvisorRequestForm from './AdvisorRequestForm';
+import ClubDetailsForm from './ClubDetailsForm';
 import StudentMessaging from './StudentMessaging';
 import SuccessModal from './SuccessModal';
 import { 
@@ -57,7 +58,8 @@ import {
   XCircle,
   AlertTriangle,
   Save,
-  MessageSquare
+  MessageSquare,
+  Search
 } from 'lucide-react';
 
 interface ClubLayoutProps {
@@ -1424,6 +1426,8 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
 }) {
   const { user } = useUser();
   const [showAdvisorRequest, setShowAdvisorRequest] = useState(false);
+  const [showClubDetailsForm, setShowClubDetailsForm] = useState(false);
+  const [selectedTeacher, setSelectedTeacher] = useState<any>(null);
   const [showMessaging, setShowMessaging] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [acceptedAdvisor, setAcceptedAdvisor] = useState<any>(null);
@@ -1433,18 +1437,24 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
 
-  const handleAdvisorRequestSent = (teacherId: string) => {
-    setShowAdvisorRequest(false);
-    setShowSuccessModal(true);
+  const handleAdvisorRequestSent = async (teacherId: string) => {
+    console.log('Teacher selected:', teacherId);
     
-    // CRITICAL FIX: Force state refresh by triggering a re-render
-    console.log('TeacherAdvisorPanel: Request sent, forcing state refresh...');
-    setLoading(true); // This will trigger useEffect to run checkAcceptedAdvisor
-    
-    // Switch to messaging view after a brief delay
-    setTimeout(() => {
-      setShowMessaging(true);
-    }, 2000);
+    // Fetch teacher details
+    try {
+      const response = await fetch(`/api/teachers?id=${teacherId}`);
+      const data = await response.json();
+      
+      if (data.teachers && data.teachers.length > 0) {
+        setSelectedTeacher(data.teachers[0]);
+        setShowAdvisorRequest(false);
+        setShowClubDetailsForm(true);
+      } else {
+        console.error('Teacher not found');
+      }
+    } catch (error) {
+      console.error('Error fetching teacher details:', error);
+    }
   };
 
   const handleCloseAdvisorRelationship = async () => {
@@ -1677,6 +1687,29 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
             onRequestSent={handleAdvisorRequestSent} 
             clubInfo={clubInfo}
             user={user}
+          />
+        ) : showClubDetailsForm && selectedTeacher ? (
+          <ClubDetailsForm
+            teacherId={selectedTeacher.id}
+            teacherName={selectedTeacher.name}
+            teacherAvailability={selectedTeacher.teacher_availability || []}
+            studentInfo={{
+              name: '',
+              grade: '',
+              school: '',
+              district: ''
+            }}
+            clubInfo={clubInfo}
+            onRequestComplete={() => {
+              setShowClubDetailsForm(false);
+              setSelectedTeacher(null);
+              setLoading(true); // Trigger refresh to check for pending requests
+            }}
+            onBack={() => {
+              setShowClubDetailsForm(false);
+              setSelectedTeacher(null);
+              setShowAdvisorRequest(true);
+            }}
           />
         ) : pendingRequest ? (
           // Show pending request UI
@@ -2658,6 +2691,15 @@ function EmailPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
   const [newName, setNewName] = useState('');
   const [subject, setSubject] = useState('');
   const [content, setContent] = useState('');
+  const [contactSearch, setContactSearch] = useState('');
+
+  // Filter contacts based on search
+  const filteredContacts = contactSearch
+    ? contacts.filter(contact => 
+        contact.email.toLowerCase().includes(contactSearch.toLowerCase()) ||
+        (contact.name && contact.name.toLowerCase().includes(contactSearch.toLowerCase()))
+      )
+    : contacts;
 
   useEffect(() => {
     if (clubInfo?.clubId || clubInfo?.id) {
@@ -2947,27 +2989,52 @@ function EmailPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
           <Users className="w-6 h-6 text-orange-500" />
           <h2 className="text-2xl font-light text-gray-900">Manage Contacts ({contacts.length})</h2>
         </div>
-        <div className="space-y-2 max-h-60 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-gray-50">
-          {contacts.map((contact) => (
+        {/* Enhanced contacts list with search and better handling for many contacts */}
+        {contacts.length > 10 && (
+          <div className="mb-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                placeholder="Search contacts..."
+                value={contactSearch}
+                onChange={(e) => setContactSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm"
+              />
+            </div>
+          </div>
+        )}
+        
+        <div className={`space-y-2 pr-2 scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-gray-50 ${
+          contacts.length > 20 ? 'max-h-80' : contacts.length > 10 ? 'max-h-60' : 'max-h-96'
+        } overflow-y-auto`}>
+          {filteredContacts.map((contact, index) => (
             <motion.div 
               key={contact.id}
-              className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors duration-200"
+              className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.3 }}
+              transition={{ duration: 0.2, delay: Math.min(index * 0.02, 0.5) }}
             >
-              <div>
-                <p className="font-medium text-gray-900">{contact.email}</p>
-                {contact.name && <p className="text-sm text-gray-600 font-light">{contact.name}</p>}
+              <div className="flex-1 min-w-0">
+                <p className="font-medium text-gray-900 truncate">{contact.email}</p>
+                {contact.name && <p className="text-sm text-gray-600 font-light truncate">{contact.name}</p>}
               </div>
               <button
                 onClick={() => handleRemoveContact(contact.id)}
-                className="text-gray-400 hover:text-red-500 transition-colors duration-200"
+                className="text-gray-400 hover:text-red-500 transition-colors duration-200 ml-2 flex-shrink-0"
+                title="Remove contact"
               >
-                <Trash2 className="w-5 h-5" />
+                <Trash2 className="w-4 h-4" />
               </button>
             </motion.div>
           ))}
+          {filteredContacts.length === 0 && contactSearch && (
+            <div className="text-center py-6">
+              <Search className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+              <p className="text-gray-500 font-light">No contacts found matching "{contactSearch}"</p>
+            </div>
+          )}
           {contacts.length === 0 && (
             <div className="text-center py-8">
               <UserX className="w-12 h-12 text-gray-300 mx-auto mb-3" />
@@ -2975,6 +3042,21 @@ function EmailPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
             </div>
           )}
         </div>
+        
+        {/* Show stats for large lists */}
+        {contacts.length > 50 && (
+          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-blue-700">
+                📊 {contacts.length} total contacts
+                {contactSearch && ` • ${filteredContacts.length} shown`}
+              </span>
+              {contacts.length > 100 && (
+                <span className="text-blue-600 font-medium">Large contact list - optimized for performance</span>
+              )}
+            </div>
+          </div>
+        )}
       </motion.div>
 
       {/* Email Composer */}
@@ -4496,8 +4578,13 @@ This summary was generated automatically by Clubly AI.
     }
   };
 
-  // Download as DOCX
+  // Download as DOCX - Fixed with native download fallback
   const downloadDocx = async () => {
+    if (!summary) {
+      alert('No summary available to download. Please generate a summary first.');
+      return;
+    }
+    
     try {
       const { Document, Packer, Paragraph, TextRun } = await import("docx");
       const doc = new Document({
@@ -4523,7 +4610,7 @@ This summary was generated automatically by Clubly AI.
                 ],
                 spacing: { after: 400 },
               }),
-              ...summary!.split("\n").map(
+              ...summary.split("\n").map(
                 (line) =>
                   new Paragraph({
                     children: [new TextRun({ text: line, size: 24 })],
@@ -4534,9 +4621,25 @@ This summary was generated automatically by Clubly AI.
           },
         ],
       });
+      
       const blob = await Packer.toBlob(doc);
-      const { saveAs } = await import("file-saver");
-      saveAs(blob, `${meetingTitle || 'meeting_summary'}.docx`);
+      const fileName = `${meetingTitle || 'meeting_summary'}.docx`;
+      
+      // Try file-saver first, fallback to native download
+      try {
+        const { saveAs } = await import("file-saver");
+        saveAs(blob, fileName);
+      } catch (fileSaverError) {
+        // Fallback to native browser download
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+      }
     } catch (err) {
       console.error('Error generating DOCX:', err);
       alert('Failed to download DOCX. Please try again.');
@@ -5602,10 +5705,28 @@ function SummariesPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
                             ],
                             }],
                       });
+                      
                       const blob = await Packer.toBlob(doc);
-                      saveAs(blob, `${summary.title || 'meeting_summary'}.docx`);
+                      const fileName = `${summary.title || 'meeting_summary'}.docx`;
+                      
+                      // Try file-saver first, fallback to native download
+                      try {
+                        const { saveAs } = await import("file-saver");
+                        saveAs(blob, fileName);
+                      } catch (fileSaverError) {
+                        // Fallback to native browser download
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = fileName;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(url);
+                      }
                     } catch (err) {
                       console.error('Error generating DOCX:', err);
+                      alert('Failed to download DOCX. Please try again.');
                     }
                   }}
                       className="w-full px-4 py-2.5 bg-orange-500 text-white font-medium rounded-xl hover:bg-orange-600 transition-colors duration-200 flex items-center justify-center gap-2"

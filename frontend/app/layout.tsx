@@ -7,6 +7,7 @@ import '../styles/globals.css';
 import Link from 'next/link';
 import { Toaster } from 'sonner';
 import { usePathname } from 'next/navigation';
+import DashboardLink from './components/DashboardLink';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -102,13 +103,10 @@ export default function RootLayout({
                   {/* Desktop Nav */}
                   <div className="hidden md:flex items-center space-x-3">
                     <SignedIn>
-                      <Link 
-                        href="/dashboard" 
-                        className="font-light text-black/70 hover:text-black transition-all duration-300 px-6 py-3 rounded-xl hover:bg-black/5 relative group"
-                      >
+                      <DashboardLink className="font-light text-black/70 hover:text-black transition-all duration-300 px-6 py-3 rounded-xl hover:bg-black/5 relative group">
                         Dashboard
                         <div className="absolute bottom-2 left-6 w-0 h-px bg-orange-500 transition-all duration-500 group-hover:w-12" />
-                      </Link>
+                      </DashboardLink>
                       <SignOutButton>
                         <button className="font-light text-black/70 hover:text-black transition-all duration-300 px-6 py-3 rounded-xl hover:bg-black/5">
                           Sign Out
@@ -171,13 +169,12 @@ export default function RootLayout({
                       >
                         <div className="p-2">
                           <SignedIn>
-                            <Link 
-                              href="/dashboard" 
-                              className="block px-6 py-4 text-black/70 font-light hover:bg-black/5 hover:text-black transition-all duration-300 rounded-xl" 
+                            <DashboardLink 
+                              className="block px-6 py-4 text-black/70 font-light hover:bg-black/5 hover:text-black transition-all duration-300 rounded-xl text-left" 
                               onClick={() => setMobileMenuOpen(false)}
                             >
                               Dashboard
-                            </Link>
+                            </DashboardLink>
                             <SignOutButton>
                               <button 
                                 className="block w-full text-left px-6 py-4 text-black/70 font-light hover:bg-black/5 hover:text-black transition-all duration-300 rounded-xl" 

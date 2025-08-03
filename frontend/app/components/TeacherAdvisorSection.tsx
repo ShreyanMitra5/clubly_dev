@@ -46,7 +46,11 @@ export default function TeacherAdvisorSection({ clubId, clubName }: TeacherAdvis
     try {
       const res = await fetch('/api/teachers?active_only=true&has_availability=true');
       const data = await res.json();
-      setTeachers(data.teachers || []);
+      // Filter out teachers who are at capacity
+      const availableTeachers = (data.teachers || []).filter(teacher => 
+        teacher.current_clubs_count < teacher.max_clubs
+      );
+      setTeachers(availableTeachers);
     } catch (error) {
       console.error('Error loading teachers:', error);
     }
@@ -193,8 +197,11 @@ export default function TeacherAdvisorSection({ clubId, clubName }: TeacherAdvis
 
       {/* Available Teachers */}
       <div className="mb-6">
-        <h4 className="text-md font-medium text-gray-900 mb-3">Available Teachers</h4>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="flex items-center justify-between mb-3">
+          <h4 className="text-md font-medium text-gray-900">Available Teachers</h4>
+          <span className="text-sm text-gray-500">{teachers.length} teacher{teachers.length !== 1 ? 's' : ''} found</span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-h-96 overflow-y-auto">
           {teachers.map((teacher) => (
             <div
               key={teacher.id}
@@ -209,11 +216,7 @@ export default function TeacherAdvisorSection({ clubId, clubName }: TeacherAdvis
                     {teacher.current_clubs_count} of {teacher.max_clubs} clubs
                   </p>
                 </div>
-                <div className={`w-3 h-3 rounded-full ${
-                  teacher.current_clubs_count < teacher.max_clubs 
-                    ? 'bg-green-400' 
-                    : 'bg-red-400'
-                }`}></div>
+                <div className="w-3 h-3 rounded-full bg-green-400"></div>
               </div>
             </div>
           ))}
@@ -243,9 +246,7 @@ export default function TeacherAdvisorSection({ clubId, clubName }: TeacherAdvis
                   required
                 >
                   <option value="">Choose a teacher...</option>
-                  {teachers
-                    .filter(t => t.current_clubs_count < t.max_clubs)
-                    .map(teacher => (
+                  {teachers.map(teacher => (
                       <option key={teacher.id} value={teacher.id}>
                         {teacher.name} ({teacher.current_clubs_count}/{teacher.max_clubs} clubs)
                       </option>

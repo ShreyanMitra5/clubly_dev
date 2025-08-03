@@ -100,19 +100,25 @@ export default function TeacherPortal({}: TeacherPortalProps) {
     if (!teacher) return;
 
     try {
-      const newAvailability = [...availability, availabilityForm];
-      const res = await fetch('/api/teachers/availability', {
+      // Get all current availability slots plus the new one
+      const allSlots = [...availability, availabilityForm].map(slot => ({
+        day: slot.day_of_week,
+        start: slot.start_time + ':00', // Ensure HH:MM:SS format
+        end: slot.end_time + ':00'
+      }));
+
+      const res = await fetch(`/api/teachers/${teacher.id}/availability`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          teacher_id: teacher.id,
-          availability: newAvailability
+          slots: allSlots,
+          room: availabilityForm.room_number || teacher.room_number || 'TBD'
         })
       });
 
       if (res.ok) {
-        const data = await res.json();
-        setAvailability(data.availability);
+        // Reload the availability from the server
+        await loadTeacherData();
         setShowAvailabilityForm(false);
         setAvailabilityForm({
           day_of_week: 1,
@@ -122,10 +128,13 @@ export default function TeacherPortal({}: TeacherPortalProps) {
           is_recurring: true,
           is_active: true
         });
+      } else {
+        const errorData = await res.json();
+        throw new Error(errorData.error || 'Failed to save availability');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving availability:', error);
-      setError('Failed to save availability');
+      setError('Failed to save availability: ' + error.message);
     }
   };
 

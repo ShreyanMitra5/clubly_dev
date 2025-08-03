@@ -35,6 +35,7 @@ export default function TeacherMessaging() {
   const [selectedRequest, setSelectedRequest] = useState<AdvisorRequest | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showDropdown, setShowDropdown] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -47,6 +48,18 @@ export default function TeacherMessaging() {
       fetchMessages(selectedRequest.student_id);
     }
   }, [selectedRequest]);
+
+  useEffect(() => {
+    // Close dropdown when clicking outside
+    const handleClickOutside = () => {
+      setShowDropdown(null);
+    };
+    
+    if (showDropdown) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [showDropdown]);
 
   const fetchAdvisorRequests = async () => {
     if (!user) return;
@@ -63,7 +76,10 @@ export default function TeacherMessaging() {
 
       const { data, error } = await supabase
         .from('advisor_requests')
-        .select('*')
+        .select(`
+          *,
+          clubs(name)
+        `)
         .eq('teacher_id', teacherData.id)
         .order('created_at', { ascending: false });
 
@@ -162,7 +178,7 @@ export default function TeacherMessaging() {
           receiver_id: selectedRequest.student_id,
           message: newMessage.trim(),
           sender_name: teacherData.name || 'Teacher',
-          receiver_name: selectedRequest.student_name
+          receiver_name: 'Student' // Use default since we don't have student name in advisor_requests
         });
 
       if (insertError) {
@@ -241,7 +257,7 @@ export default function TeacherMessaging() {
               receiver_id: request.student_id,
               message: `Hi! I'm excited to be your advisor for ${request.club_name}. I've reviewed your club details and I'm looking forward to helping you succeed. Let's schedule a time to discuss your goals and how I can best support you.`,
               sender_name: teacherData.name || 'Teacher',
-              receiver_name: request.student_name
+              receiver_name: 'Student' // Use default since we don't have student name in advisor_requests
             });
 
           if (messageError) {
@@ -277,6 +293,51 @@ export default function TeacherMessaging() {
     return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const deleteConversation = async (requestId: string) => {
+    if (!confirm('Are you sure you want to delete this conversation? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      // Find the request to get student and teacher IDs
+      const request = advisorRequests.find(req => req.id === requestId);
+      if (!request) {
+        throw new Error('Request not found');
+      }
+
+      // Delete all messages for this conversation
+      const { error: messagesError } = await supabase
+        .from('messages')
+        .delete()
+        .or(`and(sender_id.eq.${request.teacher_id},receiver_id.eq.${request.student_id}),and(sender_id.eq.${request.student_id},receiver_id.eq.${request.teacher_id})`);
+
+      if (messagesError) {
+        console.error('Error deleting messages:', messagesError);
+        throw new Error('Failed to delete messages');
+      }
+
+      // If this is the selected conversation, clear it
+      if (selectedRequest?.id === requestId) {
+        setSelectedRequest(null);
+        setMessages([]);
+      }
+
+      // Refresh advisor requests
+      await fetchAdvisorRequests();
+      
+      alert('Conversation deleted successfully');
+    } catch (err: any) {
+      console.error('Error deleting conversation:', err);
+      setError('Failed to delete conversation');
+      alert('Failed to delete conversation');
+    } finally {
+      setLoading(false);
+      setShowDropdown(null);
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'approved': return 'text-green-600 bg-green-100';
@@ -290,52 +351,110 @@ export default function TeacherMessaging() {
     <div className="bg-white rounded-b-2xl shadow-sm">
       {/* Remove header since it's now in the parent component */}
 
-      <div className="flex h-[500px]">
-        {/* Student List Sidebar */}
-        <div className="w-1/3 border-r border-gray-200 bg-gray-50">
-          <div className="p-6 border-b border-gray-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Students</h3>
-            <p className="text-sm text-gray-600">
-              {advisorRequests.filter(req => req.status === 'approved').length} active conversations
-            </p>
+      <div className="flex h-[700px] bg-gradient-to-br from-slate-50 to-blue-50/30">
+        {/* Modern Sidebar */}
+        <div className="w-80 bg-white/70 backdrop-blur-xl border-r border-slate-200/60 shadow-lg">
+          {/* Header */}
+          <div className="p-6 border-b border-slate-200/60 bg-gradient-to-r from-blue-50/50 to-indigo-50/50">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                <MessageSquare className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold text-slate-900">Student Conversations</h4>
+                <p className="text-sm text-slate-600">
+                  {advisorRequests.filter(req => req.status === 'approved').length} active conversations
+                </p>
+              </div>
+            </div>
           </div>
-          <div className="p-4">
-            <h4 className="text-sm font-medium text-gray-700 mb-3 uppercase tracking-wide">Advisor Requests</h4>
-            <div className="space-y-3">
-              {advisorRequests.map((request) => (
-                <motion.div
-                  key={request.id}
-                  onClick={() => setSelectedRequest(request)}
-                  className={`p-3 rounded-lg cursor-pointer transition-all duration-200 ${
-                    selectedRequest?.id === request.id 
-                      ? 'bg-orange-100 border-orange-300' 
-                      : 'bg-gray-50 hover:bg-gray-100'
-                  }`}
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium text-gray-900">{request.student_name}</h4>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
-                      {request.status}
-                    </span>
+
+          {/* Conversations List */}
+          <div className="p-4 space-y-3 overflow-y-auto max-h-[500px]">
+            {advisorRequests.map((request) => (
+              <motion.div
+                key={request.id}
+                onClick={() => setSelectedRequest(request)}
+                className={`group relative p-4 rounded-2xl cursor-pointer transition-all duration-300 border ${
+                  selectedRequest?.id === request.id 
+                    ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 shadow-lg ring-1 ring-blue-200/50' 
+                    : 'bg-white/60 hover:bg-white/90 border-slate-200/50 hover:border-slate-300 hover:shadow-md'
+                }`}
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                {/* Three Dots Menu */}
+                <div className="absolute top-3 right-3 flex items-center space-x-2">
+                  <div className="relative">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowDropdown(showDropdown === request.id ? null : request.id);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-slate-200 rounded-full"
+                    >
+                      <svg className="w-4 h-4 text-slate-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                      </svg>
+                    </button>
+                    
+                    {/* Dropdown Menu */}
+                    {showDropdown === request.id && (
+                      <div className="absolute top-full right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-slate-200 z-50">
+                        <div className="py-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteConversation(request.id);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center space-x-2"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            <span>Delete Conversation</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-sm text-gray-600">{request.club_name}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    {formatDate(request.created_at)}
-                  </p>
-                  
+                  <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(request.status)}`}>
+                    {request.status}
+                  </span>
+                </div>
+
+                {/* Student Info */}
+                <div className="pr-16">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <div className="w-10 h-10 bg-gradient-to-r from-slate-100 to-slate-200 rounded-full flex items-center justify-center">
+                      <User className="w-5 h-5 text-slate-600" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-slate-900 text-base">{request.student_name || 'Student'}</h4>
+                      <p className="text-xs text-slate-500">
+                        {formatDate(request.created_at)}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Club Name - Made Bigger and Prominent */}
+                  <div className="mb-3">
+                    <h3 className="text-xl font-bold text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text">
+                      {request.clubs?.name || request.club_name || 'Unknown Club'}
+                    </h3>
+                  </div>
+
                   {/* Action buttons for pending requests */}
                   {request.status === 'pending' && (
-                    <div className="flex space-x-2 mt-3">
+                    <div className="flex space-x-2 mt-4">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleRequestAction(request.id, 'approve');
                         }}
-                        className="flex-1 px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition-colors flex items-center justify-center space-x-1"
+                        className="flex-1 px-3 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200 flex items-center justify-center space-x-2 shadow-md"
                       >
-                        <CheckCircle className="w-3 h-3" />
+                        <CheckCircle className="w-4 h-4" />
                         <span>Approve</span>
                       </button>
                       <button
@@ -343,23 +462,26 @@ export default function TeacherMessaging() {
                           e.stopPropagation();
                           handleRequestAction(request.id, 'deny');
                         }}
-                        className="flex-1 px-2 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition-colors flex items-center justify-center space-x-1"
+                        className="flex-1 px-3 py-2 bg-gradient-to-r from-red-500 to-rose-600 text-white text-sm rounded-lg hover:from-red-600 hover:to-rose-700 transition-all duration-200 flex items-center justify-center space-x-2 shadow-md"
                       >
-                        <XCircle className="w-3 h-3" />
+                        <XCircle className="w-4 h-4" />
                         <span>Deny</span>
                       </button>
                     </div>
                   )}
-                </motion.div>
-              ))}
-              
-              {advisorRequests.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No advisor requests yet</p>
                 </div>
-              )}
-            </div>
+              </motion.div>
+            ))}
+            
+            {advisorRequests.length === 0 && (
+              <div className="text-center py-12 text-slate-500">
+                <div className="w-16 h-16 bg-gradient-to-r from-slate-100 to-slate-200 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <MessageSquare className="w-8 h-8 text-slate-400" />
+                </div>
+                <p className="text-lg font-medium">No conversations yet</p>
+                <p className="text-sm text-slate-400 mt-1">Students will appear here when they request advisory</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -367,45 +489,67 @@ export default function TeacherMessaging() {
         <div className="flex-1 flex flex-col">
           {selectedRequest ? (
             <>
-              {/* Messages Header */}
-              <div className="p-4 border-b border-gray-200/50">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-blue-600" />
+              {/* Modern Messages Header */}
+              <div className="p-6 border-b border-slate-200/60 bg-gradient-to-r from-white to-slate-50/50">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
+                    <User className="w-6 h-6 text-white" />
                   </div>
-                  <div>
-                    <h3 className="font-medium text-gray-900">{selectedRequest.student_name}</h3>
-                    <p className="text-sm text-gray-600">{selectedRequest.club_name}</p>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-slate-900">{selectedRequest.student_name || 'Student'}</h3>
+                    <h2 className="text-2xl font-bold text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text">
+                      {selectedRequest.clubs?.name || selectedRequest.club_name || 'Unknown Club'}
+                    </h2>
                   </div>
-                  <span className={`ml-auto px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(selectedRequest.status)}`}>
+                  <span className={`px-3 py-2 rounded-xl text-sm font-semibold ${getStatusColor(selectedRequest.status)} shadow-sm`}>
                     {selectedRequest.status}
                   </span>
                 </div>
               </div>
 
-              {/* Messages List */}
-              <div className="flex-1 p-4 overflow-y-auto space-y-4">
-                {messages.map((message) => (
-                  <motion.div
-                    key={message.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`flex ${message.sender_id === user?.id ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                      message.sender_id === user?.id 
-                        ? 'bg-blue-500 text-white' 
-                        : 'bg-gray-100 text-gray-900'
-                    }`}>
-                      <p className="text-sm">{message.message}</p>
-                      <p className={`text-xs mt-1 ${
-                        message.sender_id === user?.id ? 'text-blue-100' : 'text-gray-500'
-                      }`}>
-                        {formatDate(message.created_at)}
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
+              {/* Modern Messages List */}
+              <div className="flex-1 p-6 overflow-y-auto space-y-4 bg-gradient-to-b from-slate-50/30 to-white">
+                {messages.map((message) => {
+                  const isTeacherMessage = message.sender_id === selectedRequest?.teacher_id;
+                  return (
+                    <motion.div
+                      key={message.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.3 }}
+                      className={`flex ${isTeacherMessage ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div className={`max-w-xs lg:max-w-md ${
+                        isTeacherMessage 
+                          ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/25' 
+                          : 'bg-white text-slate-800 shadow-lg border border-slate-200/50'
+                      } rounded-2xl px-4 py-3 backdrop-blur-sm`}>
+                        <div className="flex items-center space-x-2 mb-2">
+                          <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                            isTeacherMessage ? 'bg-white/20' : 'bg-slate-100'
+                          }`}>
+                            {isTeacherMessage ? (
+                              <User className="w-3 h-3 text-white" />
+                            ) : (
+                              <User className="w-3 h-3 text-slate-600" />
+                            )}
+                          </div>
+                          <span className={`text-xs font-semibold ${
+                            isTeacherMessage ? 'text-white/80' : 'text-slate-600'
+                          }`}>
+                            {message.sender_name || (isTeacherMessage ? 'You' : 'Student')}
+                          </span>
+                        </div>
+                        <p className="text-sm leading-relaxed font-medium">{message.message}</p>
+                        <p className={`text-xs mt-2 ${
+                          isTeacherMessage ? 'text-white/60' : 'text-slate-500'
+                        }`}>
+                          {formatDate(message.created_at)}
+                        </p>
+                      </div>
+                    </motion.div>
+                  );
+                })}
                 
                 {messages.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
@@ -415,34 +559,43 @@ export default function TeacherMessaging() {
                 )}
               </div>
 
-              {/* Message Input */}
-              <div className="p-6 border-t border-gray-200 bg-white">
+              {/* Modern Message Input */}
+              <div className="p-6 border-t border-slate-200/60 bg-gradient-to-r from-white to-slate-50/50">
                 <div className="flex items-end space-x-4">
                   <div className="flex-1">
-                    <textarea
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), sendMessage())}
-                      placeholder="Type your message to the student..."
-                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                      rows={3}
-                      disabled={loading}
-                    />
-                    <p className="text-xs text-gray-500 mt-2">Press Enter to send, Shift+Enter for new line</p>
+                    <div className="relative">
+                      <textarea
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), sendMessage())}
+                        placeholder="Type your message to the student..."
+                        className="w-full px-4 py-4 pr-12 border border-slate-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-white shadow-sm backdrop-blur-sm"
+                        rows={3}
+                        disabled={loading}
+                      />
+                      <div className="absolute bottom-3 right-3">
+                        <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
+                          <MessageSquare className="w-3 h-3 text-white" />
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-2 flex items-center space-x-1">
+                      <span>Press Enter to send, Shift+Enter for new line</span>
+                    </p>
                   </div>
                   <button
                     onClick={sendMessage}
                     disabled={loading || !newMessage.trim()}
-                    className="px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 shadow-lg hover:shadow-xl"
+                    className="px-6 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-2xl font-semibold hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
                   >
                     {loading ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
                         <span>Sending...</span>
                       </>
                     ) : (
                       <>
-                        <Send className="w-4 h-4" />
+                        <Send className="w-5 h-5" />
                         <span>Send</span>
                       </>
                     )}
