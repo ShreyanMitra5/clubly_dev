@@ -74,7 +74,7 @@ Requirements:
 Example format:
 {
   "subject": "Meeting Summary: [Brief topic description]",
-  "body": "Dear Club Members,\n\nHere's a summary of our recent ${clubName} club meeting:\n\n[Formatted meeting summary]\n\nBest regards,\n[Club Name]"
+  "body": "Dear Club Members,\n\nHere's a summary of our recent ${clubName} club meeting:\n\n**Club Meeting Summary**\nThe club meeting began with a warm welcome to all members. The main agenda of the meeting was to discuss [specific topics covered].\n\n**Key Discussion Points:**\n* [First key point]\n* [Second key point]\n* [Third key point]\n\n**Technical Details:**\nThe meeting also covered important technical aspects, including:\n* [Technical point 1]\n* [Technical point 2]\n* Components such as:\n  + [Component 1]\n  + [Component 2]\n\nThe discussion aimed to provide a comprehensive understanding of [topic] and its applications, with a focus on the technical aspects and practical implementation.\n\nBest regards,\n${clubName} Club"
 }
 
 Return ONLY the JSON object, no explanation.`;
@@ -141,15 +141,15 @@ Return ONLY the JSON object, no explanation.`;
         
         // Final fallback content
         if (type === 'presentation') {
-          return NextResponse.json({
-            subject: `New ${clubName} Club Presentation Available`,
-            body: `Dear Club Members,\n\nI'm excited to share that we have a new presentation available for our ${clubName} club.\n\nYou can view the presentation here: ${presentationUrl || 'Available upon request'}\n\nBest regards,\n${clubName} Club`
-          });
+                  return NextResponse.json({
+          subject: `New ${clubName} Club Presentation Available`,
+          body: `Dear Club Members,\n\nI'm excited to share that we have a new presentation available for our ${clubName} club.\n\nYou can view the presentation here:\n${presentationUrl || 'Available upon request'}\n\nBest regards,\n${clubName} Club`
+        });
         } else {
-          return NextResponse.json({
-            subject: `${clubName} Club Meeting Summary`,
-            body: `Dear Club Members,\n\nHere's a summary of our recent ${clubName} club meeting:\n\n${content}\n\nBest regards,\n${clubName} Club`
-          });
+                  return NextResponse.json({
+          subject: `${clubName} Club Meeting Summary`,
+          body: `Dear Club Members,\n\nHere's a summary of our recent ${clubName} club meeting:\n\n**Club Meeting Summary**\n${content}\n\n**Next Steps**\nWe look forward to seeing everyone at our next meeting and continuing to work together to make our club successful.\n\nBest regards,\n${clubName} Club`
+        });
         }
       }
     }

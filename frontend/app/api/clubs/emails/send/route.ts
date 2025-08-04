@@ -74,6 +74,23 @@ export async function POST(request: NextRequest) {
     // Prepare email content
     // Use senderName in the footer
     const footerSender = senderName ? `${senderName}, ${clubName}` : clubName;
+    
+    // Process content to ensure proper spacing and line breaks for plain text emails
+    const processedContent = content
+      // Ensure proper spacing around URLs
+      .replace(/(https?:\/\/[^\s]+)/g, ' $1 ')
+      // Ensure double line breaks for paragraph separation
+      .replace(/\n\n/g, '\n\n')
+      // Ensure single line breaks are preserved
+      .replace(/\n/g, '\n')
+      // Add space after periods if followed by a letter
+      .replace(/\.([A-Za-z])/g, '. $1')
+      // Ensure proper spacing around markdown syntax
+      .replace(/\*\*/g, ' **')
+      .replace(/\*\*/g, '** ')
+      .replace(/\* /g, ' * ')
+      .replace(/\*/g, ' * ');
+    
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
@@ -81,8 +98,8 @@ export async function POST(request: NextRequest) {
           <p style="color: #6b7280; margin: 10px 0 0 0;">Club Announcement</p>
         </div>
         
-        <div style="line-height: 1.6; color: #374151;">
-          ${content.replace(/\n/g, '<br>')}
+        <div style="line-height: 1.8; color: #374151; white-space: pre-wrap; font-family: Arial, sans-serif; font-size: 14px; background-color: #ffffff; padding: 20px; border-radius: 4px;">
+          ${processedContent}
         </div>
         
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
