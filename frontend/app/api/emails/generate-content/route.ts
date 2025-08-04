@@ -108,7 +108,9 @@ Return ONLY the JSON object, no explanation.`;
     // Parse the JSON response
     let result;
     try {
-      result = JSON.parse(response);
+      // Clean the response to handle control characters
+      const cleanedResponse = response.replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+      result = JSON.parse(cleanedResponse);
       
       if (!result.subject || !result.body) {
         throw new Error('Invalid response format');
@@ -119,17 +121,36 @@ Return ONLY the JSON object, no explanation.`;
       console.error('Error parsing Groq response:', parseError);
       console.log('Raw response:', response);
       
-      // Fallback content
-      if (type === 'presentation') {
-        return NextResponse.json({
-          subject: `New ${clubName} Club Presentation Available`,
-          body: `Dear Club Members,\n\nI'm excited to share that we have a new presentation available for our ${clubName} club.\n\nYou can view the presentation here: ${presentationUrl || 'Available upon request'}\n\nBest regards,\n${clubName} Club`
-        });
-      } else {
-        return NextResponse.json({
-          subject: `${clubName} Club Meeting Summary`,
-          body: `Dear Club Members,\n\nHere's a summary of our recent ${clubName} club meeting:\n\n${content}\n\nBest regards,\n${clubName} Club`
-        });
+      // Fallback: try to extract JSON from the response
+      try {
+        const jsonMatch = response.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const cleanedJson = jsonMatch[0].replace(/[\x00-\x1F\x7F-\x9F]/g, '');
+          result = JSON.parse(cleanedJson);
+          
+          if (!result.subject || !result.body) {
+            throw new Error('Invalid response format');
+          }
+          
+          return NextResponse.json(result);
+        } else {
+          throw new Error('No JSON found in response');
+        }
+      } catch (fallbackError) {
+        console.error('Fallback parsing also failed:', fallbackError);
+        
+        // Final fallback content
+        if (type === 'presentation') {
+          return NextResponse.json({
+            subject: `New ${clubName} Club Presentation Available`,
+            body: `Dear Club Members,\n\nI'm excited to share that we have a new presentation available for our ${clubName} club.\n\nYou can view the presentation here: ${presentationUrl || 'Available upon request'}\n\nBest regards,\n${clubName} Club`
+          });
+        } else {
+          return NextResponse.json({
+            subject: `${clubName} Club Meeting Summary`,
+            body: `Dear Club Members,\n\nHere's a summary of our recent ${clubName} club meeting:\n\n${content}\n\nBest regards,\n${clubName} Club`
+          });
+        }
       }
     }
 

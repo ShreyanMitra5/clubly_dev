@@ -1,24 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
-import { supabase } from '../../../../../utils/supabaseClient';
+import { supabaseServer } from '../../../../../utils/supabaseServer';
 
 interface Recipient {
   email: string;
   name?: string;
 }
 
-interface EmailContact {
-  id: string;
-  email: string;
-  name?: string;
-  addedAt: string;
-}
 
-interface ClubEmails {
-  clubId: string;
-  contacts: EmailContact[];
-  updatedAt: string;
-}
 
 interface SendEmailRequest {
   clubId: string;
@@ -39,15 +28,26 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Load club's email list
-    const { data: contacts, error } = await supabase
-      .from('club_emails')
-      .select('email, name')
-      .eq('club_id', clubId);
-    if (error) {
-      return NextResponse.json({ error: 'Failed to fetch club emails from Supabase' }, { status: 500 });
+    // Load club's email list from Supabase
+    let contacts: Array<{ email: string; name?: string }> = [];
+    try {
+      const { data, error } = await supabaseServer
+        .from('club_emails')
+        .select('email, name')
+        .eq('club_id', clubId);
+      
+      if (error) {
+        console.error('Error loading club emails:', error);
+        contacts = [];
+      } else {
+        contacts = data || [];
+      }
+    } catch (error) {
+      console.error('Error loading club emails:', error);
+      contacts = [];
     }
-    const recipients = (contacts || []).map(contact => ({
+    
+    const recipients = contacts.map(contact => ({
       email: contact.email,
       name: contact.name
     }));

@@ -1,0 +1,30 @@
+{
+  "clubId": "43156a57-dcb4-4767-8e69-7187c799a1f5",
+  "contacts": [
+    {
+      "id": "f55aab86-9692-495c-a379-6c55a98c05f9",
+      "email": "calhighpythonclub@gmail.com",
+      "name": "Cal High Python Club",
+      "addedAt": "2025-08-04T19:30:15.645Z"
+    },
+    {
+      "id": "43bac5ef-5e6c-4180-af4f-38aaa7ef53d5",
+      "email": "clublyteam@gmail.com",
+      "name": "Clubly",
+      "addedAt": "2025-08-04T19:30:15.645Z"
+    },
+    {
+      "id": "71826875-99ba-47ab-b378-5e102de9a496",
+      "email": "calhighpythonclub@gmail.com",
+      "name": "Cal High Python Club",
+      "addedAt": "2025-08-04T20:13:48.153Z"
+    },
+    {
+      "id": "67679e26-4632-4754-97da-df0ff2934457",
+      "email": "clublyteam@gmail.com",
+      "name": "Clubly",
+      "addedAt": "2025-08-04T20:13:48.153Z"
+    }
+  ],
+  "updatedAt": "2025-08-04T20:13:48.153Z"
+}
