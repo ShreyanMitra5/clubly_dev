@@ -76,20 +76,29 @@ export async function POST(request: NextRequest) {
     const footerSender = senderName ? `${senderName}, ${clubName}` : clubName;
     
     // Process content to ensure proper spacing and line breaks for plain text emails
-    const processedContent = content
-      // Ensure proper spacing around URLs
-      .replace(/(https?:\/\/[^\s]+)/g, ' $1 ')
-      // Ensure double line breaks for paragraph separation
-      .replace(/\n\n/g, '\n\n')
-      // Ensure single line breaks are preserved
-      .replace(/\n/g, '\n')
-      // Add space after periods if followed by a letter
-      .replace(/\.([A-Za-z])/g, '. $1')
-      // Ensure proper spacing around markdown syntax
-      .replace(/\*\*/g, ' **')
-      .replace(/\*\*/g, '** ')
-      .replace(/\* /g, ' * ')
-      .replace(/\*/g, ' * ');
+    let processedContent = content;
+    
+    // Log the original content for debugging
+    console.log('Original email content:', JSON.stringify(content));
+    
+    // Ensure proper spacing around URLs
+    processedContent = processedContent.replace(/(https?:\/\/[^\s]+)/g, ' $1 ');
+    
+    // Ensure proper spacing around markdown syntax
+    processedContent = processedContent.replace(/\*\*/g, ' **');
+    processedContent = processedContent.replace(/\*\*/g, '** ');
+    processedContent = processedContent.replace(/\* /g, ' * ');
+    processedContent = processedContent.replace(/\*/g, ' * ');
+    
+    // Add space after periods if followed by a letter
+    processedContent = processedContent.replace(/\.([A-Za-z])/g, '. $1');
+    
+    // Ensure proper line breaks are preserved
+    processedContent = processedContent.replace(/\n\n/g, '\n\n');
+    processedContent = processedContent.replace(/\n/g, '\n');
+    
+    // Log the processed content for debugging
+    console.log('Processed email content:', JSON.stringify(processedContent));
     
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -98,7 +107,7 @@ export async function POST(request: NextRequest) {
           <p style="color: #6b7280; margin: 10px 0 0 0;">Club Announcement</p>
         </div>
         
-        <div style="line-height: 1.8; color: #374151; white-space: pre-wrap; font-family: Arial, sans-serif; font-size: 14px; background-color: #ffffff; padding: 20px; border-radius: 4px;">
+        <div style="line-height: 1.8; color: #374151; white-space: pre-wrap; font-family: Arial, sans-serif; font-size: 14px; background-color: #ffffff; padding: 20px; border-radius: 4px; word-wrap: break-word; overflow-wrap: break-word;">
           ${processedContent}
         </div>
         
