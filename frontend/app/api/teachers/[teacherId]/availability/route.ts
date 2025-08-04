@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '../../../../../utils/supabaseServer';
+import { supabaseServer } from '../../../../../utils/supabaseServer';
 
 export async function POST(
   req: NextRequest,
-  { params }: { params: { teacherId: string } }
+  { params }: { params: Promise<{ teacherId: string }> }
 ) {
   try {
-    const teacherId = params.teacherId;
+    const { teacherId } = await params;
     const body: {
       slots: Array<{ day: number; start: string; end: string }>;
       room: string;
@@ -17,7 +17,7 @@ export async function POST(
     console.log('Room:', body.room);
 
     // First, delete existing availability for this teacher
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await supabaseServer
       .from('teacher_availability')
       .delete()
       .eq('teacher_id', teacherId);
@@ -41,7 +41,7 @@ export async function POST(
     console.log('Inserting rows:', rows);
 
     // Insert new availability
-    const { error: insertError } = await supabase
+    const { error: insertError } = await supabaseServer
       .from('teacher_availability')
       .insert(rows);
 
@@ -61,12 +61,12 @@ export async function POST(
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { teacherId: string } }
+  { params }: { params: Promise<{ teacherId: string }> }
 ) {
   try {
-    const teacherId = params.teacherId;
+    const { teacherId } = await params;
 
-    const { data, error } = await supabase
+    const { data, error } = await supabaseServer
       .from('teacher_availability')
       .select('*')
       .eq('teacher_id', teacherId)

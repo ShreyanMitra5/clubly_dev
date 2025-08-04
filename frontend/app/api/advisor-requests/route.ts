@@ -180,7 +180,7 @@ export async function POST(request: NextRequest) {
         user_id: teacher.user_id,
         type: 'advisor_request',
         title: 'New Advisor Request',
-        message: `You have a new advisor request for ${advisorRequest.clubs?.name}`,
+        message: `You have a new advisor request for ${advisorRequest.clubs?.name || 'a student club'}`,
         related_id: advisorRequest.id
       }]);
 
@@ -277,7 +277,7 @@ export async function PATCH(request: NextRequest) {
         user_id: advisorRequest.student_id,
         type: status === 'approved' ? 'request_approved' : 'request_denied',
         title: `Advisor Request ${status === 'approved' ? 'Approved' : 'Denied'}`,
-        message: `Your advisor request for ${advisorRequest.clubs?.name} has been ${status}`,
+        message: `Your advisor request for ${advisorRequest.clubs?.name || 'your club'} has been ${status}`,
         related_id: request_id
       }]);
 
