@@ -4147,15 +4147,7 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
           </motion.div>
       </div>
 
-        {/* Floating Action Button */}
-        <motion.button
-          onClick={() => openEventModal(new Date())}
-          className="fixed bottom-8 right-8 w-16 h-16 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-full shadow-2xl hover:shadow-3xl transition-all duration-300 z-50"
-          whileHover={{ scale: 1.1, rotate: 90 }}
-          whileTap={{ scale: 0.9 }}
-        >
-                   <Plus className="w-8 h-8" />
-       </motion.button>
+
       </div>
 
       {/* Event Modal */}
