@@ -3888,14 +3888,14 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
 
             {onboardingStage === 'form' && (
               <form onSubmit={handleOnboardingSubmit} className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-orange-100 p-8 space-y-6">
-                <h2 className="text-2xl font-light text-gray-900 mb-4 text-center">Semester Setup</h2>
+                <h2 className="text-2xl font-light text-gray-900 mb-4 text-center">School Year Setup (Both Semesters)</h2>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">School Start Date</label>
                     <input type="date" value={formData.schoolYearStart} onChange={e=>setFormData({...formData,schoolYearStart:e.target.value})} className="w-full p-3 border border-gray-200 rounded-lg" required />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">School End Date</label>
                     <input type="date" value={formData.schoolYearEnd} onChange={e=>setFormData({...formData,schoolYearEnd:e.target.value})} className="w-full p-3 border border-gray-200 rounded-lg" required />
                   </div>
                 </div>
@@ -3908,16 +3908,18 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Meeting Days</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Meeting Day (choose one)</label>
                   <div className="grid grid-cols-3 gap-2 text-sm text-gray-700">
-                    {['monday','tuesday','wednesday','thursday','friday','saturday','sunday'].map(day=> (
+                    {['monday','tuesday','wednesday','thursday','friday','saturday','sunday'].map(day => (
                       <label key={day} className="flex items-center space-x-2">
-                        <input type="checkbox" checked={formData.meetingDays.includes(day)} onChange={e=>{
-                          const days=formData.meetingDays.includes(day)?formData.meetingDays.filter(d=>d!==day):[...formData.meetingDays,day];
-                          setFormData({...formData,meetingDays:days});
-                        }} />
+                        <input
+                          type="radio"
+                          name="meeting-day"
+                          checked={formData.meetingDays[0] === day}
+                          onChange={()=> setFormData({...formData, meetingDays: [day]})}
+                        />
                         <span className="capitalize">{day}</span>
-                  </label>
+                      </label>
                     ))}
                   </div>
                 </div>

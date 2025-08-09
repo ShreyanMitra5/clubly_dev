@@ -157,7 +157,7 @@ export default function SemesterRoadmapPage() {
 
                 <div className="grid md:grid-cols-2 gap-6">
               <div>
-                    <label className="block text-lg font-light text-gray-900 mb-4">Academic Year Start</label>
+                    <label className="block text-lg font-light text-gray-900 mb-4">School Start Date</label>
                     <input
                       type="date"
                       value={setupForm.schoolYearStart}
@@ -168,7 +168,7 @@ export default function SemesterRoadmapPage() {
               </div>
 
               <div>
-                    <label className="block text-lg font-light text-gray-900 mb-4">Academic Year End</label>
+                    <label className="block text-lg font-light text-gray-900 mb-4">School End Date</label>
                     <input
                       type="date"
                       value={setupForm.schoolYearEnd}
