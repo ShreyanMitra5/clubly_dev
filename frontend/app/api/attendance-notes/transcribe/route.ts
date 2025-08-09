@@ -45,7 +45,7 @@ async function startTranscription(audioUrl: string) {
   return data.id;
 }
 
-async function pollTranscription(transcriptId: string, timeoutMs = 300000) { // Increased to 5 minutes
+async function pollTranscription(transcriptId: string, timeoutMs = 1800000) { // Increased to 30 minutes for long recordings
   const url = `${ASSEMBLYAI_TRANSCRIBE_URL}/${transcriptId}`;
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
@@ -58,7 +58,7 @@ async function pollTranscription(transcriptId: string, timeoutMs = 300000) { // 
     if (data.status === 'error') throw new Error(data.error || 'Transcription failed');
     await new Promise(r => setTimeout(r, 3000)); // Increased polling interval
   }
-  throw new Error('Transcription timed out after 5 minutes');
+  throw new Error('Transcription timed out after 30 minutes');
 }
 
 export async function POST(req: NextRequest) {
@@ -79,6 +79,14 @@ export async function POST(req: NextRequest) {
     // Check for empty file
     if (buffer.length === 0) {
       return NextResponse.json({ error: 'Recorded audio is empty. Please try again.' }, { status: 400 });
+    }
+    
+    // Check file size (limit to 100MB for very long recordings)
+    const maxFileSize = 100 * 1024 * 1024; // 100MB
+    if (buffer.length > maxFileSize) {
+      return NextResponse.json({ 
+        error: `Audio file too large (${(buffer.length / 1024 / 1024).toFixed(1)}MB). Please record shorter sessions or try again.` 
+      }, { status: 400 });
     }
     // Upload to AssemblyAI
     const res = await fetch(ASSEMBLYAI_UPLOAD_URL, {

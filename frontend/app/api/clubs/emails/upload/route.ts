@@ -32,15 +32,21 @@ async function loadClubEmails(clubId: string): Promise<EmailContact[]> {
 // Helper function to save emails to Supabase
 async function saveEmailsToSupabase(clubId: string, contacts: EmailContact[]): Promise<void> {
   try {
-    // Insert all new contacts
+    // Use upsert to handle potential duplicates gracefully
     const { error } = await supabaseServer
       .from('club_emails')
-      .insert(contacts.map(contact => ({
-        club_id: clubId,
-        email: contact.email,
-        name: contact.name,
-        added_at: contact.addedAt
-      })));
+      .upsert(
+        contacts.map(contact => ({
+          club_id: clubId,
+          email: contact.email,
+          name: contact.name,
+          added_at: contact.addedAt
+        })),
+        { 
+          onConflict: 'club_id,email',
+          ignoreDuplicates: false 
+        }
+      );
     
     if (error) {
       console.error('Error saving emails to Supabase:', error);
@@ -167,12 +173,12 @@ export async function POST(request: NextRequest) {
         continue;
       }
       
-      // Allow duplicates - just skip the duplicate check
-      // if (existingEmailSet.has(email)) {
-      //   console.log('Duplicate email found:', email);
-      //   skippedEmails.push(contact.email);
-      //   continue;
-      // }
+      // Check for duplicates within the same club
+      if (existingEmailSet.has(email)) {
+        console.log('Duplicate email found within club:', email);
+        skippedEmails.push(contact.email);
+        continue;
+      }
       
       console.log('Adding new contact:', email);
       newContacts.push({
@@ -197,7 +203,7 @@ export async function POST(request: NextRequest) {
       importedCount: newContacts.length,
       skippedCount: skippedEmails.length,
       skippedEmails,
-      message: `Successfully imported ${newContacts.length} contacts${skippedEmails.length > 0 ? `, skipped ${skippedEmails.length} duplicates/invalid emails` : ''}`
+      message: `Successfully uploaded ${newContacts.length} NEW contact${newContacts.length !== 1 ? 's' : ''}${skippedEmails.length > 0 ? `, skipped ${skippedEmails.length} duplicate${skippedEmails.length !== 1 ? 's' : ''}/invalid emails` : ''}`
     });
 
   } catch (error) {
