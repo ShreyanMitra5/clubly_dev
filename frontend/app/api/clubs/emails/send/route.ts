@@ -81,10 +81,13 @@ export async function POST(request: NextRequest) {
     // Log the original content for debugging
     console.log('Original email content:', JSON.stringify(content));
     
-    // Ensure proper spacing around URLs
-    processedContent = processedContent.replace(/(https?:\/\/[^\s]+)/g, ' $1 ');
+    // Create HTML version with clickable links
+    let htmlContent = processedContent;
     
-    // Ensure proper spacing around markdown syntax
+    // Convert URLs to clickable links in HTML
+    htmlContent = htmlContent.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" style="color: #2563eb; text-decoration: underline;" target="_blank">$1</a>');
+    
+    // Ensure proper spacing around markdown syntax for plain text
     processedContent = processedContent.replace(/\*\*/g, ' **');
     processedContent = processedContent.replace(/\*\*/g, '** ');
     processedContent = processedContent.replace(/\* /g, ' * ');
@@ -100,7 +103,7 @@ export async function POST(request: NextRequest) {
     // Log the processed content for debugging
     console.log('Processed email content:', JSON.stringify(processedContent));
     
-    const htmlContent = `
+    const emailHtmlContent = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
         <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
           <h2 style="color: #2563eb; margin: 0;">${clubName}</h2>
@@ -108,7 +111,7 @@ export async function POST(request: NextRequest) {
         </div>
         
         <div style="line-height: 1.8; color: #374151; white-space: pre-wrap; font-family: Arial, sans-serif; font-size: 14px; background-color: #ffffff; padding: 20px; border-radius: 4px; word-wrap: break-word; overflow-wrap: break-word;">
-          ${processedContent}
+          ${htmlContent}
         </div>
         
         <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; font-size: 14px;">
@@ -125,7 +128,7 @@ export async function POST(request: NextRequest) {
           from: '"Clubly Team" <clublyteam@gmail.com>',
           to: recipient.name ? `${recipient.name} <${recipient.email}>` : recipient.email,
           subject: subject,
-          html: htmlContent,
+          html: emailHtmlContent,
           text: content // Plain text fallback
         };
 

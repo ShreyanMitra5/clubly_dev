@@ -54,3 +54,9 @@ temp/
 /.clerk/
 
 # Whisper.cpp model files
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

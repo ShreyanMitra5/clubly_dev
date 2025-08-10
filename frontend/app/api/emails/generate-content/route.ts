@@ -143,7 +143,7 @@ Return ONLY the JSON object, no explanation.`;
         if (type === 'presentation') {
                   return NextResponse.json({
           subject: `New ${clubName} Club Presentation Available`,
-          body: `Dear Club Members,\n\nI'm excited to share that we have a new presentation available for our ${clubName} club.\n\nYou can view the presentation here:\n${presentationUrl || 'Available upon request'}\n\nBest regards,\n${clubName} Club`
+          body: `Dear Club Members,\n\nI'm excited to share that we have a new presentation available for our ${clubName} club.\n\nYou can view the presentation here: ${presentationUrl || 'Available upon request'}\n\nBest regards,\n${clubName} Club`
         });
         } else {
                   return NextResponse.json({
