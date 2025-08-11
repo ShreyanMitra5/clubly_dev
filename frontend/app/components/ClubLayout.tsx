@@ -5836,7 +5836,330 @@ function SummariesPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
   );
 }
 
+// Meeting Bookings Panel - Shows meeting requests and allows booking with approved advisors
+function MeetingBookingsPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any }) {
+  const { user } = useUser();
+  const [bookings, setBookings] = useState<any[]>([]);
+  const [advisors, setAdvisors] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showBookingForm, setShowBookingForm] = useState(false);
+  const [selectedAdvisor, setSelectedAdvisor] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    meeting_date: '',
+    start_time: '',
+    end_time: '',
+    purpose: ''
+  });
 
+  // Fetch approved advisors and meeting bookings
+  useEffect(() => {
+    async function fetchData() {
+      if (!user || !clubInfo?.id) return;
+
+      try {
+        // Fetch approved advisor requests
+        const { data: approvedRequests, error: advisorError } = await supabase
+          .from('advisor_requests')
+          .select(`
+            *,
+            teachers(id, name, email, room_number)
+          `)
+          .eq('student_id', user.id)
+          .eq('club_id', clubInfo.id)
+          .eq('status', 'approved');
+
+        if (advisorError) {
+          console.error('Error fetching advisors:', advisorError);
+        } else {
+          setAdvisors(approvedRequests || []);
+        }
+
+        // Fetch meeting bookings
+        const meetingBookingsResponse = await fetch(
+          `/api/meeting-bookings?userId=${user.id}&clubId=${clubInfo.id}`
+        );
+        
+        if (meetingBookingsResponse.ok) {
+          const meetingBookingsData = await meetingBookingsResponse.json();
+          setBookings(meetingBookingsData.bookings || []);
+        } else {
+          console.error('Error fetching bookings:', meetingBookingsResponse.statusText);
+          setBookings([]);
+        }
+      } catch (error) {
+        console.error('Error fetching meeting data:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, [user, clubInfo]);
+
+  const handleBookMeeting = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedAdvisor || !user || !clubInfo?.id) return;
+
+    try {
+      const response = await fetch('/api/meeting-bookings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          club_id: clubInfo.id,
+          teacher_id: selectedAdvisor.teachers.id,
+          student_id: user.id,
+          meeting_date: formData.meeting_date,
+          start_time: formData.start_time,
+          end_time: formData.end_time,
+          purpose: formData.purpose
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        setBookings(prev => [...prev, result.booking]);
+        setShowBookingForm(false);
+        setFormData({ meeting_date: '', start_time: '', end_time: '', purpose: '' });
+        alert('Meeting request sent successfully!');
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to book meeting');
+      }
+    } catch (error) {
+      console.error('Error booking meeting:', error);
+      alert('Failed to book meeting');
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const formatTime = (timeString: string) => {
+    return new Date(`2000-01-01T${timeString}`).toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'approved': return 'bg-green-100 text-green-800';
+      case 'declined': return 'bg-red-100 text-red-800';
+      case 'completed': return 'bg-blue-100 text-blue-800';
+      case 'cancelled': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
+      </div>
+    );
+  }
+
+  if (advisors.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+        <h3 className="text-xl font-semibold text-gray-900 mb-2">No Approved Advisors</h3>
+        <p className="text-gray-600">
+          You need to have an approved advisor request before you can book meetings.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Meeting Bookings</h2>
+          <p className="text-gray-600">Schedule meetings with your approved advisors</p>
+        </div>
+        <button
+          onClick={() => setShowBookingForm(true)}
+          className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Book Meeting
+        </button>
+      </div>
+
+      {/* Approved Advisors */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Approved Advisors</h3>
+        <div className="grid md:grid-cols-2 gap-4">
+          {advisors.map((advisor) => (
+            <div key={advisor.id} className="border rounded-lg p-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                  <Users className="w-5 h-5 text-orange-600" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-900">{advisor.teachers.name}</h4>
+                  <p className="text-sm text-gray-600">{advisor.teachers.email}</p>
+                  {advisor.teachers.room_number && (
+                    <p className="text-sm text-gray-500">Room: {advisor.teachers.room_number}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Meeting Bookings */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="p-6 border-b">
+          <h3 className="text-lg font-semibold text-gray-900">Your Meeting Requests</h3>
+        </div>
+        <div className="divide-y">
+          {bookings.length === 0 ? (
+            <div className="p-6 text-center text-gray-500">
+              No meeting requests yet. Book your first meeting above!
+            </div>
+          ) : (
+            bookings.map((booking) => (
+              <div key={booking.id} className="p-6">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h4 className="font-medium text-gray-900">{formatDate(booking.meeting_date)}</h4>
+                    <p className="text-sm text-gray-600">
+                      {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
+                    </p>
+                    {booking.purpose && (
+                      <p className="text-sm text-gray-600 mt-1">Purpose: {booking.purpose}</p>
+                    )}
+                    {booking.teacher_response && (
+                      <div className="mt-2 p-2 bg-gray-50 rounded text-sm text-gray-700">
+                        <strong>Teacher Response:</strong> {booking.teacher_response}
+                      </div>
+                    )}
+                  </div>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
+                    {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Booking Form Modal */}
+      {showBookingForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Book a Meeting</h3>
+            <form onSubmit={handleBookMeeting} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Select Advisor
+                </label>
+                <select
+                  value={selectedAdvisor?.id || ''}
+                  onChange={(e) => setSelectedAdvisor(advisors.find(a => a.id === e.target.value))}
+                  required
+                  className="w-full p-2 border border-gray-300 rounded-lg"
+                >
+                  <option value="">Choose an advisor</option>
+                  {advisors.map((advisor) => (
+                    <option key={advisor.id} value={advisor.id}>
+                      {advisor.teachers.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Meeting Date
+                </label>
+                <input
+                  type="date"
+                  value={formData.meeting_date}
+                  onChange={(e) => setFormData(prev => ({ ...prev, meeting_date: e.target.value }))}
+                  min={new Date().toISOString().split('T')[0]}
+                  required
+                  className="w-full p-2 border border-gray-300 rounded-lg"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Start Time
+                  </label>
+                  <input
+                    type="time"
+                    value={formData.start_time}
+                    onChange={(e) => setFormData(prev => ({ ...prev, start_time: e.target.value }))}
+                    required
+                    className="w-full p-2 border border-gray-300 rounded-lg"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    End Time
+                  </label>
+                  <input
+                    type="time"
+                    value={formData.end_time}
+                    onChange={(e) => setFormData(prev => ({ ...prev, end_time: e.target.value }))}
+                    required
+                    className="w-full p-2 border border-gray-300 rounded-lg"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Purpose (Optional)
+                </label>
+                <textarea
+                  value={formData.purpose}
+                  onChange={(e) => setFormData(prev => ({ ...prev, purpose: e.target.value }))}
+                  placeholder="What would you like to discuss?"
+                  className="w-full p-2 border border-gray-300 rounded-lg"
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="submit"
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg transition-colors"
+                >
+                  Send Request
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowBookingForm(false)}
+                  className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 const panels = {
   Dashboard: DashboardPanel,
@@ -5845,6 +6168,7 @@ const panels = {
   Roadmap: RoadmapPanel,
   Attendance: AttendancePanel,
   Advisor: TeacherAdvisorPanel,  // Human Teacher Advisor System
+  'Meeting Bookings': MeetingBookingsPanel,  // Meeting booking system
   'AI Assistant': AIAdvisorPanel,   // AI Chat Advisor System
   Tasks: TasksPanel,
   Email: EmailPanel,
@@ -5942,6 +6266,12 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
           <path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
         </svg>
     ), label: 'Teacher Advisor' },
+    { key: 'Meeting Bookings', icon: (
+        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M8 2v4m8-4v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"/>
+          <rect x="8" y="14" width="4" height="4" rx="1"/>
+        </svg>
+    ), label: 'Meeting Bookings' },
     { key: 'AI Assistant', icon: (
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M12 2a3 3 0 0 0-3 3v1a9 9 0 0 0 18 0V5a3 3 0 0 0-3-3z" />

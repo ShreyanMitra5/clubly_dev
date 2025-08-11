@@ -54,7 +54,8 @@ export interface MeetingBooking {
   end_time: string; // HH:MM:SS format
   room_number?: string;
   purpose?: string;
-  status: 'confirmed' | 'cancelled' | 'completed';
+  status: 'pending' | 'approved' | 'declined' | 'completed' | 'cancelled';
+  teacher_response?: string; // Optional note from teacher when approving/declining
   created_at: string;
   updated_at: string;
   // Joined data
@@ -66,7 +67,7 @@ export interface MeetingBooking {
 export interface Notification {
   id: string;
   user_id: string;
-  type: 'advisor_request' | 'booking_confirmed' | 'booking_cancelled' | 'availability_updated' | 'request_approved' | 'request_denied';
+  type: 'advisor_request' | 'meeting_request' | 'meeting_approved' | 'meeting_declined' | 'meeting_cancelled' | 'availability_updated' | 'request_approved' | 'request_denied';
   title: string;
   message: string;
   related_id?: string;

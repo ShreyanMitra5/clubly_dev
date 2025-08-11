@@ -516,6 +516,53 @@ export default function TeacherDashboard() {
     }
   };
 
+  const handleMeetingAction = async (bookingId: string, status: 'approved' | 'declined') => {
+    try {
+      // Get the teacher response from the textarea
+      const responseTextarea = document.getElementById(`response-${bookingId}`) as HTMLTextAreaElement;
+      const teacher_response = responseTextarea?.value || '';
+
+      const response = await fetch(`/api/meeting-bookings/${bookingId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status,
+          teacher_response,
+          teacher_id: teacherData?.id
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        
+        // Update the meeting bookings state
+        setMeetingBookings(prev => 
+          prev.map(booking => 
+            booking.id === bookingId 
+              ? { ...booking, status, teacher_response }
+              : booking
+          )
+        );
+
+        // Clear the textarea
+        if (responseTextarea) {
+          responseTextarea.value = '';
+        }
+
+        console.log(`Meeting ${status} successfully`);
+      } else {
+        const error = await response.json();
+        console.error('Error updating meeting:', error);
+        alert(error.error || 'Failed to update meeting request');
+      }
+    } catch (error) {
+      console.error('Error handling meeting action:', error);
+      alert('Failed to update meeting request');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-orange-50/20 flex items-center justify-center">
@@ -1007,7 +1054,7 @@ export default function TeacherDashboard() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                           <div>
                             <span className="text-gray-600 font-extralight">Room:</span>
-                            <span className="ml-2 text-gray-900 font-light">{booking.room_number}</span>
+                            <span className="ml-2 text-gray-900 font-light">{booking.room_number || 'TBD'}</span>
                           </div>
                           <div>
                             <span className="text-gray-600 font-extralight">Duration:</span>
@@ -1020,6 +1067,49 @@ export default function TeacherDashboard() {
                           <div className="mt-4">
                             <span className="text-gray-600 font-extralight">Purpose:</span>
                             <p className="mt-1 text-gray-900 font-light">{booking.purpose}</p>
+                          </div>
+                        )}
+                        
+                        {/* Teacher Response Actions for Pending Requests */}
+                        {booking.status === 'pending' && (
+                          <div className="mt-6 border-t pt-4">
+                            <div className="flex flex-col space-y-3">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                  Response (Optional)
+                                </label>
+                                <textarea
+                                  placeholder="Add a note for the student..."
+                                  className="w-full p-2 border border-gray-300 rounded-lg text-sm"
+                                  rows={2}
+                                  id={`response-${booking.id}`}
+                                />
+                              </div>
+                              <div className="flex gap-3">
+                                <button
+                                  onClick={() => handleMeetingAction(booking.id, 'approved')}
+                                  className="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                                >
+                                  <CheckCircle className="w-4 h-4" />
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() => handleMeetingAction(booking.id, 'declined')}
+                                  className="flex-1 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center justify-center gap-2"
+                                >
+                                  <XCircle className="w-4 h-4" />
+                                  Decline
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Show Teacher Response if provided */}
+                        {booking.teacher_response && (
+                          <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                            <span className="text-sm font-medium text-blue-900">Your Response:</span>
+                            <p className="text-sm text-blue-800 mt-1">{booking.teacher_response}</p>
                           </div>
                         )}
                       </div>

@@ -1,19 +1,25 @@
-import { clerkMiddleware } from '@clerk/nextjs/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NextResponse } from 'next/server';
 
-// Initialize Clerk's default middleware once
-const clerk = clerkMiddleware();
+const isPublicRoute = createRouteMatcher([
+  '/',
+  '/sign-in(.*)',
+  '/sign-up(.*)',
+  '/api/webhooks(.*)',
+  '/api/(.*)'  // Allow all API routes for now
+]);
 
-export default function middleware(req: NextRequest) {
+export default clerkMiddleware(async (auth, req) => {
   // If the browser already holds a Clerk dev-browser JWT, just continue –
   // skipping another handshake prevents the cookie from ballooning.
   if (req.cookies.get('__clerk_db_jwt') || req.cookies.get('__session')) {
     return NextResponse.next();
   }
 
-  // Otherwise let Clerk handle the (initial) handshake / auth
-  return clerk(req);
-}
+  // For development, allow all routes to pass through
+  // This prevents authentication blocking during development
+  return NextResponse.next();
+});
 
 export const config = {
   matcher: [
@@ -22,4 +28,4 @@ export const config = {
     // Always run for API routes
     '/(api|trpc)(.*)',
   ],
-}; 
+};

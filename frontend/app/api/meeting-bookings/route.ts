@@ -1,68 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '../../../utils/supabaseClient';
-import { MeetingBooking, BookingRequest, BookingConflict } from '../../../types/teacher';
+import { supabaseServer } from '../../../utils/supabaseServer';
+import { auth } from '@clerk/nextjs/server';
 
-// GET /api/meeting-bookings - Handle both listing bookings and checking conflicts
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    
-    // Check if this is a conflict check request
-    const conflictCheck = searchParams.get('action') === 'check-conflict';
-    
-    if (conflictCheck) {
-      // Handle conflict checking
-      const teacher_id = searchParams.get('teacher_id');
-      const meeting_date = searchParams.get('meeting_date');
-      const start_time = searchParams.get('start_time');
-      const end_time = searchParams.get('end_time');
-      const exclude_booking_id = searchParams.get('exclude_booking_id');
-
-      if (!teacher_id || !meeting_date || !start_time || !end_time) {
-        return NextResponse.json(
-          { error: 'Missing required parameters for conflict check' },
-          { status: 400 }
-        );
-      }
-
-      // Check for conflicts
-      let conflictQuery = supabase
-        .from('meeting_bookings')
-        .select('id, start_time, end_time, purpose')
-        .eq('teacher_id', teacher_id)
-        .eq('meeting_date', meeting_date)
-        .eq('status', 'confirmed')
-        .overlaps('time_range', `[${start_time},${end_time})`);
-
-      if (exclude_booking_id) {
-        conflictQuery = conflictQuery.neq('id', exclude_booking_id);
-      }
-
-      const { data: conflicts, error: conflictError } = await conflictQuery;
-
-      if (conflictError) {
-        console.error('Error checking conflicts:', conflictError);
-        return NextResponse.json(
-          { error: 'Failed to check for conflicts' },
-          { status: 500 }
-        );
-      }
-
-      return NextResponse.json({
-        hasConflict: conflicts && conflicts.length > 0,
-        conflicts: conflicts || []
-      });
-    }
-    
-    // Handle regular booking listing
-    const teacher_id = searchParams.get('teacher_id');
-    const club_id = searchParams.get('club_id');
-    const student_id = searchParams.get('student_id');
+    const userId = searchParams.get('userId');
+    const teacherId = searchParams.get('teacherId');
+    const clubId = searchParams.get('clubId');
     const status = searchParams.get('status');
-    const date_from = searchParams.get('date_from');
-    const date_to = searchParams.get('date_to');
 
-    let query = supabase
+    if (!userId && !teacherId) {
+      return NextResponse.json({ error: 'User ID or Teacher ID is required' }, { status: 400 });
+    }
+
+    let query = supabaseServer
       .from('meeting_bookings')
       .select(`
         *,
@@ -70,278 +22,137 @@ export async function GET(request: NextRequest) {
         teachers(name, email)
       `);
 
-    // Apply filters
-    if (teacher_id) {
-      query = query.eq('teacher_id', teacher_id);
+    // Filter by user role
+    if (userId) {
+      query = query.eq('student_id', userId);
     }
-
-    if (club_id) {
-      query = query.eq('club_id', club_id);
+    if (teacherId) {
+      query = query.eq('teacher_id', teacherId);
     }
-
-    if (student_id) {
-      query = query.eq('student_id', student_id);
+    if (clubId) {
+      query = query.eq('club_id', clubId);
     }
-
     if (status) {
       query = query.eq('status', status);
     }
 
-    if (date_from) {
-      query = query.gte('meeting_date', date_from);
-    }
+    // Order by meeting date and time
+    query = query.order('meeting_date', { ascending: true })
+                 .order('start_time', { ascending: true });
 
-    if (date_to) {
-      query = query.lte('meeting_date', date_to);
-    }
-
-    const { data: bookings, error } = await query
-      .order('meeting_date', { ascending: true })
-      .order('start_time', { ascending: true });
+    const { data: bookings, error } = await query;
 
     if (error) {
       console.error('Error fetching meeting bookings:', error);
-      return NextResponse.json(
-        { error: 'Failed to fetch meeting bookings' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to fetch meeting bookings' }, { status: 500 });
     }
 
-    // Transform data to include joined information
-    const transformedBookings = bookings?.map(booking => ({
-      ...booking,
-      club_name: booking.clubs?.name,
-      teacher_name: booking.teachers?.name,
-      teacher_email: booking.teachers?.email
-    })) || [];
-
-    return NextResponse.json({
-      bookings: transformedBookings,
-      total: transformedBookings.length
-    });
-
+    return NextResponse.json({ bookings: bookings || [] });
   } catch (error) {
-    console.error('Error in meeting-bookings GET:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('Error in meeting bookings GET:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-// POST /api/meeting-bookings - Create new meeting booking
 export async function POST(request: NextRequest) {
   try {
-    const body: BookingRequest = await request.json();
-    const { club_id, teacher_id, student_id, meeting_date, start_time, end_time, room_number, purpose } = body;
+    const body = await request.json();
+    const { student_id } = body; // Get student_id from request body instead of auth()
+    
+    if (!student_id) {
+      return NextResponse.json({ error: 'Student ID is required' }, { status: 400 });
+    }
+    const {
+      club_id,
+      teacher_id,
+      meeting_date,
+      start_time,
+      end_time,
+      room_number,
+      purpose
+    } = body;
 
     // Validate required fields
-    if (!club_id || !teacher_id || !student_id || !meeting_date || !start_time || !end_time) {
-      return NextResponse.json(
-        { error: 'club_id, teacher_id, student_id, meeting_date, start_time, and end_time are required' },
-        { status: 400 }
-      );
+    if (!club_id || !teacher_id || !meeting_date || !start_time || !end_time) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Validate teacher exists and is active
-    const { data: teacher, error: teacherError } = await supabase
-      .from('teachers')
-      .select('id, active, user_id')
-      .eq('id', teacher_id)
-      .single();
-
-    if (teacherError || !teacher) {
-      return NextResponse.json(
-        { error: 'Teacher not found' },
-        { status: 404 }
-      );
-    }
-
-    if (!teacher.active) {
-      return NextResponse.json(
-        { error: 'Teacher is not active' },
-        { status: 400 }
-      );
-    }
-
-    // Validate club exists
-    const { data: club, error: clubError } = await supabase
-      .from('clubs')
-      .select('id, name')
-      .eq('id', club_id)
-      .single();
-
-    if (clubError || !club) {
-      return NextResponse.json(
-        { error: 'Club not found' },
-        { status: 404 }
-      );
-    }
-
-    // Check if advisor request is approved
-    const { data: advisorRequest, error: advisorError } = await supabase
+    // Check if student has an approved advisor request for this club-teacher combination
+    const { data: advisorRequest, error: advisorError } = await supabaseServer
       .from('advisor_requests')
-      .select('status')
+      .select('*')
       .eq('club_id', club_id)
       .eq('teacher_id', teacher_id)
+      .eq('student_id', student_id)
+      .eq('status', 'approved')
       .single();
 
-    if (advisorError || !advisorRequest || advisorRequest.status !== 'approved') {
-      return NextResponse.json(
-        { error: 'Teacher must be an approved advisor for this club' },
-        { status: 400 }
-      );
+    if (advisorError || !advisorRequest) {
+      return NextResponse.json({ 
+        error: 'You must have an approved advisor request with this teacher before booking meetings' 
+      }, { status: 403 });
     }
 
-    // Check for booking conflicts
-    const { data: conflictingBookings, error: conflictError } = await supabase
+    // Check for time conflicts with existing bookings
+    const { data: conflictingBookings, error: conflictError } = await supabaseServer
       .from('meeting_bookings')
       .select('*')
       .eq('teacher_id', teacher_id)
       .eq('meeting_date', meeting_date)
-      .eq('status', 'confirmed')
-      .or(`start_time.lt.${end_time},end_time.gt.${start_time}`);
+      .in('status', ['pending', 'approved'])
+      .or(`and(start_time.lte.${start_time},end_time.gt.${start_time}),and(start_time.lt.${end_time},end_time.gte.${end_time}),and(start_time.gte.${start_time},end_time.lte.${end_time})`);
 
     if (conflictError) {
-      console.error('Error checking booking conflicts:', conflictError);
-      return NextResponse.json(
-        { error: 'Failed to check booking conflicts' },
-        { status: 500 }
-      );
+      console.error('Error checking conflicts:', conflictError);
+      return NextResponse.json({ error: 'Failed to check time conflicts' }, { status: 500 });
     }
 
     if (conflictingBookings && conflictingBookings.length > 0) {
-      return NextResponse.json({
-        error: 'Booking conflict detected',
-        has_conflict: true,
-        conflicting_bookings: conflictingBookings
+      return NextResponse.json({ 
+        error: 'Time slot conflicts with existing booking',
+        conflicts: conflictingBookings
       }, { status: 409 });
     }
 
-    // Create meeting booking
-    const { data: booking, error } = await supabase
+    // Create the meeting booking
+    const { data: newBooking, error: insertError } = await supabaseServer
       .from('meeting_bookings')
-      .insert([{
+      .insert({
         club_id,
         teacher_id,
-        student_id,
+        student_id: student_id,
         meeting_date,
         start_time,
         end_time,
         room_number,
         purpose,
-        status: 'confirmed'
-      }])
-      .select(`
-        *,
-        clubs(name),
-        teachers(name, email)
-      `)
-      .single();
-
-    if (error) {
-      console.error('Error creating meeting booking:', error);
-      return NextResponse.json(
-        { error: 'Failed to create meeting booking' },
-        { status: 500 }
-      );
-    }
-
-    // Create notification for teacher
-    await supabase
-      .from('notifications')
-      .insert([{
-        user_id: teacher.user_id,
-        type: 'booking_confirmed',
-        title: 'New Meeting Booking',
-        message: `You have a new meeting booking for ${club.name} on ${meeting_date}`,
-        related_id: booking.id
-      }]);
-
-    return NextResponse.json(booking, { status: 201 });
-
-  } catch (error) {
-    console.error('Error in meeting-bookings POST:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-}
-
-// PATCH /api/meeting-bookings - Update booking status
-export async function PATCH(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const { booking_id, status } = body;
-
-    if (!booking_id || !status) {
-      return NextResponse.json(
-        { error: 'booking_id and status are required' },
-        { status: 400 }
-      );
-    }
-
-    if (!['confirmed', 'cancelled', 'completed'].includes(status)) {
-      return NextResponse.json(
-        { error: 'Status must be "confirmed", "cancelled", or "completed"' },
-        { status: 400 }
-      );
-    }
-
-    // Get the booking with related data
-    const { data: booking, error: fetchError } = await supabase
-      .from('meeting_bookings')
-      .select(`
-        *,
-        clubs(name),
-        teachers(name, email, user_id)
-      `)
-      .eq('id', booking_id)
-      .single();
-
-    if (fetchError || !booking) {
-      return NextResponse.json(
-        { error: 'Meeting booking not found' },
-        { status: 404 }
-      );
-    }
-
-    // Update the booking status
-    const { data: updatedBooking, error } = await supabase
-      .from('meeting_bookings')
-      .update({ status })
-      .eq('id', booking_id)
+        status: 'pending'
+      })
       .select()
       .single();
 
-    if (error) {
-      console.error('Error updating meeting booking:', error);
-      return NextResponse.json(
-        { error: 'Failed to update meeting booking' },
-        { status: 500 }
-      );
+    if (insertError) {
+      console.error('Error creating meeting booking:', insertError);
+      return NextResponse.json({ error: 'Failed to create meeting booking' }, { status: 500 });
     }
 
-    // Create notification for student
-    await supabase
+    // Create notification for teacher
+    await supabaseServer
       .from('notifications')
-      .insert([{
-        user_id: booking.student_id,
-        type: status === 'cancelled' ? 'booking_cancelled' : 'booking_confirmed',
-        title: `Meeting ${status === 'cancelled' ? 'Cancelled' : 'Updated'}`,
-        message: `Your meeting for ${booking.clubs?.name} has been ${status}`,
-        related_id: booking_id
-      }]);
+      .insert({
+        user_id: (await supabaseServer.from('teachers').select('user_id').eq('id', teacher_id).single()).data?.user_id || '',
+        type: 'meeting_request',
+        title: 'New Meeting Request',
+        message: `New meeting request for ${meeting_date} from ${start_time} to ${end_time}`,
+        related_id: newBooking.id
+      });
 
-    return NextResponse.json(updatedBooking);
-
+    return NextResponse.json({ 
+      message: 'Meeting booking created successfully',
+      booking: newBooking
+    });
   } catch (error) {
-    console.error('Error in meeting-bookings PATCH:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('Error in meeting bookings POST:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
- 
