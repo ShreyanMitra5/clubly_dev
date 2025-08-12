@@ -231,6 +231,10 @@ export default function TeacherSignupPage() {
                   alt="Teacher Dashboard Preview" 
                   className="w-full h-auto rounded-3xl shadow-2xl shadow-orange-500/10 transform scale-125"
                 />
+                {/* Crown decoration on the left side */}
+                <div className="absolute top-8 -left-9 z-30">
+                  <i className="fa-solid fa-crown text-7xl" style={{ color: '#ff9924', transform: 'rotate(-40deg)' }}></i>
+                </div>
               </div>
             </motion.div>
           </div>
