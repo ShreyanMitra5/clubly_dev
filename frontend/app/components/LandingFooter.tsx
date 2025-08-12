@@ -95,7 +95,7 @@ const LandingFooter = () => {
             </a>
             
             <a 
-              href="/teacher-auth" 
+              href="/teacher-signup" 
               className="group text-black/60 hover:text-orange-500 font-light transition-all duration-300 relative"
             >
               Teacher Access

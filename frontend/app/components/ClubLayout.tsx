@@ -6352,9 +6352,7 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.2 }}
           >
-                         <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center shadow-lg border border-white/20">
-               <img src="/new_logo.png" alt="Clubly" className="w-6 h-6" />
-             </div>
+                         <img src="/new_logo.png" alt="Clubly" className="w-12 h-12" />
           {!sidebarCompressed && (
               <div>
                 <h1 className="text-xl font-extralight text-white">Clubly</h1>
@@ -6471,8 +6469,8 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
                 </svg>
               </button>
             <div className="ml-4">
-              <h1 className="text-xl font-bold text-gray-900">{clubName}</h1>
-                <p className="text-sm text-gray-500">{activeTab}</p>
+              <h1 className="text-xl font-light text-gray-900">{clubName}</h1>
+                <p className="text-sm text-gray-500 font-extralight">Club Space</p>
             </div>
           </div>
         </header>

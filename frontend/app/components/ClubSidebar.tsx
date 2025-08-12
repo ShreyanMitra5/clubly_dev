@@ -109,9 +109,7 @@ export default function ClubSidebar({ activeFeature, setActiveFeature, clubName,
         <div className="p-4 border-b border-white/10 backdrop-blur-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-sm p-2 ring-2 ring-white/20">
-                <img src="/logo.svg" alt="Clubly" className="w-full h-full" />
-              </div>
+              <img src="/logo.svg" alt="Clubly" className="w-12 h-12" />
               {!isCollapsed && (
                 <span className="text-xl font-bold bg-gradient-to-r from-white to-white/80 bg-clip-text text-transparent">
                   Clubly

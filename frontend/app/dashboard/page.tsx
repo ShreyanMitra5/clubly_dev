@@ -290,7 +290,7 @@ export default function DashboardPage() {
   const features = [
     { icon: Brain, title: "AI Presentations", description: "Generate professional slides instantly", color: "orange" },
     { icon: Calendar, title: "Smart Planning", description: "AI-powered event scheduling", color: "blue" },
-    { icon: Target, title: "Member Analytics", description: "Track engagement and growth", color: "green" },
+    { icon: Target, title: "AI Meeting Notes", description: "Get instant meeting summaries", color: "green" },
     { icon: Sparkles, title: "Content Creation", description: "Automated social media posts", color: "purple", comingSoon: true }
   ];
 
@@ -337,7 +337,8 @@ export default function DashboardPage() {
               </h1>
               
               <p className="text-xl text-gray-600 font-extralight max-w-2xl leading-relaxed">
-                Manage your student organizations with AI-powered tools designed to amplify your impact and streamline your workflow.
+              Run your student organization effortlessly with AI tools that help you get more done and make a bigger impact.
+
               </p>
             </div>
 
@@ -419,7 +420,7 @@ export default function DashboardPage() {
               transition={{ duration: 0.8, delay: 1.0 }}
             >
               <div className="flex items-center justify-between mb-8">
-                <h2 className="text-3xl font-light text-gray-900">Your Organizations</h2>
+                <h2 className="text-3xl font-light text-gray-900">Your Clubs</h2>
                 <span className="text-sm text-gray-500 font-extralight">{clubs.length} active</span>
               </div>
 
@@ -486,6 +487,7 @@ export default function DashboardPage() {
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 1.0 }}
+              className="bg-gradient-to-br from-orange-50/30 via-white/40 to-orange-50/30 backdrop-blur-xl border border-orange-200/30 rounded-2xl p-6 shadow-xl shadow-orange-500/10"
             >
               <h2 className="text-2xl font-light text-gray-900 mb-6">AI-Powered Features</h2>
               
@@ -493,14 +495,14 @@ export default function DashboardPage() {
                 {features.map((feature, index) => (
                   <motion.div
                     key={feature.title}
-                    className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300 group relative"
+                    className="bg-white/80 backdrop-blur-xl border border-orange-200/40 rounded-xl p-4 shadow-lg hover:shadow-xl hover:shadow-orange-500/20 transition-all duration-300 group relative hover:border-orange-300/60"
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 1.2 + index * 0.1, duration: 0.6 }}
                     whileHover={{ x: 5, scale: 1.02 }}
                   >
                     {feature.comingSoon && (
-                      <div className="absolute -top-2 -right-2 bg-gradient-to-r from-purple-500 to-purple-600 text-white text-xs px-2 py-1 rounded-full font-medium">
+                      <div className="absolute -top-2 -right-2 bg-gradient-to-r from-orange-500 to-orange-600 text-white text-xs px-2 py-1 rounded-full font-medium">
                         Coming Soon
                       </div>
                     )}
@@ -508,15 +510,15 @@ export default function DashboardPage() {
                       <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
                         feature.color === 'orange' ? 'bg-orange-500' : 
                         feature.color === 'blue' ? 'bg-blue-500' : 
-                        feature.color === 'green' ? 'bg-green-500' : 'bg-purple-500'
+                        feature.color === 'green' ? 'bg-green-500' : 'bg-orange-500'
                       }`}>
                         <feature.icon className="w-5 h-5 text-white" />
                       </div>
                       <div>
-                        <h3 className="font-light text-gray-900">{feature.title}</h3>
+                        <h3 className="font-light text-gray-900 group-hover:text-orange-600 transition-colors duration-300">{feature.title}</h3>
                       </div>
                     </div>
-                    <p className="text-gray-600 text-sm font-extralight leading-relaxed">
+                    <p className="text-gray-600 text-sm font-extralight leading-relaxed group-hover:text-gray-700 transition-colors duration-300">
                       {feature.description}
                     </p>
                   </motion.div>

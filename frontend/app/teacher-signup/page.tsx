@@ -171,9 +171,7 @@ export default function TeacherSignupPage() {
                   whileTap={{ scale: 0.98 }}
                 >
                   <SignUpButton 
-                    mode="modal" 
-                    afterSignInUrl="/teacher-registration" 
-                    afterSignUpUrl="/teacher-registration"
+                    mode="modal"
                   >
                     <button 
                       className="bg-black text-white px-8 py-3 rounded-lg font-light text-lg hover:bg-gray-900 transition-all duration-300 shadow-sm flex items-center gap-2"
@@ -380,7 +378,7 @@ export default function TeacherSignupPage() {
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
             >
-              <SignUpButton mode="modal" afterSignInUrl="/teacher-registration" afterSignUpUrl="/teacher-registration">
+              <SignUpButton mode="modal">
                 <button 
                   className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-lg font-light text-lg transition-all duration-300 shadow-lg flex items-center gap-2 mx-auto"
                   onClick={handleTeacherSignup}
