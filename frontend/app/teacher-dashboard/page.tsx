@@ -59,6 +59,9 @@ interface AdvisorRequest {
   meeting_time?: string;
   status: 'pending' | 'approved' | 'denied';
   created_at: string;
+  clubs?: {
+    name: string;
+  };
 }
 
 interface MeetingBooking {
@@ -72,7 +75,8 @@ interface MeetingBooking {
   end_time: string;
   room_number: string;
   purpose: string;
-  status: 'confirmed' | 'cancelled' | 'completed';
+  status: 'pending' | 'approved' | 'declined' | 'confirmed' | 'cancelled' | 'completed';
+  teacher_response?: string;
   created_at: string;
 }
 
@@ -506,13 +510,13 @@ export default function TeacherDashboard() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-700';
-      case 'approved': return 'bg-green-100 text-green-700';
-      case 'denied': return 'bg-red-100 text-red-700';
-      case 'confirmed': return 'bg-blue-100 text-blue-700';
-      case 'cancelled': return 'bg-gray-100 text-gray-700';
-      case 'completed': return 'bg-purple-100 text-purple-700';
-      default: return 'bg-gray-100 text-gray-700';
+      case 'pending': return 'bg-orange-100 text-orange-700 border border-orange-200';
+      case 'approved': return 'bg-green-100 text-green-700 border border-green-200';
+      case 'denied': return 'bg-red-100 text-red-700 border border-red-200';
+      case 'confirmed': return 'bg-black text-white border border-black';
+      case 'cancelled': return 'bg-gray-100 text-gray-700 border border-gray-200';
+      case 'completed': return 'bg-orange-100 text-orange-700 border border-orange-200';
+      default: return 'bg-gray-100 text-gray-700 border border-gray-200';
     }
   };
 
@@ -622,49 +626,67 @@ export default function TeacherDashboard() {
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 pt-32 pb-20">
-        {/* Header */}
+        {/* Premium Header */}
         <motion.div
-          className="mb-16"
+          className="mb-20"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
+          <div className="relative">
+            {/* Background Glow */}
+            <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 via-transparent to-orange-500/10 blur-3xl -z-10" />
+            
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-8">
-            <div>
+              <div className="flex-1">
               <motion.div
-                className="inline-flex items-center space-x-2 bg-white/80 backdrop-blur-xl border border-orange-200/50 rounded-full px-4 py-2 mb-6"
+                  className="inline-flex items-center space-x-3 bg-gradient-to-r from-orange-500/10 to-orange-400/5 backdrop-blur-xl border border-orange-200/30 rounded-2xl px-6 py-3 mb-8"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
               >
-                <Star className="w-4 h-4 text-orange-500 fill-orange-500" />
-                <span className="text-sm font-extralight text-gray-700">Teacher Dashboard</span>
+                  <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
+                    <GraduationCap className="w-4 h-4 text-white" />
+                  </div>
+                  <span className="text-sm font-light text-orange-700 tracking-wide">TEACHER PORTAL</span>
               </motion.div>
               
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-extralight text-gray-900 mb-4 leading-tight">
+                <h1 className="text-6xl md:text-7xl lg:text-8xl font-thin text-gray-900 mb-6 leading-tight tracking-tight">
                 Welcome back,
                 <br />
-                <span className="text-orange-500 font-light">{teacherData.name}</span>
+                  <span className="bg-gradient-to-r from-orange-600 via-orange-500 to-orange-400 bg-clip-text text-transparent font-light">
+                    {teacherData.name ? teacherData.name.split(' ')[0] : 'Teacher'}
+                  </span>
               </h1>
               
-              <p className="text-xl text-gray-600 font-extralight max-w-2xl leading-relaxed">
-                Manage your club advisor responsibilities and connect with student organizations.
-              </p>
+
             </div>
 
+              {/* Premium Stats Card */}
             <motion.div
-              className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl p-6 shadow-lg"
+                className="bg-gradient-to-br from-white via-white to-orange-50/30 backdrop-blur-xl border border-white/50 rounded-3xl p-8 shadow-2xl shadow-orange-500/10"
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              <div className="text-center">
-                <div className="text-3xl font-light text-gray-900 mb-1">
-                  {teacherData.current_clubs_count}/{teacherData.max_clubs}
+                <div className="text-center relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 to-transparent rounded-3xl" />
+                  <div className="relative">
+                    <div className="text-5xl font-thin text-black mb-2">
+                      {teacherData.current_clubs_count}
+                      <span className="text-2xl text-gray-400 font-light">/{teacherData.max_clubs}</span>
                 </div>
-                <div className="text-sm text-gray-600 font-extralight">Active Clubs</div>
+                    <div className="text-sm text-gray-600 font-light uppercase tracking-wider">Active Clubs</div>
+                    <div className="mt-4 h-1 bg-gray-200 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-orange-500 to-orange-400 rounded-full transition-all duration-1000"
+                        style={{ width: (teacherData.current_clubs_count / teacherData.max_clubs) * 100 + '%' }}
+                      />
+                    </div>
+                  </div>
               </div>
             </motion.div>
+            </div>
           </div>
         </motion.div>
 
@@ -724,28 +746,54 @@ export default function TeacherDashboard() {
           </motion.div>
         )}
 
-        {/* Navigation Tabs */}
+        {/* Premium Navigation Tabs */}
         <motion.div
-          className="mb-12"
+          className="mb-16"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.6 }}
         >
-          <div className="flex flex-wrap gap-2 bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl p-2 shadow-lg">
-            {tabs.map((tab) => (
-              <button
+          <div className="relative">
+            <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 via-transparent to-orange-500/5 blur-2xl" />
+            <div className="relative bg-gradient-to-r from-white via-white to-orange-50/20 backdrop-blur-2xl border border-white/50 rounded-3xl p-3 shadow-2xl shadow-black/5">
+              <div className="flex flex-wrap gap-2">
+                {tabs.map((tab, index) => (
+                  <motion.button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 px-6 py-3 rounded-xl font-light transition-all duration-300 ${
+                    className={`relative flex items-center space-x-3 px-8 py-4 rounded-2xl font-light transition-all duration-500 group overflow-hidden ${
                   activeTab === tab.id
-                    ? 'bg-orange-500 text-white shadow-lg'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'
-                }`}
-              >
-                <tab.icon className="w-4 h-4" />
-                <span>{tab.label}</span>
-              </button>
-            ))}
+                        ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-xl shadow-orange-500/25 scale-105'
+                        : 'text-gray-600 hover:text-black hover:bg-white/80 hover:scale-105'
+                    }`}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {activeTab === tab.id && (
+                      <motion.div
+                        className="absolute inset-0 bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl"
+                        layoutId="activeTab"
+                        transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                      />
+                    )}
+                    <div className="relative flex items-center space-x-3">
+                      <div className={`w-5 h-5 transition-all duration-300 ${
+                        activeTab === tab.id ? 'text-white' : 'text-orange-500 group-hover:text-orange-600'
+                      }`}>
+                        <tab.icon className="w-5 h-5" />
+                      </div>
+                      <span className="relative">{tab.label}</span>
+                    </div>
+                    {activeTab !== tab.id && (
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    )}
+                  </motion.button>
+                ))}
+              </div>
+            </div>
           </div>
         </motion.div>
 
@@ -760,122 +808,237 @@ export default function TeacherDashboard() {
               transition={{ duration: 0.3 }}
               className="space-y-8"
             >
-              {/* Stats Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Premium Stats Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
                 <motion.div
-                  className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl p-6 shadow-lg"
-                  initial={{ opacity: 0, y: 20 }}
+                  className="group relative"
+                  initial={{ opacity: 0, y: 40 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
+                  transition={{ delay: 0.1, duration: 0.8 }}
+                  whileHover={{ y: -5 }}
                 >
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
-                      <Users className="w-6 h-6 text-white" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-orange-400/10 blur-2xl group-hover:blur-3xl transition-all duration-500" />
+                  <div className="relative bg-gradient-to-br from-white via-white to-orange-50/30 backdrop-blur-xl border border-white/50 rounded-3xl p-8 shadow-2xl shadow-orange-500/10 group-hover:shadow-orange-500/20 transition-all duration-500">
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/25">
+                          <Users className="w-8 h-8 text-white" />
                     </div>
+                        <div>
+                          <div className="text-sm text-gray-500 font-light uppercase tracking-wide">Active</div>
+                          <div className="text-lg font-light text-gray-700">Club Advisory</div>
                   </div>
-                  <div className="text-3xl font-light text-gray-900 mb-1">
+                      </div>
+                      <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div className="text-5xl font-thin text-black tracking-tight">
                     {teacherData.current_clubs_count}
+                        <span className="text-2xl text-gray-400 font-light ml-2">clubs</span>
                   </div>
-                  <div className="text-sm text-gray-600 font-extralight">Active Clubs</div>
+                      
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-500 font-light">Capacity</span>
+                        <span className="text-gray-700 font-light">{teacherData.current_clubs_count}/{teacherData.max_clubs}</span>
+                      </div>
+                      
+                      <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                <motion.div
+                          className="h-full bg-gradient-to-r from-orange-500 to-orange-400 rounded-full"
+                          initial={{ width: 0 }}
+                          animate={{ width: (teacherData.current_clubs_count / teacherData.max_clubs) * 100 + '%' }}
+                          transition={{ duration: 1.5, delay: 0.5 }}
+                        />
+                    </div>
+                  </div>
+                  </div>
                 </motion.div>
 
                 <motion.div
-                  className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl p-6 shadow-lg"
-                  initial={{ opacity: 0, y: 20 }}
+                  className="group relative"
+                  initial={{ opacity: 0, y: 40 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
+                  transition={{ delay: 0.2, duration: 0.8 }}
+                  whileHover={{ y: -5 }}
                 >
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
-                      <Clock className="w-6 h-6 text-white" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-gray-500/20 to-gray-400/10 blur-2xl group-hover:blur-3xl transition-all duration-500" />
+                  <div className="relative bg-gradient-to-br from-white via-white to-gray-50/30 backdrop-blur-xl border border-white/50 rounded-3xl p-8 shadow-2xl shadow-gray-500/10 group-hover:shadow-gray-500/20 transition-all duration-500">
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-16 h-16 bg-gradient-to-r from-gray-800 to-black rounded-2xl flex items-center justify-center shadow-lg shadow-gray-800/25">
+                          <Clock className="w-8 h-8 text-white" />
+                    </div>
+                        <div>
+                          <div className="text-sm text-gray-500 font-light uppercase tracking-wide">Schedule</div>
+                          <div className="text-lg font-light text-gray-700">Availability</div>
+                  </div>
+                  </div>
+                      <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div className="text-5xl font-thin text-black tracking-tight">
+                        {availability.length}
+                        <span className="text-2xl text-gray-400 font-light ml-2">days</span>
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-gray-500 font-light">This Week</span>
+                        <span className="text-gray-700 font-light">{availability.length}/5 days</span>
+                      </div>
+                      
+                      <div className="flex space-x-1">
+                        {[1,2,3,4,5].map((day) => (
+                          <div 
+                            key={day}
+                            className={`flex-1 h-2 rounded-full ${
+                              availability.some(a => a.day_of_week === day) 
+                                ? 'bg-gradient-to-r from-gray-800 to-black' 
+                                : 'bg-gray-200'
+                            }`}
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
-                  <div className="text-3xl font-light text-gray-900 mb-1">
-                    {availability.length}
-                  </div>
-                  <div className="text-sm text-gray-600 font-extralight">Available Days</div>
-                </motion.div>
-
-                <motion.div
-                  className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl p-6 shadow-lg"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-xl flex items-center justify-center">
-                      <Calendar className="w-6 h-6 text-white" />
-                    </div>
-                  </div>
-                  <div className="text-3xl font-light text-gray-900 mb-1">
-                    {meetingBookings.filter(b => b.status === 'confirmed').length}
-                  </div>
-                  <div className="text-sm text-gray-600 font-extralight">Upcoming Meetings</div>
                 </motion.div>
               </div>
 
-              {/* Teacher Info */}
+              {/* Premium Profile Information */}
               <motion.div
-                className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl p-8 shadow-lg"
-                initial={{ opacity: 0, y: 20 }}
+                className="group relative mb-8"
+                initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.4 }}
+                transition={{ delay: 0.4, duration: 0.8 }}
               >
-                <h2 className="text-2xl font-light text-gray-900 mb-6">Profile Information</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                    <p className="text-gray-900 font-light">{teacherData.email}</p>
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 via-transparent to-blue-500/10 blur-2xl" />
+                <div className="relative bg-gradient-to-br from-white via-white to-blue-50/20 backdrop-blur-xl border border-white/50 rounded-3xl p-8 shadow-2xl shadow-blue-500/10">
+                  <div className="flex items-center space-x-4 mb-8">
+                    <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/25">
+                      <GraduationCap className="w-8 h-8 text-white" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Room Number</label>
-                    <p className="text-gray-900 font-light">{teacherData.room_number}</p>
+                      <h2 className="text-3xl font-thin text-black mb-1">Profile Information</h2>
+                      <p className="text-gray-600 font-light">Your teaching credentials and settings</p>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Max Clubs</label>
-                    <p className="text-gray-900 font-light">{teacherData.max_clubs} clubs</p>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                    <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                      teacherData.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
-                    }`}>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-6">
+                      <div className="group">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <Mail className="w-5 h-5 text-blue-500" />
+                          <label className="text-sm font-light text-gray-500 uppercase tracking-wide">Email Address</label>
+                        </div>
+                        <p className="text-lg font-light text-black pl-8">{teacherData.email}</p>
+                      </div>
+                      
+                      <div className="group">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <Building className="w-5 h-5 text-blue-500" />
+                          <label className="text-sm font-light text-gray-500 uppercase tracking-wide">Room Number</label>
+                        </div>
+                        <p className="text-lg font-light text-black pl-8">{teacherData.room_number || 'Not specified'}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-6">
+                      <div className="group">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <Users className="w-5 h-5 text-blue-500" />
+                          <label className="text-sm font-light text-gray-500 uppercase tracking-wide">Club Capacity</label>
+                        </div>
+                        <p className="text-lg font-light text-black pl-8">{teacherData.max_clubs} clubs maximum</p>
+                      </div>
+                      
+                      <div className="group">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <CheckCircle className="w-5 h-5 text-blue-500" />
+                          <label className="text-sm font-light text-gray-500 uppercase tracking-wide">Account Status</label>
+                        </div>
+                        <div className="pl-8">
+                          <span className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-light border ${
+                            teacherData.active 
+                              ? 'bg-green-50 text-green-700 border-green-200' 
+                              : 'bg-red-50 text-red-700 border-red-200'
+                          }`}>
+                            <div className={`w-2 h-2 rounded-full mr-2 ${
+                              teacherData.active ? 'bg-green-500' : 'bg-red-500'
+                            }`} />
                       {teacherData.active ? 'Active' : 'Inactive'}
                     </span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </motion.div>
 
-              {/* Availability Schedule */}
+              {/* Premium Availability Schedule */}
               <motion.div
-                className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl p-8 shadow-lg"
-                initial={{ opacity: 0, y: 20 }}
+                className="group relative"
+                initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5 }}
+                transition={{ delay: 0.5, duration: 0.8 }}
               >
-                <h2 className="text-2xl font-light text-gray-900 mb-6">Availability Schedule</h2>
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-transparent to-purple-500/10 blur-2xl" />
+                <div className="relative bg-gradient-to-br from-white via-white to-purple-50/20 backdrop-blur-xl border border-white/50 rounded-3xl p-8 shadow-2xl shadow-purple-500/10">
+                  <div className="flex items-center space-x-4 mb-8">
+                    <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/25">
+                      <Calendar className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-3xl font-thin text-black mb-1">Availability Schedule</h2>
+                      <p className="text-gray-600 font-light">Your weekly office hours for student meetings</p>
+                    </div>
+                  </div>
+                  
                 <div className="space-y-4">
                   {DAYS.slice(1, 6).map((day, index) => {
                     const dayAvailability = availability.find(a => a.day_of_week === index + 1);
                     return (
-                      <div key={day} className="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl">
-                        <span className="font-light text-gray-900">{day}</span>
-                        {dayAvailability ? (
+                        <motion.div 
+                          key={day} 
+                          className="group relative overflow-hidden"
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.6 + index * 0.1 }}
+                        >
+                          <div className="flex items-center justify-between p-6 bg-gradient-to-r from-white/50 to-gray-50/30 backdrop-blur-sm rounded-2xl border border-white/50 hover:border-purple-200/50 transition-all duration-300 group-hover:shadow-lg">
                           <div className="flex items-center space-x-4">
-                            <span className="text-sm text-gray-600 font-extralight">
+                              <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                                dayAvailability 
+                                  ? 'bg-gradient-to-r from-green-500 to-green-600 shadow-lg shadow-green-500/25' 
+                                  : 'bg-gray-200'
+                              }`}>
+                                {dayAvailability ? (
+                                  <CheckCircle className="w-6 h-6 text-white" />
+                                ) : (
+                                  <XCircle className="w-6 h-6 text-gray-400" />
+                                )}
+                              </div>
+                              <div>
+                                <span className="text-lg font-light text-black">{day}</span>
+                                <div className="text-sm text-gray-500 font-light">
+                                  {dayAvailability ? 'Available' : 'Not Available'}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {dayAvailability && (
+                              <div className="text-right">
+                                <div className="text-lg font-light text-black">
                               {formatTime(dayAvailability.start_time)} - {formatTime(dayAvailability.end_time)}
-                            </span>
-                            <CheckCircle className="w-5 h-5 text-green-500" />
                           </div>
-                        ) : (
-                          <div className="flex items-center space-x-4">
-                            <span className="text-sm text-gray-500 font-extralight">Not available</span>
-                            <XCircle className="w-5 h-5 text-gray-400" />
+                                <div className="text-sm text-gray-500 font-light">Office Hours</div>
                           </div>
                         )}
                       </div>
+                        </motion.div>
                     );
                   })}
+                  </div>
                 </div>
               </motion.div>
             </motion.div>
@@ -889,16 +1052,30 @@ export default function TeacherDashboard() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <div className="bg-gradient-to-br from-white via-white to-blue-50/30 backdrop-blur-xl border border-gray-200/30 rounded-3xl shadow-2xl overflow-hidden">
-                {/* Modern Header */}
-                <div className="bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 px-8 py-6">
-                  <div className="flex items-center justify-between">
+              <div className="relative group">
+                {/* Glow Effect - Behind Content */}
+                <div className="absolute -inset-4 bg-gradient-to-r from-orange-500/10 via-orange-400/5 to-orange-500/10 blur-2xl opacity-0 group-hover:opacity-100 transition-all duration-500 -z-10" />
+                
+                <div className="relative bg-gradient-to-br from-white via-white to-orange-50/30 backdrop-blur-2xl border border-white/50 rounded-3xl shadow-2xl shadow-orange-500/10 overflow-hidden">
+                  {/* Premium Header */}
+                  <div className="relative bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 px-10 py-8">
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/10 via-transparent to-black/10" />
+                    <div className="relative flex items-center justify-between">
+                      <div className="flex items-center space-x-6">
+                        <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg">
+                          <Users className="w-8 h-8 text-white" />
+                        </div>
                     <div>
-                      <h2 className="text-2xl font-semibold text-white">Advisor Requests</h2>
-                      <p className="text-orange-100 mt-1">Manage student club advisor requests</p>
+                          <h2 className="text-3xl font-thin text-white mb-1">Advisor Requests</h2>
+                          <p className="text-orange-100 font-light">Manage student club advisor applications</p>
                     </div>
-                    <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-4 py-2">
-                      <span className="text-white font-medium">{advisorRequests.length} Total</span>
+                      </div>
+                      <div className="text-right">
+                        <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-6 py-3 border border-white/20">
+                          <div className="text-2xl font-thin text-white">{advisorRequests.length}</div>
+                          <div className="text-orange-100 text-sm font-light">Total Requests</div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1127,21 +1304,38 @@ export default function TeacherDashboard() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-lg overflow-hidden"
             >
-              <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 px-8 py-6">
-                <div className="flex items-center justify-between">
+              <div className="relative group">
+                {/* Glow Effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 via-black/10 to-orange-500/20 blur-3xl group-hover:blur-3xl transition-all duration-500" />
+                
+                <div className="relative bg-gradient-to-br from-white via-white to-orange-50/30 backdrop-blur-2xl border border-white/50 rounded-3xl shadow-2xl shadow-orange-500/10 overflow-hidden">
+                  {/* Premium Header */}
+                  <div className="relative bg-gradient-to-r from-orange-600 via-orange-500 to-orange-700 px-10 py-8">
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/20" />
+                    <div className="relative flex items-center justify-between">
+                      <div className="flex items-center space-x-6">
+                        <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg border border-white/10">
+                          <MessageSquare className="w-8 h-8 text-white" />
+                        </div>
                   <div>
-                    <h2 className="text-2xl font-semibold text-white">Student Communications</h2>
-                    <p className="text-blue-100 mt-1">Manage conversations with your advisees</p>
+                          <h2 className="text-3xl font-thin text-white mb-1">Student Communications</h2>
+                          <p className="text-orange-100 font-light">Real-time messaging with your club advisees</p>
                   </div>
-                  <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-4 py-2">
-                    <MessageSquare className="w-6 h-6 text-white" />
                   </div>
+                      <div className="text-right">
+                        <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-6 py-3 border border-white/20">
+                          <div className="text-2xl font-thin text-white">{advisorRequests.filter(req => req.status === 'approved').length}</div>
+                          <div className="text-orange-100 text-sm font-light">Active Conversations</div>
                 </div>
               </div>
-              <div className="p-0">
+                    </div>
+                  </div>
+                </div>
+
+                <div className="relative -mt-4 bg-white/90 backdrop-blur-xl border border-white/50 rounded-3xl shadow-2xl shadow-orange-500/5 overflow-hidden">
                 <TeacherMessaging />
+                </div>
               </div>
             </motion.div>
           )}
@@ -1154,111 +1348,141 @@ export default function TeacherDashboard() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <div className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl p-8 shadow-lg">
-                <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-light text-gray-900">Profile Settings</h2>
-                  <button
+              <div className="relative group">
+                {/* Glow Effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 via-black/10 to-orange-500/20 blur-3xl group-hover:blur-3xl transition-all duration-500" />
+                
+                <div className="relative bg-gradient-to-br from-white via-white to-orange-50/30 backdrop-blur-2xl border border-white/50 rounded-3xl shadow-2xl shadow-orange-500/10 overflow-hidden">
+                  {/* Premium Header */}
+                  <div className="relative bg-gradient-to-r from-orange-600 via-orange-500 to-orange-700 px-10 py-8">
+                    <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-transparent to-black/30" />
+                    <div className="relative flex items-center justify-between">
+                      <div className="flex items-center space-x-6">
+                        <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center shadow-lg border border-white/10">
+                          <Settings className="w-8 h-8 text-white" />
+                        </div>
+                        <div>
+                          <h2 className="text-3xl font-thin text-white mb-1">Profile Settings</h2>
+                          <p className="text-orange-100 font-light">Configure your teaching profile and availability</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <motion.button
                     onClick={() => setIsEditing(!isEditing)}
-                    className="px-4 py-2 bg-orange-500 text-white rounded-lg font-light hover:bg-orange-600 transition-colors"
-                  >
-                    {isEditing ? 'Cancel' : 'Edit Profile'}
-                  </button>
+                          className="bg-white/20 backdrop-blur-sm rounded-2xl px-6 py-3 border border-white/20 text-white font-light hover:bg-white/30 hover:border-orange-300/30 transition-all duration-300"
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                        >
+                          {isEditing ? 'Cancel Edit' : 'Edit Profile'}
+                        </motion.button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 
+                <div className="relative -mt-4 bg-white/90 backdrop-blur-xl border border-white/50 rounded-3xl shadow-2xl shadow-orange-500/5 p-10">
                 {error && (
-                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
-                    <p className="text-red-600 text-sm font-light">{error}</p>
-                  </div>
+                    <motion.div 
+                      className="mb-8 p-6 bg-red-50/80 backdrop-blur-sm border border-red-200/50 rounded-2xl"
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                    >
+                      <p className="text-red-600 font-light">{error}</p>
+                    </motion.div>
                 )}
 
                 {isEditing ? (
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">School District</label>
+                    <motion.div 
+                      className="space-y-8"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.5 }}
+                    >
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <motion.div 
+                          className="group"
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.1 }}
+                        >
+                          <label className="block text-sm font-light text-gray-500 uppercase tracking-wide mb-3">School District</label>
                         <input
                           type="text"
                           value={editFormData.district}
                           onChange={(e) => setEditFormData(prev => ({ ...prev, district: e.target.value }))}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                            className="w-full px-6 py-4 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light bg-white/50 backdrop-blur-sm transition-all duration-300 group-hover:border-orange-300"
                           placeholder="e.g., Los Angeles Unified"
                         />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">School Name</label>
+                        </motion.div>
+                        <motion.div 
+                          className="group"
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ delay: 0.2 }}
+                        >
+                          <label className="block text-sm font-light text-gray-500 uppercase tracking-wide mb-3">School Name</label>
                         <input
                           type="text"
                           value={editFormData.school}
                           onChange={(e) => setEditFormData(prev => ({ ...prev, school: e.target.value }))}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                            className="w-full px-6 py-4 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light bg-white/50 backdrop-blur-sm transition-all duration-300 group-hover:border-orange-300"
                           placeholder="e.g., Lincoln High School"
                         />
+                        </motion.div>
                       </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Subject/Department</label>
+                    <motion.div 
+                      className="group"
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
+                    >
+                      <label className="block text-sm font-light text-gray-500 uppercase tracking-wide mb-3">Subject/Department</label>
                       <input
                         type="text"
                         value={editFormData.subject}
                         onChange={(e) => setEditFormData(prev => ({ ...prev, subject: e.target.value }))}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                        className="w-full px-6 py-4 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light bg-white/50 backdrop-blur-sm transition-all duration-300 group-hover:border-orange-300"
                         placeholder="e.g., Computer Science, Mathematics"
                       />
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Room Number</label>
+                    </motion.div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <motion.div 
+                        className="group"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.4 }}
+                      >
+                        <label className="block text-sm font-light text-gray-500 uppercase tracking-wide mb-3">Room Number</label>
                         <input
                           type="text"
                           value={editFormData.roomNumber}
                           onChange={(e) => setEditFormData(prev => ({ ...prev, roomNumber: e.target.value }))}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                          className="w-full px-6 py-4 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light bg-white/50 backdrop-blur-sm transition-all duration-300 group-hover:border-orange-300"
                           placeholder="e.g., Room 201"
                         />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">Max Clubs to Advise</label>
-                        <div className="space-y-2">
+                      </motion.div>
+                      <motion.div 
+                        className="group"
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.5 }}
+                      >
+                        <label className="block text-sm font-light text-gray-500 uppercase tracking-wide mb-3">Max Clubs to Advise</label>
                           <select
-                            value={editFormData.maxClubs === 0 ? 'custom' : editFormData.maxClubs}
+                          value={editFormData.maxClubs}
                             onChange={(e) => {
-                              const value = e.target.value;
-                              if (value === 'custom') {
-                                setEditFormData(prev => ({ ...prev, maxClubs: 0 }));
-                              } else {
                                 setEditFormData(prev => ({ 
                                   ...prev, 
-                                  maxClubs: parseInt(value),
-                                  customMaxClubs: ''
+                              maxClubs: parseInt(e.target.value)
                                 }));
-                              }
                             }}
-                            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                          className="w-full px-6 py-4 border border-gray-200/50 rounded-2xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light bg-white/50 backdrop-blur-sm transition-all duration-300 group-hover:border-orange-300"
                           >
-                            {[1, 2, 3, 4, 5].map(num => (
+                          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
                               <option key={num} value={num}>{num} club{num !== 1 ? 's' : ''}</option>
                             ))}
-                            <option value="custom">Custom number</option>
                           </select>
-                          {editFormData.maxClubs === 0 && (
-                            <input
-                              type="number"
-                              min="1"
-                              max="20"
-                              value={editFormData.customMaxClubs}
-                              placeholder="Enter number of clubs"
-                              onChange={(e) => {
-                                setEditFormData(prev => ({
-                                  ...prev,
-                                  customMaxClubs: e.target.value,
-                                  maxClubs: parseInt(e.target.value) || 1
-                                }));
-                              }}
-                              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
-                            />
-                          )}
-                        </div>
-                      </div>
+                      </motion.div>
                     </div>
                     
                     {/* Availability Schedule */}
@@ -1349,7 +1573,7 @@ export default function TeacherDashboard() {
                         Cancel
                       </button>
                     </div>
-                  </div>
+                    </motion.div>
                 ) : (
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1397,6 +1621,7 @@ export default function TeacherDashboard() {
                     </div>
                   </div>
                 )}
+                </div>
               </div>
             </motion.div>
           )}

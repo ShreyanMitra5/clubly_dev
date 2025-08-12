@@ -13,7 +13,6 @@ interface TeacherFormData {
   subject: string;
   roomNumber: string;
   maxClubs: number;
-  customMaxClubs: string;
   availability: {
     [key: string]: {
       startTime: string;
@@ -44,7 +43,6 @@ export default function TeacherRegistration() {
     subject: '',
     roomNumber: '',
     maxClubs: 3,
-    customMaxClubs: '',
     availability: {
       monday: { startTime: '15:00', endTime: '16:00', enabled: false },
       tuesday: { startTime: '15:00', endTime: '16:00', enabled: false },
@@ -398,40 +396,17 @@ export default function TeacherRegistration() {
 
                                  <div>
                    <label className="block text-sm font-medium text-gray-700 mb-2">Max Clubs to Advise</label>
-                   <div className="space-y-2">
-                                           <select
-                        value={formData.maxClubs === 0 ? 'custom' : formData.maxClubs}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          if (value === 'custom') {
-                            handleInputChange('maxClubs', 0);
-                          } else {
-                            handleInputChange('maxClubs', parseInt(value));
-                            handleInputChange('customMaxClubs', '');
-                          }
-                        }}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
-                      >
-                        {[1, 2, 3, 4, 5].map(num => (
-                          <option key={num} value={num}>{num} club{num !== 1 ? 's' : ''}</option>
-                        ))}
-                        <option value="custom">Custom number</option>
-                      </select>
-                      {formData.maxClubs === 0 && (
-                        <input
-                          type="number"
-                          min="1"
-                          max="20"
-                          value={formData.customMaxClubs}
-                          placeholder="Enter number of clubs"
-                          onChange={(e) => {
-                            handleInputChange('customMaxClubs', e.target.value);
-                            handleInputChange('maxClubs', parseInt(e.target.value) || 1);
-                          }}
-                          className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
-                        />
-                      )}
-                   </div>
+                                      <select
+                     value={formData.maxClubs}
+                     onChange={(e) => {
+                       handleInputChange('maxClubs', parseInt(e.target.value));
+                     }}
+                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
+                   >
+                     {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                       <option key={num} value={num}>{num} club{num !== 1 ? 's' : ''}</option>
+                     ))}
+                   </select>
                  </div>
               </div>
             </motion.div>

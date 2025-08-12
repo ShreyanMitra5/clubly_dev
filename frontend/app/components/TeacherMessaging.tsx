@@ -340,48 +340,53 @@ export default function TeacherMessaging() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'approved': return 'text-green-600 bg-green-100';
-      case 'denied': return 'text-red-600 bg-red-100';
-      case 'pending': return 'text-yellow-600 bg-yellow-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'approved': return 'text-green-600 bg-green-100 border border-green-200';
+      case 'denied': return 'text-red-600 bg-red-100 border border-red-200';
+      case 'pending': return 'text-orange-600 bg-orange-100 border border-orange-200';
+      default: return 'text-gray-600 bg-gray-100 border border-gray-200';
     }
   };
 
   return (
-    <div className="bg-white rounded-b-2xl shadow-sm">
-      {/* Remove header since it's now in the parent component */}
-
-      <div className="flex h-[700px] bg-gradient-to-br from-slate-50 to-blue-50/30">
-        {/* Modern Sidebar */}
-        <div className="w-80 bg-white/70 backdrop-blur-xl border-r border-slate-200/60 shadow-lg">
-          {/* Header */}
-          <div className="p-6 border-b border-slate-200/60 bg-gradient-to-r from-blue-50/50 to-indigo-50/50">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-                <MessageSquare className="w-5 h-5 text-white" />
+    <div className="relative bg-transparent">
+      <div className="flex h-[800px] bg-gradient-to-br from-gray-50/50 via-white/80 to-orange-50/30 backdrop-blur-sm">
+        {/* Ultra-Modern Sidebar */}
+        <div className="w-96 bg-gradient-to-b from-white/90 via-white/80 to-white/70 backdrop-blur-2xl border-r border-white/30 shadow-2xl shadow-orange-500/10">
+          {/* Elegant Header */}
+          <div className="p-8 border-b border-white/20 bg-gradient-to-r from-orange-50/80 via-white/90 to-orange-50/80 backdrop-blur-xl">
+            <div className="flex items-center space-x-4">
+              <div className="relative group">
+                <div className="absolute inset-0 bg-orange-500 rounded-2xl blur-lg opacity-20 group-hover:opacity-30 transition-all duration-300"></div>
+                <div className="relative w-14 h-14 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-xl">
+                  <MessageSquare className="w-7 h-7 text-white" />
+                </div>
               </div>
               <div>
-                <h4 className="text-lg font-semibold text-slate-900">Student Conversations</h4>
-                <p className="text-sm text-slate-600">
-                  {advisorRequests.filter(req => req.status === 'approved').length} active conversations
-                </p>
+                <h4 className="text-xl font-thin text-gray-900 mb-1">Student Conversations</h4>
+                <div className="text-sm text-gray-500 font-light flex items-center space-x-2">
+                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                  <span>{advisorRequests.filter(req => req.status === 'approved').length} active • {advisorRequests.filter(req => req.status === 'pending').length} pending</span>
+                </div>
               </div>
             </div>
           </div>
 
           {/* Conversations List */}
-          <div className="p-4 space-y-3 overflow-y-auto max-h-[500px]">
-            {advisorRequests.map((request) => (
+          <div className="p-6 space-y-4 overflow-y-auto max-h-[600px] scrollbar-thin scrollbar-thumb-orange-200 scrollbar-track-transparent">
+            {advisorRequests.map((request, index) => (
               <motion.div
                 key={request.id}
                 onClick={() => setSelectedRequest(request)}
-                className={`group relative p-4 rounded-2xl cursor-pointer transition-all duration-300 border ${
+                className={`group relative p-6 rounded-3xl cursor-pointer transition-all duration-500 border backdrop-blur-xl ${
                   selectedRequest?.id === request.id 
-                    ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200 shadow-lg ring-1 ring-blue-200/50' 
-                    : 'bg-white/60 hover:bg-white/90 border-slate-200/50 hover:border-slate-300 hover:shadow-md'
+                    ? 'bg-gradient-to-br from-orange-50/90 via-white/80 to-orange-100/60 border-orange-300/50 shadow-2xl shadow-orange-500/20 ring-2 ring-orange-200/30' 
+                    : 'bg-gradient-to-br from-white/80 via-white/60 to-gray-50/40 hover:from-white/90 hover:via-white/80 hover:to-orange-50/30 border-gray-200/30 hover:border-orange-200/50 hover:shadow-xl hover:shadow-orange-500/10'
                 }`}
-                whileHover={{ scale: 1.02, y: -2 }}
-                whileTap={{ scale: 0.98 }}
+                whileHover={{ scale: 1.03, y: -4 }}
+                whileTap={{ scale: 0.97 }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
               >
                 {/* Three Dots Menu */}
                 <div className="absolute top-3 right-3 flex items-center space-x-2">
@@ -424,22 +429,26 @@ export default function TeacherMessaging() {
                 </div>
 
                 {/* Student Info */}
-                <div className="pr-16">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <div className="w-10 h-10 bg-gradient-to-r from-slate-100 to-slate-200 rounded-full flex items-center justify-center">
-                      <User className="w-5 h-5 text-slate-600" />
+                <div className="pr-20">
+                  <div className="flex items-center space-x-4 mb-4">
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-gradient-to-r from-orange-400 to-orange-500 rounded-2xl blur-md opacity-20"></div>
+                      <div className="relative w-12 h-12 bg-gradient-to-br from-orange-400 via-orange-500 to-orange-600 rounded-2xl flex items-center justify-center shadow-lg">
+                        <User className="w-6 h-6 text-white" />
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-semibold text-slate-900 text-base">{request.student_name || 'Student'}</h4>
-                      <p className="text-xs text-slate-500">
-                        {formatDate(request.created_at)}
+                    <div className="flex-1">
+                      <h4 className="font-light text-gray-900 text-lg mb-1">{request.student_name || 'Student'}</h4>
+                      <p className="text-xs text-gray-500 font-light flex items-center space-x-2">
+                        <Clock className="w-3 h-3" />
+                        <span>{formatDate(request.created_at)}</span>
                       </p>
                     </div>
                   </div>
 
-                  {/* Club Name - Made Bigger and Prominent */}
-                  <div className="mb-3">
-                    <h3 className="text-xl font-bold text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text">
+                  {/* Club Name - Clean Black */}
+                  <div className="mb-4">
+                    <h3 className="text-xl font-thin text-black leading-tight">
                       {request.clubs?.name || request.club_name || 'Unknown Club'}
                     </h3>
                   </div>
@@ -489,60 +498,66 @@ export default function TeacherMessaging() {
         <div className="flex-1 flex flex-col">
           {selectedRequest ? (
             <>
-              {/* Modern Messages Header */}
-              <div className="p-6 border-b border-slate-200/60 bg-gradient-to-r from-white to-slate-50/50">
-                <div className="flex items-center space-x-4">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg">
-                    <User className="w-6 h-6 text-white" />
+              {/* Ultra-Premium Messages Header */}
+              <div className="p-8 border-b border-white/30 bg-gradient-to-r from-white/90 via-white/80 to-orange-50/60 backdrop-blur-2xl">
+                <div className="flex items-center space-x-6">
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-gradient-to-r from-orange-500 to-orange-600 rounded-3xl blur-lg opacity-25"></div>
+                    <div className="relative w-16 h-16 bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 rounded-3xl flex items-center justify-center shadow-xl">
+                      <User className="w-8 h-8 text-white" />
+                    </div>
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-xl font-bold text-slate-900">{selectedRequest.student_name || 'Student'}</h3>
-                    <h2 className="text-2xl font-bold text-transparent bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text">
+                    <h3 className="text-2xl font-thin text-gray-900 mb-1">{selectedRequest.student_name || 'Student'}</h3>
+                    <h2 className="text-xl font-light text-black">
                       {selectedRequest.clubs?.name || selectedRequest.club_name || 'Unknown Club'}
                     </h2>
                   </div>
-                  <span className={`px-3 py-2 rounded-xl text-sm font-semibold ${getStatusColor(selectedRequest.status)} shadow-sm`}>
-                    {selectedRequest.status}
-                  </span>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                    <span className={`px-4 py-2 rounded-2xl text-sm font-light ${getStatusColor(selectedRequest.status)} shadow-lg backdrop-blur-sm`}>
+                      {selectedRequest.status}
+                    </span>
+                  </div>
                 </div>
               </div>
 
-              {/* Modern Messages List */}
-              <div className="flex-1 p-6 overflow-y-auto space-y-4 bg-gradient-to-b from-slate-50/30 to-white">
+              {/* Ultra-Modern Messages List */}
+              <div className="flex-1 p-8 overflow-y-auto space-y-6 bg-gradient-to-b from-white/60 via-white/40 to-orange-50/20 backdrop-blur-sm scrollbar-thin scrollbar-thumb-orange-200 scrollbar-track-transparent">
                 {messages.map((message) => {
                   const isTeacherMessage = message.sender_id === selectedRequest?.teacher_id;
                   return (
                     <motion.div
                       key={message.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3 }}
+                      initial={{ opacity: 0, y: 20, scale: 0.8 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      transition={{ duration: 0.4, ease: "easeOut" }}
                       className={`flex ${isTeacherMessage ? 'justify-end' : 'justify-start'}`}
                     >
-                      <div className={`max-w-xs lg:max-w-md ${
+                      <div className={`relative max-w-xs lg:max-w-md group ${
                         isTeacherMessage 
-                          ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-lg shadow-blue-500/25' 
-                          : 'bg-white text-slate-800 shadow-lg border border-slate-200/50'
-                      } rounded-2xl px-4 py-3 backdrop-blur-sm`}>
+                          ? 'bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 text-white shadow-2xl shadow-orange-500/30' 
+                          : 'bg-gradient-to-br from-white via-white to-gray-50/80 text-gray-900 shadow-xl shadow-black/10 border border-white/50'
+                      } rounded-3xl px-6 py-4 backdrop-blur-xl transform hover:scale-105 transition-all duration-300`}>
                         <div className="flex items-center space-x-2 mb-2">
                           <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                            isTeacherMessage ? 'bg-white/20' : 'bg-slate-100'
+                            isTeacherMessage ? 'bg-white/20' : 'bg-orange-100'
                           }`}>
                             {isTeacherMessage ? (
                               <User className="w-3 h-3 text-white" />
                             ) : (
-                              <User className="w-3 h-3 text-slate-600" />
+                              <User className="w-3 h-3 text-orange-600" />
                             )}
                           </div>
-                          <span className={`text-xs font-semibold ${
-                            isTeacherMessage ? 'text-white/80' : 'text-slate-600'
+                          <span className={`text-xs font-light ${
+                            isTeacherMessage ? 'text-white/80' : 'text-gray-600'
                           }`}>
                             {message.sender_name || (isTeacherMessage ? 'You' : 'Student')}
                           </span>
                         </div>
-                        <p className="text-sm leading-relaxed font-medium">{message.message}</p>
-                        <p className={`text-xs mt-2 ${
-                          isTeacherMessage ? 'text-white/60' : 'text-slate-500'
+                        <p className="text-sm leading-relaxed font-light">{message.message}</p>
+                        <p className={`text-xs mt-2 font-light ${
+                          isTeacherMessage ? 'text-white/60' : 'text-gray-500'
                         }`}>
                           {formatDate(message.created_at)}
                         </p>
@@ -559,34 +574,38 @@ export default function TeacherMessaging() {
                 )}
               </div>
 
-              {/* Modern Message Input */}
-              <div className="p-6 border-t border-slate-200/60 bg-gradient-to-r from-white to-slate-50/50">
-                <div className="flex items-end space-x-4">
+              {/* Ultra-Premium Message Input */}
+              <div className="p-8 border-t border-white/30 bg-gradient-to-r from-white/90 via-white/80 to-orange-50/60 backdrop-blur-2xl">
+                <div className="flex space-x-6 items-end">
                   <div className="flex-1">
-                    <div className="relative">
+                    <div className="relative group">
+                      <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-orange-600/10 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-all duration-500"></div>
                       <textarea
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), sendMessage())}
-                        placeholder="Type your message to the student..."
-                        className="w-full px-4 py-4 pr-12 border border-slate-300 rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none bg-white shadow-sm backdrop-blur-sm"
+                        placeholder="Compose your message to the student..."
+                        className="relative w-full px-6 py-4 pr-14 border border-white/40 rounded-3xl focus:ring-2 focus:ring-orange-500/50 focus:border-orange-300/50 resize-none bg-white/80 shadow-xl backdrop-blur-xl font-light text-gray-900 placeholder-gray-500 transition-all duration-300 group-hover:shadow-2xl group-hover:bg-white/90"
                         rows={3}
                         disabled={loading}
                       />
-                      <div className="absolute bottom-3 right-3">
-                        <div className="w-6 h-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
-                          <MessageSquare className="w-3 h-3 text-white" />
+                      <div className="absolute bottom-4 right-4">
+                        <div className="w-8 h-8 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center shadow-lg">
+                          <MessageSquare className="w-4 h-4 text-white" />
                         </div>
                       </div>
                     </div>
-                    <p className="text-xs text-slate-500 mt-2 flex items-center space-x-1">
-                      <span>Press Enter to send, Shift+Enter for new line</span>
-                    </p>
+                    <div className="text-xs text-gray-500 mt-3 flex items-center space-x-2 font-light px-2">
+                      <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+                      <span>Press Enter to send • Shift+Enter for new line</span>
+                    </div>
                   </div>
-                  <button
+                  <motion.button
                     onClick={sendMessage}
                     disabled={loading || !newMessage.trim()}
-                    className="px-6 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-2xl font-semibold hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 shadow-lg hover:shadow-xl transform hover:scale-105"
+                    className="px-8 py-4 bg-gradient-to-r from-orange-500 via-orange-600 to-orange-700 hover:from-orange-600 hover:via-orange-700 hover:to-orange-800 text-white rounded-3xl font-light transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-3 shadow-2xl shadow-orange-500/30 hover:shadow-orange-500/50 backdrop-blur-xl border border-orange-400/20"
+                    whileHover={{ scale: 1.05, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
                   >
                     {loading ? (
                       <>
@@ -596,10 +615,10 @@ export default function TeacherMessaging() {
                     ) : (
                       <>
                         <Send className="w-5 h-5" />
-                        <span>Send</span>
+                        <span>Send Message</span>
                       </>
                     )}
-                  </button>
+                  </motion.button>
                 </div>
               </div>
             </>

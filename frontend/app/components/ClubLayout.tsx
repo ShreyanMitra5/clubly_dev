@@ -59,7 +59,9 @@ import {
   AlertTriangle,
   Save,
   MessageSquare,
-  Search
+  Search,
+  MessageCircle,
+  User
 } from 'lucide-react';
 
 interface ClubLayoutProps {
@@ -420,68 +422,7 @@ function DashboardPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
             </motion.div>
           </div>
 
-          {/* Recent Activity Summary */}
-          {history.length > 0 || meetingNotes.length > 0 ? (
-            <motion.div
-              className="mt-6 pt-6 border-t border-gray-200/50"
-              initial={{ opacity: 0 }}
-              animate={inView ? { opacity: 1 } : { opacity: 0 }}
-              transition={{ delay: 2.0, duration: 0.6 }}
-            >
-              <h4 className="text-lg font-light text-gray-900 mb-4">Recent Activity</h4>
-              <div className="space-y-3">
-                {[...history, ...meetingNotes]
-                  .sort((a, b) => {
-                    const dateA = new Date(a.createdAt || a.timestamp || a.date || Date.now());
-                    const dateB = new Date(b.createdAt || b.timestamp || b.date || Date.now());
-                    return dateB.getTime() - dateA.getTime();
-                  })
-                  .slice(0, 3)
-                  .map((item, index) => {
-                    const isPresentation = 'topic' in item;
-                    const timestamp = new Date(item.createdAt || item.timestamp || item.date || Date.now());
-                    const timeAgo = getTimeAgo(timestamp);
-                    
-                    return (
-                      <motion.div
-                        key={index}
-                        className="flex items-center space-x-3 p-3 bg-gray-50/30 rounded-lg"
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={inView ? { opacity: 1, x: 0 } : { opacity: 0, x: -10 }}
-                        transition={{ delay: 2.1 + index * 0.1, duration: 0.6 }}
-                      >
-                        <div className={`w-8 h-8 bg-gradient-to-r ${isPresentation ? 'from-orange-500 to-orange-600' : 'from-blue-500 to-blue-600'} rounded-lg flex items-center justify-center`}>
-                          {isPresentation ? (
-                            <Presentation className="w-4 h-4 text-white" />
-                          ) : (
-                            <CheckSquare className="w-4 h-4 text-white" />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <p className="text-sm font-light text-gray-900">
-                            {isPresentation ? (item.topic || 'New presentation') : (item.title || 'Meeting notes')}
-                          </p>
-                        </div>
-                        <span className="text-xs text-gray-500 font-extralight">{timeAgo}</span>
-                      </motion.div>
-                    );
-                  })}
-              </div>
-            </motion.div>
-          ) : (
-            <motion.div
-              className="mt-6 pt-6 border-t border-gray-200/50 text-center"
-              initial={{ opacity: 0 }}
-              animate={inView ? { opacity: 1 } : { opacity: 0 }}
-              transition={{ delay: 2.0, duration: 0.6 }}
-            >
-              <div className="w-12 h-12 bg-gradient-to-r from-gray-400 to-gray-500 rounded-xl flex items-center justify-center mx-auto mb-3">
-                <BarChart3 className="w-6 h-6 text-white" />
-              </div>
-              <h4 className="text-lg font-light text-gray-900 mb-2">No analytics data yet</h4>
-              <p className="text-gray-600 font-extralight">Start creating content to see your analytics insights.</p>
-            </motion.div>
-          )}
+
         </motion.div>
       </div>
     </div>
@@ -1700,16 +1641,16 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-orange-500 to-orange-600 rounded-xl flex items-center justify-center animate-spin">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+              <div className="w-16 h-16 mx-auto mb-6 bg-white/70 backdrop-blur-xl border border-orange-200/50 rounded-2xl flex items-center justify-center shadow-lg">
+                <Loader2 className="w-8 h-8 text-orange-500 animate-spin" />
               </div>
-              <p className="text-gray-600 font-extralight">Loading advisor information...</p>
+              <p className="text-gray-600 font-light text-lg">Loading advisor information...</p>
               <button 
                 onClick={() => {
                   console.log('Manual loading override');
                   setLoading(false);
                 }}
-                className="mt-4 px-4 py-2 bg-red-500 text-white rounded"
+                className="mt-6 px-4 py-2 bg-red-500 text-white rounded-xl font-light hover:bg-red-600 transition-colors"
               >
                 DEBUG: Force Complete Loading
               </button>
@@ -1760,54 +1701,53 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
           >
             {/* Pending Status Header */}
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 via-amber-500 to-yellow-500 rounded-2xl mb-4 shadow-lg animate-pulse">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-500 rounded-2xl mb-6 shadow-lg animate-pulse">
+                <Clock className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-3xl font-light text-gray-900 mb-2">Request Pending</h2>
+              <h2 className="text-3xl font-light text-black mb-2">Request Pending</h2>
               <p className="text-gray-600 font-light">Your advisor request for {clubName} is being reviewed</p>
             </div>
 
             {/* Pending Request Card */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-orange-200/50 shadow-xl overflow-hidden">
-              <div className="bg-gradient-to-r from-orange-50 to-amber-50 p-6 border-b border-orange-100">
+            <div className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-lg overflow-hidden">
+              <div className="bg-orange-50/50 p-8 border-b border-gray-200/50">
                 <div className="flex items-center space-x-4">
-                  <div className="w-16 h-16 bg-gradient-to-br from-orange-400 to-amber-500 rounded-2xl flex items-center justify-center">
-                    <span className="text-white font-medium text-xl">
+                  <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center">
+                    <span className="text-white font-light text-xl">
                       {pendingRequest.teacher?.name?.charAt(0) || 'T'}
                     </span>
                   </div>
                   <div>
-                    <h3 className="text-xl font-medium text-gray-900">{pendingRequest.teacher?.name}</h3>
-                    <p className="text-orange-600 font-medium">{pendingRequest.teacher?.subject} Teacher</p>
-                    <div className="flex items-center mt-1">
+                    <h3 className="text-xl font-light text-black">{pendingRequest.teacher?.name}</h3>
+                    <p className="text-orange-600 font-light">{pendingRequest.teacher?.subject} Teacher</p>
+                    <div className="flex items-center mt-2">
                       <div className="w-2 h-2 bg-orange-500 rounded-full mr-2 animate-pulse"></div>
-                      <span className="text-sm text-orange-600 font-medium">Pending Approval</span>
+                      <span className="text-sm text-orange-600 font-light">Pending Approval</span>
                     </div>
                   </div>
                 </div>
               </div>
               
-              <div className="p-6">
+              <div className="p-8">
                 <div className="text-center">
-                  <p className="text-gray-600 mb-6">We've sent your request to {pendingRequest.teacher?.name}. You'll be notified when they respond.</p>
+                  <p className="text-gray-600 font-light mb-8">We've sent your request to {pendingRequest.teacher?.name}. You'll be notified when they respond.</p>
                   
                   {/* Messages Button */}
                   <motion.button
                     onClick={() => setShowMessaging(true)}
-                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white px-8 py-3 rounded-2xl font-medium transition-all duration-200 shadow-lg hover:shadow-xl"
+                    className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-xl font-light text-lg flex items-center justify-center space-x-3 mx-auto transition-all duration-300 hover:shadow-lg hover:scale-105"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                   >
-                    💬 View Messages
+                    <MessageSquare className="w-5 h-5" />
+                    <span>View Messages</span>
                   </motion.button>
                 </div>
               </div>
             </div>
           </motion.div>
         ) : acceptedAdvisor ? (
-          // Show accepted advisor UI - Modern AI SAAS Design
+          // Show accepted advisor UI - Modern Design
           <motion.div 
             className="space-y-8"
             initial={{ opacity: 0, y: 30 }}
@@ -1816,28 +1756,26 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
           >
             {/* Modern Advisor Header */}
             <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-emerald-500 via-teal-500 to-cyan-500 rounded-2xl mb-4 shadow-lg">
-                <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+              <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-500 rounded-2xl mb-6 shadow-lg">
+                <CheckCircle className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-3xl font-light text-gray-900 mb-2">Club Advisor</h2>
+              <h2 className="text-3xl font-light text-black mb-2">Club Advisor</h2>
               <p className="text-gray-600 font-light">Your dedicated mentor for {clubName}</p>
             </div>
 
             {/* Advisor Profile Card - Modern Design */}
-            <div className="bg-white/80 backdrop-blur-sm rounded-3xl border border-gray-200/50 shadow-xl overflow-hidden">
-              <div className="bg-gradient-to-r from-emerald-50 to-teal-50 p-6 border-b border-gray-100">
+            <div className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-lg overflow-hidden">
+              <div className="bg-orange-50/50 p-8 border-b border-gray-200/50">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
-                    <div className="w-16 h-16 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl flex items-center justify-center">
-                      <span className="text-white font-medium text-xl">
+                    <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center">
+                      <span className="text-white font-light text-xl">
                         {acceptedAdvisor.teacher?.name?.charAt(0) || 'T'}
                       </span>
                     </div>
                     <div>
-                      <h3 className="text-xl font-medium text-gray-900">{acceptedAdvisor.teacher?.name}</h3>
-                      <p className="text-emerald-600 font-medium">{acceptedAdvisor.teacher?.subject} Teacher</p>
+                      <h3 className="text-xl font-light text-black">{acceptedAdvisor.teacher?.name}</h3>
+                      <p className="text-orange-600 font-light">{acceptedAdvisor.teacher?.subject} Teacher</p>
                     </div>
                   </div>
                   
@@ -1850,65 +1788,57 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
                         handleCloseAdvisorRelationship();
                       }
                     }}
-                    className="px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all duration-200 text-sm font-medium"
+                    className="px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-xl transition-all duration-200 text-sm font-light border border-red-200 hover:border-red-300"
                   >
                     End Relationship
                   </motion.button>
                 </div>
               </div>
 
-              <div className="p-6 space-y-4">
+              <div className="p-8 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                        <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H3m2 0h4M9 3v18m6-18v18" />
-                        </svg>
+                      <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
+                        <Home className="w-5 h-5 text-orange-600" />
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500 font-medium">Room</p>
-                        <p className="text-gray-900 font-medium">{acceptedAdvisor.teacher?.room_number || 'Not specified'}</p>
+                        <p className="text-sm text-gray-500 font-light">Room</p>
+                        <p className="text-black font-light">{acceptedAdvisor.teacher?.room_number || 'Not specified'}</p>
                       </div>
                     </div>
                     
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                        <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
+                      <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
+                        <Mail className="w-5 h-5 text-orange-600" />
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500 font-medium">Email</p>
-                        <p className="text-gray-900 font-medium break-all text-sm">{acceptedAdvisor.teacher?.email}</p>
+                        <p className="text-sm text-gray-500 font-light">Email</p>
+                        <p className="text-black font-light break-all text-sm">{acceptedAdvisor.teacher?.email}</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                        <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
+                      <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
+                        <Activity className="w-5 h-5 text-orange-600" />
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500 font-medium">Status</p>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                        <p className="text-sm text-gray-500 font-light">Status</p>
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-light bg-orange-100 text-orange-800 border border-orange-200">
                           Active Advisor
                         </span>
                       </div>
                     </div>
                     
                     <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                        <svg className="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3a4 4 0 118 0v4m-4 6v6m-4-6h8m-8 0a4 4 0 00-4 4v2a2 2 0 002 2h8a2 2 0 002-2v-2a4 4 0 00-4-4z" />
-                        </svg>
+                      <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center">
+                        <Calendar className="w-5 h-5 text-orange-600" />
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500 font-medium">Since</p>
-                        <p className="text-gray-900 font-medium text-sm">{new Date(acceptedAdvisor.created_at).toLocaleDateString()}</p>
+                        <p className="text-sm text-gray-500 font-light">Since</p>
+                        <p className="text-black font-light text-sm">{new Date(acceptedAdvisor.created_at).toLocaleDateString()}</p>
                       </div>
                     </div>
                   </div>
@@ -1916,75 +1846,75 @@ function TeacherAdvisorPanel({ clubName, clubInfo, onNavigation }: {
               </div>
 
               {/* Action Buttons */}
-              <div className="bg-gray-50/50 px-6 py-4 border-t border-gray-100">
+              <div className="bg-orange-50/30 px-8 py-6 border-t border-gray-200/50">
                 <motion.button
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setShowMessaging(true)}
-                  className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 text-white px-8 py-4 rounded-xl font-medium text-lg flex items-center justify-center space-x-3 hover:from-emerald-600 hover:to-teal-700 transition-all duration-300 shadow-lg group"
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-xl font-light text-lg flex items-center justify-center space-x-3 transition-all duration-300 shadow-lg hover:shadow-xl group"
                 >
                   <MessageSquare className="w-5 h-5" />
                   <span>Open Messages</span>
-                  <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
                 </motion.button>
               </div>
             </div>
           </motion.div>
         ) : (
           <motion.div 
-            className="text-center space-y-8"
+            className="space-y-8"
             initial={{ opacity: 0, y: 30 }}
             animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200/50">
-              <div className="max-w-md mx-auto space-y-6">
-                <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto">
+            <div className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl p-8 shadow-lg">
+              <div className="max-w-md mx-auto text-center space-y-6">
+                <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center mx-auto">
                   <Users className="w-8 h-8 text-white" />
                 </div>
                 
                 <div>
-                  <h3 className="text-2xl font-light text-gray-900 mb-2">Find an Advisor</h3>
-                  <p className="text-gray-600 font-light">
+                  <h3 className="text-2xl font-light text-black mb-3">Find an Advisor</h3>
+                  <p className="text-gray-600 font-light leading-relaxed">
                     Search for teachers in your school and district who can advise your club.
                   </p>
                 </div>
 
                 <motion.button
                   onClick={() => setShowAdvisorRequest(true)}
-                  className="w-full bg-gradient-to-r from-blue-500 to-blue-600 text-white px-8 py-4 rounded-xl font-light text-lg flex items-center justify-center space-x-3 hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-lg group"
+                  className="w-full bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-xl font-light text-lg flex items-center justify-center space-x-3 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 group"
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
                   <Users className="w-5 h-5" />
                   <span>Find an Advisor</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
                 </motion.button>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200/50">
-              <div className="max-w-md mx-auto space-y-6">
-                <div className="w-16 h-16 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl flex items-center justify-center mx-auto">
+            <div className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl p-8 shadow-lg">
+              <div className="max-w-md mx-auto text-center space-y-6">
+                <div className="w-16 h-16 bg-black rounded-2xl flex items-center justify-center mx-auto">
                   <MessageSquare className="w-8 h-8 text-white" />
                 </div>
                 
                 <div>
-                  <h3 className="text-2xl font-light text-gray-900 mb-2">View Messages</h3>
-                  <p className="text-gray-600 font-light">
+                  <h3 className="text-2xl font-light text-black mb-3">View Messages</h3>
+                  <p className="text-gray-600 font-light leading-relaxed">
                     Check your existing conversations with club advisors.
                   </p>
                 </div>
 
                 <motion.button
                   onClick={() => setShowMessaging(true)}
-                  className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white px-8 py-4 rounded-xl font-light text-lg flex items-center justify-center space-x-3 hover:from-green-600 hover:to-green-700 transition-all duration-300 shadow-lg group"
+                  className="w-full bg-black hover:bg-gray-800 text-white px-8 py-4 rounded-xl font-light text-lg flex items-center justify-center space-x-3 transition-all duration-300 shadow-lg hover:shadow-xl hover:scale-105 group"
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
                   <MessageSquare className="w-5 h-5" />
                   <span>View Messages</span>
+                  <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform duration-200" />
                 </motion.button>
               </div>
             </div>
@@ -5995,12 +5925,12 @@ function MeetingBookingsPanel({ clubName, clubInfo }: { clubName: string; clubIn
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'approved': return 'bg-green-100 text-green-800';
-      case 'declined': return 'bg-red-100 text-red-800';
-      case 'completed': return 'bg-blue-100 text-blue-800';
-      case 'cancelled': return 'bg-gray-100 text-gray-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'pending': return 'bg-orange-100 text-orange-800 border border-orange-200';
+      case 'approved': return 'bg-green-100 text-green-800 border border-green-200';
+      case 'declined': return 'bg-red-100 text-red-800 border border-red-200';
+      case 'completed': return 'bg-black text-white border border-black';
+      case 'cancelled': return 'bg-gray-100 text-gray-800 border border-gray-200';
+      default: return 'bg-gray-100 text-gray-800 border border-gray-200';
     }
   };
 
@@ -6014,109 +5944,153 @@ function MeetingBookingsPanel({ clubName, clubInfo }: { clubName: string; clubIn
 
   if (advisors.length === 0) {
     return (
-      <div className="text-center py-12">
-        <Users className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">No Approved Advisors</h3>
-        <p className="text-gray-600">
-          You need to have an approved advisor request before you can book meetings.
-        </p>
+      <div className="text-center py-16">
+        <div className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl p-12 shadow-lg max-w-lg mx-auto">
+          <Users className="w-16 h-16 text-orange-400 mx-auto mb-6" />
+          <h3 className="text-2xl font-light text-black mb-3">No Approved Advisors</h3>
+          <p className="text-gray-600 font-light leading-relaxed">
+            You need to have an approved advisor request before you can book meetings.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Meeting Bookings</h2>
-          <p className="text-gray-600">Schedule meetings with your approved advisors</p>
+      <div className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl p-8 shadow-lg">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-6">
+          <div>
+            <h2 className="text-3xl font-light text-black mb-2">Meeting Bookings</h2>
+            <p className="text-gray-600 font-light">Schedule meetings with your approved advisors</p>
+          </div>
+          <button
+            onClick={() => setShowBookingForm(true)}
+            className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl flex items-center gap-3 transition-all duration-300 hover:shadow-lg hover:scale-105 font-light"
+          >
+            <Plus className="w-5 h-5" />
+            Book Meeting
+          </button>
         </div>
-        <button
-          onClick={() => setShowBookingForm(true)}
-          className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          Book Meeting
-        </button>
       </div>
 
       {/* Approved Advisors */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Approved Advisors</h3>
-        <div className="grid md:grid-cols-2 gap-4">
-          {advisors.map((advisor) => (
-            <div key={advisor.id} className="border rounded-lg p-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                  <Users className="w-5 h-5 text-orange-600" />
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900">{advisor.teachers.name}</h4>
-                  <p className="text-sm text-gray-600">{advisor.teachers.email}</p>
-                  {advisor.teachers.room_number && (
-                    <p className="text-sm text-gray-500">Room: {advisor.teachers.room_number}</p>
-                  )}
+      <div className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-lg overflow-hidden">
+        <div className="p-8 border-b border-gray-200/50">
+          <h3 className="text-2xl font-light text-black">Your Approved Advisors</h3>
+        </div>
+        <div className="p-8">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {advisors.map((advisor) => (
+              <div 
+                key={advisor.id} 
+                className="bg-white border border-gray-200/50 rounded-xl p-6 hover:shadow-lg transition-all duration-300 hover:scale-105"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                    <Users className="w-6 h-6 text-orange-500" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-light text-black text-lg">{advisor.teachers.name}</h4>
+                    <p className="text-sm text-gray-600 font-light">{advisor.teachers.email}</p>
+                    {advisor.teachers.room_number && (
+                      <p className="text-sm text-orange-500 font-light mt-1">Room: {advisor.teachers.room_number}</p>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
       {/* Meeting Bookings */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-6 border-b">
-          <h3 className="text-lg font-semibold text-gray-900">Your Meeting Requests</h3>
+      <div className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-2xl shadow-lg overflow-hidden">
+        <div className="p-8 border-b border-gray-200/50">
+          <h3 className="text-2xl font-light text-black">Your Meeting Requests</h3>
         </div>
-        <div className="divide-y">
+        <div className="p-8">
           {bookings.length === 0 ? (
-            <div className="p-6 text-center text-gray-500">
-              No meeting requests yet. Book your first meeting above!
+            <div className="text-center py-12">
+              <Calendar className="w-16 h-16 text-orange-400 mx-auto mb-6" />
+              <p className="text-gray-600 font-light text-lg">No meeting requests yet.</p>
+              <p className="text-gray-500 font-light">Book your first meeting above!</p>
             </div>
           ) : (
-            bookings.map((booking) => (
-              <div key={booking.id} className="p-6">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h4 className="font-medium text-gray-900">{formatDate(booking.meeting_date)}</h4>
-                    <p className="text-sm text-gray-600">
-                      {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
-                    </p>
-                    {booking.purpose && (
-                      <p className="text-sm text-gray-600 mt-1">Purpose: {booking.purpose}</p>
-                    )}
-                    {booking.teacher_response && (
-                      <div className="mt-2 p-2 bg-gray-50 rounded text-sm text-gray-700">
-                        <strong>Teacher Response:</strong> {booking.teacher_response}
+            <div className="space-y-6">
+              {bookings.map((booking) => (
+                <div 
+                  key={booking.id} 
+                  className="bg-white border border-gray-200/50 rounded-xl p-6 hover:shadow-lg transition-all duration-300"
+                >
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <Calendar className="w-5 h-5 text-orange-500" />
+                        <h4 className="font-light text-black text-lg">{formatDate(booking.meeting_date)}</h4>
                       </div>
-                    )}
+                      <div className="flex items-center gap-3 mb-2">
+                        <Clock className="w-4 h-4 text-gray-400" />
+                        <p className="text-gray-600 font-light">
+                          {formatTime(booking.start_time)} - {formatTime(booking.end_time)}
+                        </p>
+                      </div>
+                      {booking.purpose && (
+                        <div className="flex items-start gap-3 mb-3">
+                          <MessageCircle className="w-4 h-4 text-gray-400 mt-0.5" />
+                          <p className="text-gray-600 font-light">
+                            <span className="text-gray-500">Purpose:</span> {booking.purpose}
+                          </p>
+                        </div>
+                      )}
+                      {booking.teacher_response && (
+                        <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                          <div className="flex items-start gap-3">
+                            <User className="w-4 h-4 text-orange-500 mt-0.5" />
+                            <div>
+                              <p className="font-light text-orange-800 text-sm">Teacher Response:</p>
+                              <p className="text-orange-700 font-light mt-1">{booking.teacher_response}</p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <span className={`px-4 py-2 rounded-full text-sm font-light ${getStatusColor(booking.status)}`}>
+                      {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                    </span>
                   </div>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(booking.status)}`}>
-                    {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                  </span>
                 </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
       </div>
 
       {/* Booking Form Modal */}
       {showBookingForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Book a Meeting</h3>
-            <form onSubmit={handleBookMeeting} className="space-y-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white/95 backdrop-blur-xl border border-gray-200/50 rounded-2xl p-8 w-full max-w-lg shadow-2xl">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-light text-black">Book a Meeting</h3>
+              <button
+                onClick={() => setShowBookingForm(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleBookMeeting} className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-light text-black mb-2">
                   Select Advisor
                 </label>
                 <select
                   value={selectedAdvisor?.id || ''}
                   onChange={(e) => setSelectedAdvisor(advisors.find(a => a.id === e.target.value))}
                   required
-                  className="w-full p-2 border border-gray-300 rounded-lg"
+                  className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light bg-white"
                 >
                   <option value="">Choose an advisor</option>
                   {advisors.map((advisor) => (
@@ -6128,7 +6102,7 @@ function MeetingBookingsPanel({ clubName, clubInfo }: { clubName: string; clubIn
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-light text-black mb-2">
                   Meeting Date
                 </label>
                 <input
@@ -6137,13 +6111,13 @@ function MeetingBookingsPanel({ clubName, clubInfo }: { clubName: string; clubIn
                   onChange={(e) => setFormData(prev => ({ ...prev, meeting_date: e.target.value }))}
                   min={new Date().toISOString().split('T')[0]}
                   required
-                  className="w-full p-2 border border-gray-300 rounded-lg"
+                  className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-light text-black mb-2">
                     Start Time
                   </label>
                   <input
@@ -6151,11 +6125,11 @@ function MeetingBookingsPanel({ clubName, clubInfo }: { clubName: string; clubIn
                     value={formData.start_time}
                     onChange={(e) => setFormData(prev => ({ ...prev, start_time: e.target.value }))}
                     required
-                    className="w-full p-2 border border-gray-300 rounded-lg"
+                    className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-light text-black mb-2">
                     End Time
                   </label>
                   <input
@@ -6163,35 +6137,35 @@ function MeetingBookingsPanel({ clubName, clubInfo }: { clubName: string; clubIn
                     value={formData.end_time}
                     onChange={(e) => setFormData(prev => ({ ...prev, end_time: e.target.value }))}
                     required
-                    className="w-full p-2 border border-gray-300 rounded-lg"
+                    className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Purpose (Optional)
+                <label className="block text-sm font-light text-black mb-2">
+                  Purpose <span className="text-gray-400">(Optional)</span>
                 </label>
                 <textarea
                   value={formData.purpose}
                   onChange={(e) => setFormData(prev => ({ ...prev, purpose: e.target.value }))}
                   placeholder="What would you like to discuss?"
-                  className="w-full p-2 border border-gray-300 rounded-lg"
+                  className="w-full p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent font-light resize-none"
                   rows={3}
                 />
               </div>
 
-              <div className="flex gap-3 pt-4">
+              <div className="flex gap-4 pt-4">
                 <button
                   type="submit"
-                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-2 px-4 rounded-lg transition-colors"
+                  className="flex-1 bg-orange-500 hover:bg-orange-600 text-white py-3 px-6 rounded-xl transition-all duration-300 hover:shadow-lg hover:scale-105 font-light"
                 >
                   Send Request
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowBookingForm(false)}
-                  className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 py-2 px-4 rounded-lg transition-colors"
+                  className="flex-1 bg-white border border-gray-200 hover:bg-gray-50 text-black py-3 px-6 rounded-xl transition-all duration-300 font-light"
                 >
                   Cancel
                 </button>
