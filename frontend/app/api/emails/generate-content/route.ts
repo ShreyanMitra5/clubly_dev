@@ -44,7 +44,7 @@ Requirements:
 Example format:
 {
   "subject": "🚀 New ${clubName} presentation is live!",
-  "body": "Hey everyone!\\n\\nI'm excited to share our latest ${clubName} presentation: \\"[Topic Name]\\"\\n\\n[1-2 sentences about what makes it valuable]\\n\\nCheck it out here:\\n\\n${presentationUrl || 'Available upon request'}\\n\\nLooking forward to your thoughts!\\n\\nCheers,\\n${clubName} Team"
+          "body": "Hey everyone!\\n\\nI'm excited to share our latest ${clubName} presentation: \\"[Topic Name]\\"\\n\\n[1-2 sentences about what makes it valuable]\\n\\nCheck it out here:\\n\\n${presentationUrl || 'Available upon request'}\\n\\nLooking forward to your thoughts!\\n\\nBest regards,\\n${clubName} Team"
 }
 
 Return ONLY the JSON object, no explanation.`;
@@ -75,7 +75,7 @@ Requirements:
 Example format:
 {
   "subject": "📝 Highlights from our ${clubName} meeting!",
-  "body": "Hey everyone!\\n\\nI wanted to share some highlights from our latest ${clubName} meeting.\\n\\n**What We Covered:**\\n[Brief summary of main topics]\\n\\n**Key Takeaways:**\\n[Most important insights and learnings]\\n\\nLooking forward to seeing everyone at our next meeting!\\n\\nCheers,\\n${clubName} Team"
+          "body": "Hey everyone!\\n\\nI wanted to share some highlights from our latest ${clubName} meeting.\\n\\n**What We Covered:**\\n[Brief summary of main topics]\\n\\n**Key Takeaways:**\\n[Most important insights and learnings]\\n\\nLooking forward to seeing everyone at our next meeting!\\n\\nBest regards,\\n${clubName} Team"
 }
 
 Return ONLY the JSON object, no explanation.`;
@@ -97,7 +97,7 @@ Return ONLY the JSON object, no explanation.`;
       ],
       model: "llama-3.3-70b-versatile",
       temperature: 0.7,
-      max_tokens: 1000,
+      max_tokens: 2000, // Increased from 1000 to prevent truncation
     });
 
     const response = completion.choices[0]?.message?.content;
@@ -115,6 +115,16 @@ Return ONLY the JSON object, no explanation.`;
       
       if (!result.subject || !result.body) {
         throw new Error('Invalid response format');
+      }
+      
+      // Validate that the response is complete (not truncated)
+      if (result.body.length < 50 || result.subject.length < 10) {
+        throw new Error('Response appears to be truncated');
+      }
+      
+      // Ensure the response ends with a proper signature
+      if (!result.body.includes('Best regards') && !result.body.includes('Cheers') && !result.body.includes('Sincerely')) {
+        throw new Error('Response missing proper signature');
       }
       
       return NextResponse.json(result);
@@ -142,15 +152,15 @@ Return ONLY the JSON object, no explanation.`;
         
         // Final fallback content
         if (type === 'presentation') {
-                  return NextResponse.json({
-          subject: `New ${clubName} Club Presentation Available`,
-          body: `Dear Club Members,\n\nI'm excited to share that we have a new presentation available for our ${clubName} club.\n\nYou can view the presentation here: ${presentationUrl || 'Available upon request'}\n\nBest regards,\n${clubName} Club`
-        });
+          return NextResponse.json({
+            subject: `🚀 New ${clubName} Presentation Available!`,
+            body: `Hey everyone!\n\nI'm excited to share our latest ${clubName} presentation!\n\nCheck it out here:\n\n${presentationUrl || 'Available upon request'}\n\nLooking forward to your thoughts!\n\nBest regards,\n${clubName} Team`
+          });
         } else {
-                  return NextResponse.json({
-          subject: `${clubName} Club Meeting Summary`,
-          body: `Dear Club Members,\n\nHere's a summary of our recent ${clubName} club meeting:\n\n**Club Meeting Summary**\n${content}\n\n**Next Steps**\nWe look forward to seeing everyone at our next meeting and continuing to work together to make our club successful.\n\nBest regards,\n${clubName} Club`
-        });
+          return NextResponse.json({
+            subject: `📝 Highlights from our ${clubName} meeting!`,
+            body: `Hey everyone!\n\nI wanted to share some highlights from our latest ${clubName} meeting.\n\n**What We Covered:**\n${content}\n\n**Key Takeaways:**\nLots of valuable insights and discussions!\n\nLooking forward to seeing everyone at our next meeting!\n\nBest regards,\n${clubName} Team`
+          });
         }
       }
     }

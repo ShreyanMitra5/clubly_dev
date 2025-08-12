@@ -505,7 +505,7 @@ function EmailModal({ clubName, topic, onSend, onClose, sending, presentationUrl
           `I'm excited to share our latest ${clubName} presentation: "${topic}"\n\n` +
           `Check it out here:\n\n${presentationUrl}\n\n` +
           `Looking forward to your thoughts!\n\n` +
-          `Cheers,\n${clubName} Team`
+          `Best regards,\n${clubName} Team`
         );
       }
     };

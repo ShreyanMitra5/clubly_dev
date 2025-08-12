@@ -928,7 +928,7 @@ function EmailModal({ clubName, topic, onSend, onClose, sending, presentationUrl
           `I'm excited to share our latest ${clubName} presentation: "${topic}"\n\n` +
           `Check it out here:\n\n${presentationUrl}\n\n` +
           `Looking forward to your thoughts!\n\n` +
-          `Cheers,\n${clubName} Team`
+          `Best regards,\n${clubName} Team`
         );
       }
     };
@@ -5050,7 +5050,7 @@ function HistoryPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
         `I'm excited to share our latest ${clubName} presentation: "${presentation.description}"\n\n` +
         `Check it out here:\n\n${presentation.viewerUrl}\n\n` +
         `Looking forward to your thoughts!\n\n` +
-        `Cheers,\n${clubName} Team`
+        `Best regards,\n${clubName} Team`
       );
     }
   };
@@ -5452,17 +5452,17 @@ function SummariesPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
       if (response.ok) {
         const data = await response.json();
         setEmailSubject(data.subject || `📝 Highlights from our ${clubName} meeting!`);
-        setEmailContent(data.body || `Hey everyone!\n\nI wanted to share some highlights from our latest ${clubName} meeting:\n\n**What We Covered:**\n${summary.summary || summary.description}\n\n**Key Takeaways:**\nLots of valuable insights and discussions that I think you'll find interesting!\n\nLooking forward to seeing everyone at our next meeting!\n\nCheers,\n${clubName} Team`);
+        setEmailContent(data.body || `Hey everyone!\n\nI wanted to share some highlights from our latest ${clubName} meeting:\n\n**What We Covered:**\n${summary.summary || summary.description}\n\n**Key Takeaways:**\nLots of valuable insights and discussions that I think you'll find interesting!\n\nLooking forward to seeing everyone at our next meeting!\n\nBest regards,\n${clubName} Team`);
       } else {
         // Fallback content if generation fails
         setEmailSubject(`📝 Highlights from our ${clubName} meeting!`);
-        setEmailContent(`Hey everyone!\n\nI wanted to share some highlights from our latest ${clubName} meeting:\n\n**What We Covered:**\n${summary.summary || summary.description}\n\n**Key Takeaways:**\nLots of valuable insights and discussions that I think you'll find interesting!\n\nLooking forward to seeing everyone at our next meeting!\n\nCheers,\n${clubName} Team`);
+        setEmailContent(`Hey everyone!\n\nI wanted to share some highlights from our latest ${clubName} meeting:\n\n**What We Covered:**\n${summary.summary || summary.description}\n\n**Key Takeaways:**\nLots of valuable insights and discussions that I think you'll find interesting!\n\nLooking forward to seeing everyone at our next meeting!\n\nBest regards,\n${clubName} Team`);
       }
     } catch (error) {
       console.error('Error generating email content:', error);
       // Fallback content
       setEmailSubject(`📝 Highlights from our ${clubName} meeting!`);
-      setEmailContent(`Hey everyone!\n\nI wanted to share some highlights from our latest ${clubName} meeting:\n\n**What We Covered:**\n${summary.summary || summary.description}\n\n**Key Takeaways:**\nLots of valuable insights and discussions that I think you'll find interesting!\n\nLooking forward to seeing everyone at our next meeting!\n\nCheers,\n${clubName} Team`);
+      setEmailContent(`Hey everyone!\n\nI wanted to share some highlights from our latest ${clubName} meeting:\n\n**What We Covered:**\n${summary.summary || summary.description}\n\n**Key Takeaways:**\nLots of valuable insights and discussions that I think you'll find interesting!\n\nLooking forward to seeing everyone at our next meeting!\n\nBest regards,\n${clubName} Team`);
     }
   };
 
