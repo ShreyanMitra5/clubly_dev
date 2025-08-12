@@ -148,9 +148,8 @@ export default function LandingHero({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => {
-                  // This will be handled by the parent component
                   if (typeof window !== 'undefined') {
-                    window.dispatchEvent(new CustomEvent('openTeacherSignup'));
+                    window.location.href = '/teacher-signup';
                   }
                 }}
               >

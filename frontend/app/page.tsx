@@ -96,24 +96,15 @@ export default function HomePage() {
 
     checkUserStatus();
 
-    // Listen for teacher signup event
-    const handleTeacherSignup = () => {
-      // Set flag for teacher signup and open Clerk modal
-      sessionStorage.setItem('fromTeacherSignup', 'true');
-      signUpButtonRef.current?.click();
-    };
-
-    // Listen for sign up modal event (for teacher flow)
+    // Listen for sign up modal event
     const handleSignUpModal = () => {
       signUpButtonRef.current?.click();
     };
 
-    window.addEventListener('openTeacherSignup', handleTeacherSignup);
     window.addEventListener('openSignUpModal', handleSignUpModal);
 
     return () => {
       clearTimeout(loadingTimer);
-      window.removeEventListener('openTeacherSignup', handleTeacherSignup);
       window.removeEventListener('openSignUpModal', handleSignUpModal);
     };
   }, [isSignedIn, user, sessionId, router]);

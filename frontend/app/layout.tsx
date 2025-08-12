@@ -123,22 +123,47 @@ export default function RootLayout({
                       </div>
                     </SignedIn>
                     <SignedOut>
-                      <SignInButton mode="modal">
-                        <button className="font-light text-black/70 hover:text-black transition-all duration-300 px-6 py-3 rounded-xl hover:bg-black/5 relative group">
-                          Sign In
-                          <div className="absolute bottom-2 left-6 w-0 h-px bg-orange-500 transition-all duration-500 group-hover:w-8" />
-                        </button>
-                      </SignInButton>
-                      <SignUpButton mode="modal">
-                        <button 
-                          className="relative overflow-hidden bg-black text-white font-light px-8 py-3.5 rounded-xl hover:bg-black/90 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-black/20 group ml-2"
-                          onClick={() => sessionStorage.setItem('fromSignUp', 'true')}
-                        >
-                          <span className="relative z-10">Get Started</span>
-                          <div className="absolute inset-0 bg-gradient-to-r from-orange-600 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                        </button>
-                      </SignUpButton>
+                      {/* Show different buttons based on page */}
+                      {pathname === '/teacher-signup' ? (
+                        // Teacher signup page - only teacher buttons
+                        <>
+                          <SignInButton mode="modal" afterSignInUrl="/teacher-registration">
+                            <button className="font-light text-orange-600 hover:text-orange-700 transition-all duration-300 px-6 py-3 rounded-xl hover:bg-orange-50 relative group">
+                              Teacher Sign In
+                              <div className="absolute bottom-2 left-6 w-0 h-px bg-orange-500 transition-all duration-500 group-hover:w-20" />
+                            </button>
+                          </SignInButton>
+                          <SignUpButton mode="modal" afterSignUpUrl="/teacher-registration">
+                            <button 
+                              className="relative overflow-hidden bg-orange-500 text-white font-light px-8 py-3.5 rounded-xl hover:bg-orange-600 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/20 group ml-2"
+                              onClick={() => sessionStorage.setItem('fromTeacherSignup', 'true')}
+                            >
+                              <span className="relative z-10">Join as Teacher</span>
+                              <div className="absolute inset-0 bg-gradient-to-r from-orange-600 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            </button>
+                          </SignUpButton>
+                        </>
+                      ) : (
+                        // Main landing page - only student buttons (default)
+                        <>
+                          <SignInButton mode="modal">
+                            <button className="font-light text-black/70 hover:text-black transition-all duration-300 px-6 py-3 rounded-xl hover:bg-black/5 relative group">
+                              Sign In
+                              <div className="absolute bottom-2 left-6 w-0 h-px bg-orange-500 transition-all duration-500 group-hover:w-8" />
+                            </button>
+                          </SignInButton>
+                          <SignUpButton mode="modal">
+                            <button 
+                              className="relative overflow-hidden bg-black text-white font-light px-8 py-3.5 rounded-xl hover:bg-black/90 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-black/20 group ml-2"
+                              onClick={() => sessionStorage.setItem('fromSignUp', 'true')}
+                            >
+                              <span className="relative z-10">Get Started</span>
+                              <div className="absolute inset-0 bg-gradient-to-r from-orange-600 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                            </button>
+                          </SignUpButton>
+                        </>
+                      )}
                     </SignedOut>
                   </div>
 
@@ -194,25 +219,54 @@ export default function RootLayout({
                             </div>
                           </SignedIn>
                           <SignedOut>
-                            <SignInButton mode="modal">
-                              <button 
-                                className="block w-full text-left px-6 py-4 text-black/70 font-light hover:bg-black/5 hover:text-black transition-all duration-300 rounded-xl" 
-                                onClick={() => setMobileMenuOpen(false)}
-                              >
-                                Sign In
-                              </button>
-                            </SignInButton>
-                            <SignUpButton mode="modal">
-                              <button 
-                                className="block w-full text-left px-6 py-4 bg-black hover:bg-black/90 text-white font-light rounded-xl mx-2 my-2 transition-all duration-300" 
-                                onClick={() => {
-                                  sessionStorage.setItem('fromSignUp', 'true');
-                                  setMobileMenuOpen(false);
-                                }}
-                              >
-                                Get Started
-                              </button>
-                            </SignUpButton>
+                            {/* Show different buttons based on page */}
+                            {pathname === '/teacher-signup' ? (
+                              // Teacher signup page - only teacher buttons
+                              <>
+                                <SignInButton mode="modal" afterSignInUrl="/teacher-registration">
+                                  <button 
+                                    className="block w-full text-left px-6 py-4 text-orange-600 font-light hover:bg-orange-50 hover:text-orange-700 transition-all duration-300 rounded-xl" 
+                                    onClick={() => setMobileMenuOpen(false)}
+                                  >
+                                    Teacher Sign In
+                                  </button>
+                                </SignInButton>
+                                <SignUpButton mode="modal" afterSignUpUrl="/teacher-registration">
+                                  <button 
+                                    className="block w-full text-left px-6 py-4 bg-orange-500 hover:bg-orange-600 text-white font-light rounded-xl mx-2 my-2 transition-all duration-300" 
+                                    onClick={() => {
+                                      sessionStorage.setItem('fromTeacherSignup', 'true');
+                                      setMobileMenuOpen(false);
+                                    }}
+                                  >
+                                    Join as Teacher
+                                  </button>
+                                </SignUpButton>
+                              </>
+                            ) : (
+                              // Main landing page - only student buttons
+                              <>
+                                <SignInButton mode="modal">
+                                  <button 
+                                    className="block w-full text-left px-6 py-4 text-black/70 font-light hover:bg-black/5 hover:text-black transition-all duration-300 rounded-xl" 
+                                    onClick={() => setMobileMenuOpen(false)}
+                                  >
+                                    Sign In
+                                  </button>
+                                </SignInButton>
+                                <SignUpButton mode="modal">
+                                  <button 
+                                    className="block w-full text-left px-6 py-4 bg-black hover:bg-black/90 text-white font-light rounded-xl mx-2 my-2 transition-all duration-300" 
+                                    onClick={() => {
+                                      sessionStorage.setItem('fromSignUp', 'true');
+                                      setMobileMenuOpen(false);
+                                    }}
+                                  >
+                                    Get Started
+                                  </button>
+                                </SignUpButton>
+                              </>
+                            )}
                           </SignedOut>
                         </div>
                       </div>
