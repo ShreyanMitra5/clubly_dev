@@ -471,8 +471,47 @@ interface EmailModalProps {
 }
 
 function EmailModal({ clubName, topic, onSend, onClose, sending, presentationUrl }: EmailModalProps) {
-  const [subject, setSubject] = useState(`[${clubName}] New Presentation Available`);
-  const [content, setContent] = useState(`Dear club members,\n\nA new presentation has been created for our club: "${topic}"\n\n${presentationUrl ? `You can view the presentation here: ${presentationUrl}` : 'You can view and download the presentation from the link below.'}\n\nBest regards,\n${clubName} Team`);
+  const [subject, setSubject] = useState(`🚀 New ${clubName} Presentation Available!`);
+  const [content, setContent] = useState(`Generating exciting content...`);
+
+  // Generate content when modal opens
+  useEffect(() => {
+    const generateContent = async () => {
+      try {
+        const response = await fetch('/api/emails/generate-content', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'presentation',
+            clubName,
+            content: topic,
+            presentationUrl
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setSubject(data.subject);
+          setContent(data.body);
+        } else {
+          throw new Error('Failed to generate content');
+        }
+      } catch (error) {
+        console.error('Error generating email content:', error);
+        // Fallback content
+        setSubject(`🚀 New ${clubName} Presentation Available!`);
+        setContent(
+          `Hey everyone!\n\n` +
+          `I'm excited to share our latest ${clubName} presentation: "${topic}"\n\n` +
+          `Check it out here:\n\n${presentationUrl}\n\n` +
+          `Looking forward to your thoughts!\n\n` +
+          `Cheers,\n${clubName} Team`
+        );
+      }
+    };
+
+    generateContent();
+  }, [clubName, topic, presentationUrl]);
 
   const handleSend = () => {
     if (!subject.trim() || !content.trim()) return;

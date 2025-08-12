@@ -22,29 +22,29 @@ export async function POST(request: NextRequest) {
     let prompt = '';
     
     if (type === 'presentation') {
-      prompt = `Generate a professional email for a club presentation announcement.
+      prompt = `Generate a concise, personal email for a club presentation announcement. Write in FIRST PERSON from an excited club member's perspective.
 
 Club: ${clubName}
+Presentation Content: ${content}
 Presentation URL: ${presentationUrl || 'Available upon request'}
 
 Generate a JSON object with this EXACT structure:
 {
-  "subject": "Professional email subject line",
-  "body": "Professional email body with proper formatting"
+  "subject": "Exciting email subject line about the new presentation",
+  "body": "Personal, engaging email body written in first person"
 }
 
 Requirements:
-- Subject should be engaging and professional
-- Body should be well-formatted with proper paragraphs
-- Include the presentation URL if provided
-- Make it sound professional and exciting
-- Keep it concise but informative
-- Use proper email etiquette
+- Write in FIRST PERSON ("I", "we", "our latest presentation") 
+- Keep it CONCISE - maximum 4-5 short paragraphs
+- Use clear spacing between sections with \\n\\n
+- The URL must be on its own line as a complete unbroken link
+- Make it personal but brief
 
 Example format:
 {
-  "subject": "New Club Presentation Available: [Topic]",
-  "body": "Dear Club Members,\n\nI'm excited to share that we have a new presentation available for our ${clubName} club.\n\n[Presentation details and URL]\n\nBest regards,\n[Club Name]"
+  "subject": "🚀 New ${clubName} presentation is live!",
+  "body": "Hey everyone!\\n\\nI'm excited to share our latest ${clubName} presentation: \\"[Topic Name]\\"\\n\\n[1-2 sentences about what makes it valuable]\\n\\nCheck it out here:\\n\\n${presentationUrl || 'Available upon request'}\\n\\nLooking forward to your thoughts!\\n\\nCheers,\\n${clubName} Team"
 }
 
 Return ONLY the JSON object, no explanation.`;
@@ -53,28 +53,29 @@ Return ONLY the JSON object, no explanation.`;
       const words = content.split(' ').slice(0, 15).join(' ');
       const truncatedSummary = words.length < content.length ? words + '...' : words;
       
-      prompt = `Generate a professional email for a club meeting summary.
+      prompt = `Generate a concise, personal email for a club meeting summary. Write in FIRST PERSON from a club member's perspective.
 
 Club: ${clubName}
-Meeting Summary: ${truncatedSummary}
+Meeting Summary: ${content}
 
 Generate a JSON object with this EXACT structure:
 {
-  "subject": "Professional email subject line (10-15 words max)",
-  "body": "Professional email body with the full meeting summary formatted nicely"
+  "subject": "Engaging email subject line about the meeting",
+  "body": "Personal, engaging email body written in first person"
 }
 
 Requirements:
-- Subject should be concise (10-15 words max) and professional
-- Body should include the full meeting summary with proper formatting
-- Make it easy to read with clear sections
-- Use professional email tone
-- Include a brief introduction and conclusion
+- Write in FIRST PERSON ("I", "we", "our meeting")
+- Keep it CONCISE - maximum 4-5 short paragraphs
+- NO EMOJIS in the email body (only in subject line)
+- Use clear spacing between sections with \\n\\n
+- Make it personal but brief
+- Break down key highlights from the meeting
 
 Example format:
 {
-  "subject": "Meeting Summary: [Brief topic description]",
-  "body": "Dear Club Members,\n\nHere's a summary of our recent ${clubName} club meeting:\n\n**Club Meeting Summary**\nThe club meeting began with a warm welcome to all members. The main agenda of the meeting was to discuss [specific topics covered].\n\n**Key Discussion Points:**\n* [First key point]\n* [Second key point]\n* [Third key point]\n\n**Technical Details:**\nThe meeting also covered important technical aspects, including:\n* [Technical point 1]\n* [Technical point 2]\n* Components such as:\n  + [Component 1]\n  + [Component 2]\n\nThe discussion aimed to provide a comprehensive understanding of [topic] and its applications, with a focus on the technical aspects and practical implementation.\n\nBest regards,\n${clubName} Club"
+  "subject": "📝 Highlights from our ${clubName} meeting!",
+  "body": "Hey everyone!\\n\\nI wanted to share some highlights from our latest ${clubName} meeting.\\n\\n**What We Covered:**\\n[Brief summary of main topics]\\n\\n**Key Takeaways:**\\n[Most important insights and learnings]\\n\\nLooking forward to seeing everyone at our next meeting!\\n\\nCheers,\\n${clubName} Team"
 }
 
 Return ONLY the JSON object, no explanation.`;
@@ -87,7 +88,7 @@ Return ONLY the JSON object, no explanation.`;
       messages: [
         {
           role: "system",
-          content: "You are a professional club communication expert. Generate engaging, professional email content that is clear, concise, and well-formatted."
+          content: "You are an enthusiastic club member who creates engaging, personal emails to share meeting highlights with fellow members. Your writing style is friendly, informative, and first-person. You break down complex topics into digestible insights and add personal commentary."
         },
         {
           role: "user",

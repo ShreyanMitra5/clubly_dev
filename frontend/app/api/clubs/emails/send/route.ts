@@ -75,30 +75,22 @@ export async function POST(request: NextRequest) {
     // Use senderName in the footer
     const footerSender = senderName ? `${senderName}, ${clubName}` : clubName;
     
-    // Process content to ensure proper spacing and line breaks for plain text emails
-    let processedContent = content;
+    // Use the content as-is from Groq - it should already be properly formatted
+    let processedContent = content || '';
     
     // Log the original content for debugging
     console.log('Original email content:', JSON.stringify(content));
-    
-    // Create HTML version with clickable links
-    let htmlContent = processedContent;
-    
-    // Convert URLs to clickable links in HTML
-    htmlContent = htmlContent.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" style="color: #2563eb; text-decoration: underline;" target="_blank">$1</a>');
-    
-    // Ensure proper spacing around markdown syntax for plain text
-    processedContent = processedContent.replace(/\*\*/g, ' **');
-    processedContent = processedContent.replace(/\*\*/g, '** ');
-    processedContent = processedContent.replace(/\* /g, ' * ');
-    processedContent = processedContent.replace(/\*/g, ' * ');
-    
-    // Add space after periods if followed by a letter
-    processedContent = processedContent.replace(/\.([A-Za-z])/g, '. $1');
-    
-    // Ensure proper line breaks are preserved
-    processedContent = processedContent.replace(/\n\n/g, '\n\n');
-    processedContent = processedContent.replace(/\n/g, '\n');
+
+    // Build HTML with paragraphs and clickable links
+    const urlRegex = /(https?:\/\/[^\s)]+)/g;
+    const paragraphs = processedContent
+      .trim()
+      .split(/\n{2,}/)
+      .map(p => p
+        .replace(urlRegex, '<a href="$1" style="color: #2563eb; text-decoration: underline; white-space: nowrap; word-break: keep-all;" target="_blank">$1</a>')
+        .replace(/\n/g, '<br/>')
+      );
+    const htmlContent = paragraphs.map(p => `<p style="margin: 0 0 12px 0;">${p}</p>`).join('');
     
     // Log the processed content for debugging
     console.log('Processed email content:', JSON.stringify(processedContent));
@@ -110,7 +102,7 @@ export async function POST(request: NextRequest) {
           <p style="color: #6b7280; margin: 10px 0 0 0;">Club Announcement</p>
         </div>
         
-        <div style="line-height: 1.8; color: #374151; white-space: pre-wrap; font-family: Arial, sans-serif; font-size: 14px; background-color: #ffffff; padding: 20px; border-radius: 4px; word-wrap: break-word; overflow-wrap: break-word;">
+        <div style="line-height: 1.8; color: #374151; white-space: pre-wrap; font-family: Arial, sans-serif; font-size: 14px; background-color: #ffffff; padding: 20px; border-radius: 4px;">
           ${htmlContent}
         </div>
         
@@ -129,7 +121,7 @@ export async function POST(request: NextRequest) {
           to: recipient.name ? `${recipient.name} <${recipient.email}>` : recipient.email,
           subject: subject,
           html: emailHtmlContent,
-          text: content // Plain text fallback
+          text: processedContent // Plain text fallback with corrected spacing
         };
 
         await transporter.sendMail(mailOptions);

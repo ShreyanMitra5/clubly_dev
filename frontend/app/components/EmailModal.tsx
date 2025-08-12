@@ -31,6 +31,12 @@ export default function EmailModal({
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  // Helper to normalize body text for readability in the textarea
+  const normalizeBody = (raw: string): string => {
+    // Just return the text as-is to preserve URL integrity
+    return raw || '';
+  };
+
   // Generate email content when modal opens
   useEffect(() => {
     if (isOpen && content) {
@@ -67,11 +73,11 @@ export default function EmailModal({
       
       // Set fallback content
       if (type === 'presentation') {
-        setSubject(`New ${clubName} Club Presentation Available`);
-        setBody(`Dear Club Members,\n\nI'm excited to share that we have a new presentation available for our ${clubName} club.\n\nYou can view the presentation here: ${presentationUrl || 'Available upon request'}\n\nBest regards,\n${clubName} Club`);
+        setSubject(`🚀 New ${clubName} Presentation Available!`);
+        setBody(`Hey everyone!\n\nI'm excited to share our latest ${clubName} presentation: "${title || 'Latest Update'}"\n\nCheck it out here:\n\n${presentationUrl || 'Available upon request'}\n\nLooking forward to your thoughts!\n\nCheers,\n${clubName} Team`);
       } else {
-        setSubject(`${clubName} Club Meeting Summary`);
-        setBody(`Dear Club Members,\n\nHere's a summary of our recent ${clubName} club meeting:\n\n${content}\n\nBest regards,\n${clubName} Club`);
+        setSubject(`📝 Highlights from our ${clubName} meeting!`);
+        setBody(`Hey everyone!\n\nI wanted to share some highlights from our latest ${clubName} meeting:\n\n**What We Covered:**\n${content}\n\n**Key Takeaways:**\nLots of valuable insights and discussions!\n\nLooking forward to seeing everyone at our next meeting!\n\nCheers,\n${clubName} Team`);
       }
     } finally {
       setLoading(false);

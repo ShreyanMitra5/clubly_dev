@@ -953,8 +953,47 @@ interface EmailModalProps {
 }
 
 function EmailModal({ clubName, topic, onSend, onClose, sending, presentationUrl }: EmailModalProps) {
-  const [subject, setSubject] = useState(`[${clubName}] New Presentation Available`);
-  const [content, setContent] = useState(`Dear club members,\n\nA new presentation has been created for our club: "${topic}"\n\n${presentationUrl ? `You can view the presentation here: ${presentationUrl}` : 'You can view and download the presentation from the link below.'}\n\nBest regards,\n${clubName} Team`);
+  const [subject, setSubject] = useState(`🚀 New ${clubName} Presentation Available!`);
+  const [content, setContent] = useState(`Generating exciting content...`);
+
+  // Generate content when modal opens
+  useEffect(() => {
+    const generateContent = async () => {
+      try {
+        const response = await fetch('/api/emails/generate-content', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'presentation',
+            clubName,
+            content: topic,
+            presentationUrl
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setSubject(data.subject);
+          setContent(data.body);
+        } else {
+          throw new Error('Failed to generate content');
+        }
+      } catch (error) {
+        console.error('Error generating email content:', error);
+        // Fallback content
+        setSubject(`🚀 New ${clubName} Presentation Available!`);
+        setContent(
+          `Hey everyone!\n\n` +
+          `I'm excited to share our latest ${clubName} presentation: "${topic}"\n\n` +
+          `Check it out here:\n\n${presentationUrl}\n\n` +
+          `Looking forward to your thoughts!\n\n` +
+          `Cheers,\n${clubName} Team`
+        );
+      }
+    };
+
+    generateContent();
+  }, [clubName, topic, presentationUrl]);
 
   const handleSend = () => {
     if (!subject.trim() || !content.trim()) return;
@@ -5067,18 +5106,22 @@ function HistoryPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
 
       if (response.ok) {
         const data = await response.json();
-        setEmailSubject(data.subject || `[${clubName}] New Presentation: ${presentation.description}`);
-        setEmailContent(data.body || `Dear club members,\n\nA new presentation has been created for our club: "${presentation.description}"\n\nYou can view the presentation here: ${presentation.viewerUrl}\n\nBest regards,\n${clubName} Team`);
+        setEmailSubject(data.subject);
+        setEmailContent(data.body);
       } else {
-        // Fallback content if generation fails
-        setEmailSubject(`[${clubName}] New Presentation: ${presentation.description}`);
-        setEmailContent(`Dear club members,\n\nA new presentation has been created for our club: "${presentation.description}"\n\nYou can view the presentation here: ${presentation.viewerUrl}\n\nBest regards,\n${clubName} Team`);
+        throw new Error('Failed to generate email content');
       }
     } catch (error) {
       console.error('Error generating email content:', error);
-      // Fallback content if generation fails
-      setEmailSubject(`[${clubName}] New Presentation: ${presentation.description}`);
-      setEmailContent(`Dear club members,\n\nA new presentation has been created for our club: "${presentation.description}"\n\nYou can view the presentation here: ${presentation.viewerUrl}\n\nBest regards,\n${clubName} Team`);
+      // Enhanced fallback content
+      setEmailSubject(`🚀 New ${clubName} Presentation Available!`);
+      setEmailContent(
+        `Hey everyone!\n\n` +
+        `I'm excited to share our latest ${clubName} presentation: "${presentation.description}"\n\n` +
+        `Check it out here:\n\n${presentation.viewerUrl}\n\n` +
+        `Looking forward to your thoughts!\n\n` +
+        `Cheers,\n${clubName} Team`
+      );
     }
   };
 
@@ -5478,18 +5521,18 @@ function SummariesPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
 
       if (response.ok) {
         const data = await response.json();
-        setEmailSubject(data.subject || `${clubName} Meeting Summary - ${summary.title || 'Untitled Meeting'}`);
-        setEmailContent(data.body || `Dear club members,\n\nHere's a summary of our recent ${clubName} club meeting:\n\n${summary.summary || summary.description}\n\nBest regards,\n${clubName} Team`);
+        setEmailSubject(data.subject || `📝 Highlights from our ${clubName} meeting!`);
+        setEmailContent(data.body || `Hey everyone!\n\nI wanted to share some highlights from our latest ${clubName} meeting:\n\n**What We Covered:**\n${summary.summary || summary.description}\n\n**Key Takeaways:**\nLots of valuable insights and discussions that I think you'll find interesting!\n\nLooking forward to seeing everyone at our next meeting!\n\nCheers,\n${clubName} Team`);
       } else {
         // Fallback content if generation fails
-        setEmailSubject(`${clubName} Meeting Summary - ${summary.title || 'Untitled Meeting'}`);
-        setEmailContent(`Dear club members,\n\nHere's a summary of our recent ${clubName} club meeting:\n\n${summary.summary || summary.description}\n\nBest regards,\n${clubName} Team`);
+        setEmailSubject(`📝 Highlights from our ${clubName} meeting!`);
+        setEmailContent(`Hey everyone!\n\nI wanted to share some highlights from our latest ${clubName} meeting:\n\n**What We Covered:**\n${summary.summary || summary.description}\n\n**Key Takeaways:**\nLots of valuable insights and discussions that I think you'll find interesting!\n\nLooking forward to seeing everyone at our next meeting!\n\nCheers,\n${clubName} Team`);
       }
     } catch (error) {
       console.error('Error generating email content:', error);
       // Fallback content
-      setEmailSubject(`${clubName} Meeting Summary - ${summary.title || 'Untitled Meeting'}`);
-      setEmailContent(`Dear club members,\n\nHere's a summary of our recent ${clubName} club meeting:\n\n${summary.summary || summary.description}\n\nBest regards,\n${clubName} Team`);
+      setEmailSubject(`📝 Highlights from our ${clubName} meeting!`);
+      setEmailContent(`Hey everyone!\n\nI wanted to share some highlights from our latest ${clubName} meeting:\n\n**What We Covered:**\n${summary.summary || summary.description}\n\n**Key Takeaways:**\nLots of valuable insights and discussions that I think you'll find interesting!\n\nLooking forward to seeing everyone at our next meeting!\n\nCheers,\n${clubName} Team`);
     }
   };
 
