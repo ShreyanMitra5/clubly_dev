@@ -212,24 +212,24 @@ function GeneratePageContent() {
       setGenerationResult(result);
       // Save to backend history
       if (result && user) {
-        // Generate thumbnail
-        let thumbnailUrl = null;
+        // Generate thumbnail (non-blocking with timeout); if it fails, continue without it
+        let thumbnailUrl = null as string | null;
         try {
           const presentationId = result.s3Url.split('/').pop().replace('.pptx', '');
+          const controller = new AbortController();
+          const to = setTimeout(() => controller.abort(), 15000);
           const thumbRes = await fetch('/api/presentations/thumbnail', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              s3Url: result.s3Url,
-              userId: user.id,
-              presentationId,
-            }),
+            body: JSON.stringify({ s3Url: result.s3Url, userId: user.id, presentationId }),
+            signal: controller.signal,
           });
-          const thumbData = await thumbRes.json();
-          thumbnailUrl = thumbData.thumbnailUrl;
-        } catch (e) {
-          // fallback: no thumbnail
-        }
+          clearTimeout(to);
+          if (thumbRes.ok) {
+            const thumbData = await thumbRes.json();
+            thumbnailUrl = thumbData.thumbnailUrl || null;
+          }
+        } catch (_) { /* ignore */ }
         await fetch('/api/presentations/history', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -237,6 +237,7 @@ function GeneratePageContent() {
             userId: user.id,
             presentation: {
               clubId: selectedClub.clubId,
+              clubName: selectedClub.clubName,
               description: formData.description,
               generatedAt: result.generatedAt,
               s3Url: result.s3Url,

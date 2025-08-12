@@ -36,22 +36,26 @@ export async function POST(request: NextRequest) {
     await writeFile(pptxPath, pptxBuffer);
     console.log('Saved pptx to', pptxPath);
 
-    // Convert first slide to PNG using unoconv
-    console.log('Running unoconv to generate PNG...');
+    // Convert to PNG using LibreOffice headless (more reliable than unoconv) if available
+    console.log('Running soffice (LibreOffice) to generate PNG...');
     await new Promise((resolve, reject) => {
-      exec(`unoconv -f png -o "${thumbPath}" "${pptxPath}"`, (err, stdout, stderr) => {
+      exec(`soffice --headless --convert-to png --outdir "${tempDir}" "${pptxPath}"`, (err, stdout, stderr) => {
         if (err) {
-          console.error('unoconv error:', err, stderr);
-          reject(err);
-        } else {
-          console.log('unoconv output:', stdout, stderr);
-          resolve(null);
+          console.warn('soffice conversion failed, skipping thumbnail:', err, stderr);
+          return resolve(null); // fail-open; no thumbnail
         }
+        resolve(null);
       });
     });
 
     // Read the generated PNG (unoconv outputs as <basename>.png)
-    const thumbBuffer = await readFile(thumbPath);
+    let thumbBuffer: Buffer | null = null;
+    try {
+      thumbBuffer = await readFile(thumbPath);
+    } catch (_) {
+      // No thumbnail produced; return empty without error
+      return NextResponse.json({ thumbnailUrl: null });
+    }
     console.log('Read generated PNG from', thumbPath);
 
     // Upload thumbnail to S3
@@ -61,7 +65,6 @@ export async function POST(request: NextRequest) {
       Key: thumbKey,
       Body: thumbBuffer,
       ContentType: 'image/png',
-      ACL: 'public-read',
     }));
     console.log('Uploaded thumbnail to S3:', thumbKey);
 
