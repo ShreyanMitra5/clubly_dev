@@ -108,6 +108,24 @@ export default function MeetingSummariesPage() {
     return words.length < summary.length ? words + '...' : words;
   };
 
+  const cleanSummaryContent = (summary: string) => {
+    if (!summary) return summary;
+    
+    // Remove markdown formatting
+    let cleaned = summary
+      .replace(/\*\*\*(.*?)\*\*\*/g, '$1') // Remove ***text*** formatting
+      .replace(/\*\*(.*?)\*\*/g, '$1')     // Remove **text** formatting
+      .replace(/\*(.*?)\*/g, '$1')         // Remove *text* formatting
+      .replace(/#{1,6}\s/g, '')            // Remove heading markers
+      .replace(/\n\s*\n\s*\n/g, '\n\n')   // Remove excessive line breaks
+      .replace(/^\s+|\s+$/g, '');          // Trim whitespace
+    
+    // Ensure proper paragraph spacing
+    cleaned = cleaned.replace(/\n\s*\n/g, '\n\n');
+    
+    return cleaned;
+  };
+
   return (
     <ClubLayout>
       <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-white via-gray-100 to-gray-200 px-4">
@@ -143,7 +161,7 @@ export default function MeetingSummariesPage() {
                     {item.title || groqTitles[item.id] || <span className="animate-pulse text-gray-400">Generating title...</span>}
                   </div>
                   <div className="text-gray-700 text-base mb-6 text-center">
-                    {truncateSummary(item.summary || item.description || "No summary available")} ...
+                    {truncateSummary(cleanSummaryContent(item.summary || item.description || "No summary available"))} ...
                   </div>
                   <div className="flex flex-row gap-4 w-full justify-center mt-2 flex-wrap">
                     <button
@@ -172,7 +190,7 @@ export default function MeetingSummariesPage() {
               clubName={clubName}
               clubId={clubId}
               type="summary"
-              content={selectedSummary.summary || selectedSummary.description || "No summary available"}
+              content={cleanSummaryContent(selectedSummary.summary || selectedSummary.description || "No summary available")}
               title={selectedSummary.title || groqTitles[selectedSummary.id] || "Untitled Meeting"}
             />
           )}

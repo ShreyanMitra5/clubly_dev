@@ -95,6 +95,24 @@ function AttendanceNotesResultPageContent() {
 
   const preview = summary.split(' ').slice(0, 15).join(' ');
 
+  const cleanSummaryContent = (summary: string) => {
+    if (!summary) return summary;
+    
+    // Remove markdown formatting
+    let cleaned = summary
+      .replace(/\*\*\*(.*?)\*\*\*/g, '$1') // Remove ***text*** formatting
+      .replace(/\*\*(.*?)\*\*/g, '$1')     // Remove **text** formatting
+      .replace(/\*(.*?)\*/g, '$1')         // Remove *text* formatting
+      .replace(/#{1,6}\s/g, '')            // Remove heading markers
+      .replace(/\n\s*\n\s*\n/g, '\n\n')   // Remove excessive line breaks
+      .replace(/^\s+|\s+$/g, '');          // Trim whitespace
+    
+    // Ensure proper paragraph spacing
+    cleaned = cleaned.replace(/\n\s*\n/g, '\n\n');
+    
+    return cleaned;
+  };
+
   const handleDownload = async () => {
     const { Document, Packer, Paragraph, TextRun } = await import("docx");
     const doc = new Document({
@@ -193,7 +211,7 @@ function AttendanceNotesResultPageContent() {
           clubName={clubName}
           clubId={clubInfo.clubId}
           type="summary"
-          content={summary}
+          content={cleanSummaryContent(summary)}
           title={groqTitle || "Untitled Meeting"}
         />
       )}

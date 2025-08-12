@@ -5045,13 +5045,7 @@ function HistoryPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
       console.error('Error generating email content:', error);
       // Enhanced fallback content
       setEmailSubject(`🚀 New ${clubName} Presentation Available!`);
-      setEmailContent(
-        `Hey everyone!\n\n` +
-        `I'm excited to share our latest ${clubName} presentation: "${presentation.description}"\n\n` +
-        `Check it out here:\n\n${presentation.viewerUrl}\n\n` +
-        `Looking forward to your thoughts!\n\n` +
-        `Best regards,\n${clubName} Team`
-      );
+      setEmailContent(`Hey everyone!\n\nI'm excited to share our latest ${clubName} presentation: "${presentation.description}"\n\nCheck it out here:\n\n${presentation.viewerUrl}\n\nLooking forward to your thoughts!\n\nBest regards,\n${clubName} Team`);
     }
   };
 
@@ -5388,6 +5382,24 @@ function SummariesPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
     return null;
   };
 
+  const cleanSummaryContent = (summary: string) => {
+    if (!summary) return summary;
+    
+    // Remove markdown formatting
+    let cleaned = summary
+      .replace(/\*\*\*(.*?)\*\*\*/g, '$1') // Remove ***text*** formatting
+      .replace(/\*\*(.*?)\*\*/g, '$1')     // Remove **text** formatting
+      .replace(/\*(.*?)\*/g, '$1')         // Remove *text* formatting
+      .replace(/#{1,6}\s/g, '')            // Remove heading markers
+      .replace(/\n\s*\n\s*\n/g, '\n\n')   // Remove excessive line breaks
+      .replace(/^\s+|\s+$/g, '');          // Trim whitespace
+    
+    // Ensure proper paragraph spacing
+    cleaned = cleaned.replace(/\n\s*\n/g, '\n\n');
+    
+    return cleaned;
+  };
+
   const updateSummaryTitle = async (summaryId: string, newTitle: string) => {
     try {
       const response = await fetch(`/api/attendance-notes/history`, {
@@ -5445,24 +5457,24 @@ function SummariesPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
         body: JSON.stringify({
           type: 'summary',
           clubName,
-          content: summary.summary || summary.description
+          content: cleanSummaryContent(summary.summary || summary.description)
         })
       });
 
       if (response.ok) {
         const data = await response.json();
         setEmailSubject(data.subject || `📝 Highlights from our ${clubName} meeting!`);
-        setEmailContent(data.body || `Hey everyone!\n\nI wanted to share some highlights from our latest ${clubName} meeting:\n\n**What We Covered:**\n${summary.summary || summary.description}\n\n**Key Takeaways:**\nLots of valuable insights and discussions that I think you'll find interesting!\n\nLooking forward to seeing everyone at our next meeting!\n\nBest regards,\n${clubName} Team`);
+        setEmailContent(data.body || `Hey everyone!\n\nI wanted to share some highlights from our latest ${clubName} meeting:\n\n${cleanSummaryContent(summary.summary || summary.description)}\n\nLooking forward to seeing everyone at our next meeting!\n\nBest regards,\n${clubName} Team`);
       } else {
         // Fallback content if generation fails
         setEmailSubject(`📝 Highlights from our ${clubName} meeting!`);
-        setEmailContent(`Hey everyone!\n\nI wanted to share some highlights from our latest ${clubName} meeting:\n\n**What We Covered:**\n${summary.summary || summary.description}\n\n**Key Takeaways:**\nLots of valuable insights and discussions that I think you'll find interesting!\n\nLooking forward to seeing everyone at our next meeting!\n\nBest regards,\n${clubName} Team`);
+        setEmailContent(`Hey everyone!\n\nI wanted to share some highlights from our latest ${clubName} meeting:\n\n${cleanSummaryContent(summary.summary || summary.description)}\n\nLooking forward to seeing everyone at our next meeting!\n\nBest regards,\n${clubName} Team`);
       }
     } catch (error) {
       console.error('Error generating email content:', error);
       // Fallback content
       setEmailSubject(`📝 Highlights from our ${clubName} meeting!`);
-      setEmailContent(`Hey everyone!\n\nI wanted to share some highlights from our latest ${clubName} meeting:\n\n**What We Covered:**\n${summary.summary || summary.description}\n\n**Key Takeaways:**\nLots of valuable insights and discussions that I think you'll find interesting!\n\nLooking forward to seeing everyone at our next meeting!\n\nBest regards,\n${clubName} Team`);
+      setEmailContent(`Hey everyone!\n\nI wanted to share some highlights from our latest ${clubName} meeting:\n\n${cleanSummaryContent(summary.summary || summary.description)}\n\nLooking forward to seeing everyone at our next meeting!\n\nBest regards,\n${clubName} Team`);
     }
   };
 
@@ -5637,7 +5649,7 @@ function SummariesPanel({ clubName, clubInfo }: { clubName: string; clubInfo: an
 
                   <div className="prose max-w-none">
                     <p className="text-gray-700 font-light">
-                      {truncatedSummary}
+                      {cleanSummaryContent(truncatedSummary)}
                       {needsTruncation && !isExpanded && "..."}
                     </p>
                     {needsTruncation && (

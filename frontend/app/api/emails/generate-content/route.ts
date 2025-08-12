@@ -53,29 +53,30 @@ Return ONLY the JSON object, no explanation.`;
       const words = content.split(' ').slice(0, 15).join(' ');
       const truncatedSummary = words.length < content.length ? words + '...' : words;
       
-      prompt = `Generate a concise, personal email for a club meeting summary. Write in FIRST PERSON from a club member's perspective.
+      prompt = `As a club officer, write a professional email to share meeting highlights with club members. Write in FIRST PERSON from my perspective as the club officer sending this email.
 
 Club: ${clubName}
 Meeting Summary: ${content}
 
 Generate a JSON object with this EXACT structure:
 {
-  "subject": "Engaging email subject line about the meeting",
-  "body": "Personal, engaging email body written in first person"
+  "subject": "Professional email subject line about the meeting",
+  "body": "Professional, first-person email body written from a club officer's perspective"
 }
 
 Requirements:
-- Write in FIRST PERSON ("I", "we", "our meeting")
-- Keep it CONCISE - maximum 4-5 short paragraphs
-- NO EMOJIS in the email body (only in subject line)
-- Use clear spacing between sections with \\n\\n
-- Make it personal but brief
-- Break down key highlights from the meeting
+- Write in FIRST PERSON ("I", "we", "our meeting") from my perspective as a club officer
+- NO markdown formatting (no **, ***, or other symbols)
+- Use clear, readable paragraphs with proper spacing
+- Keep it concise but informative (3-4 paragraphs max)
+- Focus on key highlights, decisions made, and next steps
+- Use a warm, professional tone appropriate for club leadership
+- End with a positive note about the club's progress
 
 Example format:
 {
   "subject": "📝 Highlights from our ${clubName} meeting!",
-          "body": "Hey everyone!\\n\\nI wanted to share some highlights from our latest ${clubName} meeting.\\n\\n**What We Covered:**\\n[Brief summary of main topics]\\n\\n**Key Takeaways:**\\n[Most important insights and learnings]\\n\\nLooking forward to seeing everyone at our next meeting!\\n\\nBest regards,\\n${clubName} Team"
+  "body": "Hey everyone!\\n\\nI wanted to share some highlights from our latest ${clubName} meeting.\\n\\n[First paragraph: Key topics discussed]\\n\\n[Second paragraph: Important decisions and insights]\\n\\n[Third paragraph: Next steps and positive outlook]\\n\\nLooking forward to seeing everyone at our next meeting!\\n\\nBest regards,\\n${clubName} Team"
 }
 
 Return ONLY the JSON object, no explanation.`;

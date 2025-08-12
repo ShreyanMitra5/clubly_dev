@@ -16,8 +16,21 @@ export async function POST(request: NextRequest) {
     if (!transcript || !transcript.trim()) {
       return NextResponse.json({ error: 'Transcript is empty. Please record some audio.' }, { status: 400 });
     }
-    const prompt = 'Summarize the following club meeting transcript in very much depth, filter out all jargon or any unnecessary things that are not related to the club meeting. Have bullet points and paragraphs. Be concise and clear.';
-    const inputText = `${prompt}\nTranscript:\n${transcript}`;
+    const prompt = `As a club officer, write a professional, engaging meeting summary in FIRST PERSON that I can share with club members. 
+
+Write this as if I (the club officer) am personally sharing the highlights with my fellow club members. Use a warm, professional tone.
+
+Requirements:
+- Write in FIRST PERSON ("I", "we", "our meeting") from my perspective as a club officer
+- NO markdown formatting (no **, ***, or other symbols)
+- Use clear, readable paragraphs with proper spacing
+- Focus on key highlights, decisions made, and next steps
+- Keep it concise but informative (3-4 paragraphs max)
+- End with a positive note about the club's progress
+
+Format the summary as clean, readable text that flows naturally.`;
+
+    const inputText = `${prompt}\n\nMeeting Transcript:\n${transcript}`;
 
     const res = await fetch(GROQ_API_URL, {
       method: 'POST',

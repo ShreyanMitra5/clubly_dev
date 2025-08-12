@@ -77,7 +77,7 @@ export default function EmailModal({
         setBody(`Hey everyone!\n\nI'm excited to share our latest ${clubName} presentation: "${title || 'Latest Update'}"\n\nCheck it out here:\n\n${presentationUrl || 'Available upon request'}\n\nLooking forward to your thoughts!\n\nBest regards,\n${clubName} Team`);
       } else {
         setSubject(`📝 Highlights from our ${clubName} meeting!`);
-        setBody(`Hey everyone!\n\nI wanted to share some highlights from our latest ${clubName} meeting:\n\n**What We Covered:**\n${content}\n\n**Key Takeaways:**\nLots of valuable insights and discussions!\n\nLooking forward to seeing everyone at our next meeting!\n\nBest regards,\n${clubName} Team`);
+        setBody(`Hey everyone!\n\nI wanted to share some highlights from our latest ${clubName} meeting.\n\n${content}\n\nLooking forward to seeing everyone at our next meeting!\n\nBest regards,\n${clubName} Team`);
       }
     } finally {
       setLoading(false);
