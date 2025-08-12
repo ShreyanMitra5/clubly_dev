@@ -127,13 +127,13 @@ export default function RootLayout({
                       {pathname === '/teacher-signup' ? (
                         // Teacher signup page - only teacher buttons
                         <>
-                          <SignInButton mode="modal" afterSignInUrl="/teacher-registration">
+                          <SignInButton mode="modal">
                             <button className="font-light text-orange-600 hover:text-orange-700 transition-all duration-300 px-6 py-3 rounded-xl hover:bg-orange-50 relative group">
                               Teacher Sign In
                               <div className="absolute bottom-2 left-6 w-0 h-px bg-orange-500 transition-all duration-500 group-hover:w-20" />
                             </button>
                           </SignInButton>
-                          <SignUpButton mode="modal" afterSignUpUrl="/teacher-registration">
+                          <SignUpButton mode="modal">
                             <button 
                               className="relative overflow-hidden bg-orange-500 text-white font-light px-8 py-3.5 rounded-xl hover:bg-orange-600 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-orange-500/20 group ml-2"
                               onClick={() => sessionStorage.setItem('fromTeacherSignup', 'true')}
@@ -223,7 +223,7 @@ export default function RootLayout({
                             {pathname === '/teacher-signup' ? (
                               // Teacher signup page - only teacher buttons
                               <>
-                                <SignInButton mode="modal" afterSignInUrl="/teacher-registration">
+                                <SignInButton mode="modal">
                                   <button 
                                     className="block w-full text-left px-6 py-4 text-orange-600 font-light hover:bg-orange-50 hover:text-orange-700 transition-all duration-300 rounded-xl" 
                                     onClick={() => setMobileMenuOpen(false)}
@@ -231,7 +231,7 @@ export default function RootLayout({
                                     Teacher Sign In
                                   </button>
                                 </SignInButton>
-                                <SignUpButton mode="modal" afterSignUpUrl="/teacher-registration">
+                                <SignUpButton mode="modal">
                                   <button 
                                     className="block w-full text-left px-6 py-4 bg-orange-500 hover:bg-orange-600 text-white font-light rounded-xl mx-2 my-2 transition-all duration-300" 
                                     onClick={() => {
