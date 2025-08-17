@@ -31,7 +31,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Check presentation usage limit for this club
+    console.log('Current month calculation:', getCurrentMonthYear());
     const usageCheck = await checkPresentationUsage(clubId);
+    console.log('Usage check result:', usageCheck);
     if (!usageCheck.canGenerate) {
       return NextResponse.json({ 
         error: 'Monthly presentation limit reached for this club',
@@ -78,7 +80,14 @@ export async function POST(request: NextRequest) {
     const { publicUrl, viewerUrl } = await uploadFileToS3(filePath, bucket, fileName);
 
     // Update presentation usage count after successful generation
-    await updatePresentationUsage(clubId, clubData.owner_id || clubData.userId);
+    console.log('About to update presentation usage for:', { clubId, userId: clubData.owner_id || clubData.userId });
+    
+    try {
+      const updateResult = await updatePresentationUsage(clubId, clubData.owner_id || clubData.userId);
+      console.log('Presentation usage update result:', updateResult);
+    } catch (error) {
+      console.error('❌ Error updating presentation usage:', error);
+    }
 
     return NextResponse.json({
       success: true,
@@ -185,19 +194,34 @@ async function checkPresentationUsage(clubId: string): Promise<{
 
 async function updatePresentationUsage(clubId: string, userId: string): Promise<void> {
   try {
+    console.log('🚀 Starting updatePresentationUsage...');
+    console.log('Parameters:', { clubId, userId });
+    console.log('API URL:', `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/presentations/check-usage`);
+    
+    const requestBody = { clubId, userId };
+    console.log('Request body:', requestBody);
+    
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/presentations/check-usage`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ clubId, userId }),
+      body: JSON.stringify(requestBody),
     });
 
+    console.log('📡 Update usage response status:', response.status);
+    console.log('📡 Response headers:', Object.fromEntries(response.headers.entries()));
+
     if (!response.ok) {
-      console.error('Failed to update presentation usage:', response.statusText);
+      const errorText = await response.text();
+      console.error('❌ Failed to update presentation usage:', response.statusText, errorText);
+    } else {
+      const result = await response.json();
+      console.log('✅ Presentation usage updated successfully:', result);
     }
   } catch (error) {
-    console.error('Error updating presentation usage:', error);
+    console.error('💥 Error updating presentation usage:', error);
+    throw error; // Re-throw to see it in the calling function
   }
 }
 

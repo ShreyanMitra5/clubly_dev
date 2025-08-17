@@ -252,6 +252,12 @@ function GeneratePageContent() {
       );
 
       setGenerationResult(result);
+      
+      // Refresh usage after successful generation
+      if (selectedClub) {
+        await checkClubUsage(selectedClub.clubId);
+      }
+      
       // Save to backend history
       if (result && user) {
         // Generate thumbnail (non-blocking with timeout); if it fails, continue without it

@@ -5,6 +5,7 @@ import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { ProductionClubManager, ProductionClubData } from '../utils/productionClubManager';
 import { PresentationUsageManager } from '../utils/presentationUsageManager';
+import { RoadmapUsageManager } from '../utils/roadmapUsageManager';
 import { supabase } from '../../utils/supabaseClient';
 import Image from 'next/image';
 import { v4 as uuidv4 } from 'uuid';
@@ -3652,6 +3653,12 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
   const [onboardingStage, setOnboardingStage] = useState<'intro' | 'form'>('intro');
+  const [usageInfo, setUsageInfo] = useState<{
+    canGenerate: boolean;
+    currentUsage: number;
+    remainingSlots: number;
+    monthYear: string;
+  } | null>(null);
 
   useEffect(() => {
     const checkRoadmapData = async () => {
@@ -3676,7 +3683,23 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
       }
     };
     checkRoadmapData();
+    
+    // Check roadmap usage for this club
+    if (user && clubInfo?.id) {
+      checkRoadmapUsage();
+    }
   }, [user, clubInfo]);
+
+  // Function to check roadmap usage
+  const checkRoadmapUsage = async () => {
+    try {
+      const usage = await RoadmapUsageManager.checkUsageLimit(clubInfo.id);
+      setUsageInfo(usage);
+    } catch (error) {
+      console.error('Error checking roadmap usage:', error);
+      setUsageInfo(null);
+    }
+  };
 
   // --- Refactored roadmap data operations to use API route ---
   const loadRoadmapData = async () => {
@@ -3829,29 +3852,54 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
           meetingTime: formData.meetingTime,
           clubName: clubName,
           goals: clubInfo.goals || '', // Use club goals from onboarding data
+          userId: user?.id, // Add userId for usage tracking
         })
       });
-      if (res.ok) {
-        const { meetings } = await res.json();
-        return meetings;
+      
+      if (!res.ok) {
+        if (res.status === 429) {
+          // Monthly limit reached
+          const error = new Error('Monthly roadmap limit reached');
+          (error as any).status = 429;
+          throw error;
+        }
+        const errorText = await res.text();
+        throw new Error(`Failed to generate roadmap: ${res.statusText}`);
       }
+      
+      const data = await res.json();
+      console.log('API response data:', data);
+      return data; // Return the full response data
     } catch (err) {
       console.error('groq meeting generation error', err);
+      throw err; // Re-throw the error so it can be caught by the caller
     }
-    return [];
   };
 
   const handleOnboardingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetchGroqMeetings();
-    if (!res || !res.length) return;
-    let meetings = res;
-    let specialEvents = [];
-    if (Array.isArray(res)) {
-      meetings = res;
-    } else {
-      meetings = res.meetings || [];
-      specialEvents = res.specialEvents || [];
+    
+    let res;
+    try {
+      res = await fetchGroqMeetings();
+      if (!res || !res.length) return;
+    } catch (error: any) {
+      if (error.status === 429) {
+        // Monthly limit reached
+        alert(`Monthly roadmap limit reached for ${clubName}. You've used your 2 roadmap generations this month.`);
+        return;
+      }
+      console.error('Error generating roadmap:', error);
+      return;
+    }
+    
+    console.log('Roadmap generation response:', res);
+    let meetings = res.meetings || [];
+    let specialEvents = res.specialEvents || [];
+    
+    if (!meetings || meetings.length === 0) {
+      console.error('No meetings generated');
+      return;
     }
     // Prepare holidays within semester
     const start = new Date(formData.schoolYearStart);
@@ -3937,6 +3985,9 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
         setEvents(generatedEvents);
         setShowOnboarding(false);
         setHasRoadmapData(true);
+        
+        // Refresh usage info after successful generation
+        await checkRoadmapUsage();
       }
     } catch (error) {
       console.error('Error saving generated roadmap:', error);
@@ -3968,6 +4019,66 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
                 >
                   Start Planning Your Semester
                 </button>
+              </div>
+            )}
+
+            {/* Roadmap Usage Tracker */}
+            {usageInfo && (
+              <div className="bg-gradient-to-r from-blue-50 to-blue-100/50 border border-blue-200/50 rounded-2xl p-6 mb-6">
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-lg font-light text-gray-900">
+                        Monthly Roadmap Usage
+                      </h3>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-blue-600">
+                          {usageInfo.currentUsage}/2
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {usageInfo.remainingSlots > 0 ? `${usageInfo.remainingSlots} remaining` : 'Limit reached'}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div className="w-full bg-gray-200 rounded-full h-3 mb-3">
+                      <div 
+                        className={`h-3 rounded-full transition-all duration-500 ${
+                          usageInfo.remainingSlots === 0 
+                            ? 'bg-red-500' 
+                            : usageInfo.remainingSlots <= 1 
+                              ? 'bg-orange-500' 
+                              : 'bg-blue-500'
+                        }`}
+                        style={{ 
+                          width: `${Math.min((usageInfo.currentUsage / 2) * 100, 100)}%` 
+                        }}
+                      ></div>
+                    </div>
+                    
+                    {/* Status Message */}
+                    <div className={`text-sm font-medium ${
+                      usageInfo.remainingSlots === 0 
+                        ? 'text-red-600' 
+                        : usageInfo.remainingSlots <= 1 
+                          ? 'text-orange-600' 
+                          : 'text-blue-600'
+                    }`}>
+                      {usageInfo.remainingSlots === 0 
+                        ? '🚫 Monthly limit reached - no more roadmaps this month'
+                        : usageInfo.remainingSlots <= 1 
+                          ? '⚠️ Almost at monthly limit - only 1 roadmap remaining'
+                          : `✅ ${usageInfo.remainingSlots} roadmaps remaining this month`
+                      }
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -4060,15 +4171,91 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
                   </div>
                 </div>
 
+            {/* Roadmap Usage Tracker */}
+            {usageInfo && (
+              <div className="bg-gradient-to-r from-blue-50 to-blue-100/50 border border-blue-200/50 rounded-2xl p-6 mb-6">
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-lg font-light text-gray-900">
+                        Monthly Roadmap Usage
+                      </h3>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-blue-600">
+                          {usageInfo.currentUsage}/2
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {usageInfo.remainingSlots > 0 ? `${usageInfo.remainingSlots} remaining` : 'Limit reached'}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div className="w-full bg-gray-200 rounded-full h-3 mb-3">
+                      <div 
+                        className={`h-3 rounded-full transition-all duration-500 ${
+                          usageInfo.remainingSlots === 0 
+                            ? 'bg-red-500' 
+                            : usageInfo.remainingSlots <= 1 
+                              ? 'bg-orange-500' 
+                              : 'bg-blue-500'
+                        }`}
+                        style={{ 
+                          width: `${Math.min((usageInfo.currentUsage / 2) * 100, 100)}%` 
+                        }}
+                      ></div>
+                    </div>
+                    
+                    {/* Status Message */}
+                    <div className={`text-sm font-medium ${
+                      usageInfo.remainingSlots === 0 
+                        ? 'text-red-600' 
+                        : usageInfo.remainingSlots <= 1 
+                          ? 'text-orange-600' 
+                          : 'text-blue-600'
+                    }`}>
+                      {usageInfo.remainingSlots === 0 
+                        ? '🚫 Monthly limit reached - no more roadmaps this month'
+                        : usageInfo.remainingSlots <= 1 
+                          ? '⚠️ Almost at monthly limit - only 1 roadmap remaining'
+                          : `✅ ${usageInfo.remainingSlots} roadmaps remaining this month`
+                      }
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center space-x-4">
               <motion.button
                 onClick={() => setShowOnboarding(true)}
-                className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-2xl font-light hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg"
-                whileHover={{ scale: 1.05, y: -2 }}
-                whileTap={{ scale: 0.95 }}
+                disabled={usageInfo && !usageInfo.canGenerate}
+                className={`px-6 py-3 rounded-2xl font-light transition-all duration-300 shadow-lg ${
+                  usageInfo && !usageInfo.canGenerate
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white'
+                }`}
+                whileHover={usageInfo && !usageInfo.canGenerate ? {} : { scale: 1.05, y: -2 }}
+                whileTap={usageInfo && !usageInfo.canGenerate ? {} : { scale: 0.95 }}
               >
-                <Settings className="w-4 h-4 inline mr-2" />
-                Setup
+                {usageInfo && !usageInfo.canGenerate ? (
+                  <>
+                    <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Limit Reached
+                  </>
+                ) : (
+                  <>
+                    <Settings className="w-4 h-4 inline mr-2" />
+                    Setup
+                  </>
+                )}
               </motion.button>
                     </div>
                 </div>

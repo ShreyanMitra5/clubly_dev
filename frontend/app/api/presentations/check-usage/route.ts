@@ -6,6 +6,9 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+console.log('Supabase client initialized with URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+console.log('Service role key exists:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
+
 export async function POST(request: NextRequest) {
   try {
     const { clubId } = await request.json();
@@ -21,6 +24,8 @@ export async function POST(request: NextRequest) {
 
     // Check current usage for this club this month
     console.log('Querying presentation_usage table...');
+    console.log('Query parameters:', { clubId, currentMonthYear });
+    
     const { data: usageData, error: fetchError } = await supabase
       .from('presentation_usage')
       .select('usage_count')
@@ -65,6 +70,7 @@ export async function PUT(request: NextRequest) {
     console.log('Updating usage for clubId:', clubId, 'userId:', userId);
     const currentMonthYear = getCurrentMonthYear();
     console.log('Current month/year:', currentMonthYear);
+    console.log('Current date:', new Date().toISOString());
 
     // First, get the current usage count
     const { data: currentUsage, error: fetchError } = await supabase
@@ -81,25 +87,75 @@ export async function PUT(request: NextRequest) {
 
     const currentCount = currentUsage?.usage_count || 0;
     const newCount = currentCount + 1;
+    
+    console.log('Current usage count:', currentCount, 'New count will be:', newCount);
 
     // Try to update existing usage record
-    const { data: updateData, error: updateError } = await supabase
+    console.log('Attempting upsert with data:', {
+      club_id: clubId,
+      user_id: userId,
+      month_year: currentMonthYear,
+      usage_count: newCount,
+      updated_at: new Date().toISOString()
+    });
+    
+    // First try to update the existing record
+    let updateData: any;
+    const { data: updateResult, error: updateError } = await supabase
       .from('presentation_usage')
-      .upsert({
-        club_id: clubId,
-        user_id: userId,
-        month_year: currentMonthYear,
+      .update({
         usage_count: newCount,
         updated_at: new Date().toISOString()
       })
+      .eq('club_id', clubId)
+      .eq('month_year', currentMonthYear)
       .select()
       .single();
 
     if (updateError) {
-      console.error('Error updating usage data:', updateError);
-      return NextResponse.json({ error: 'Failed to update usage data' }, { status: 500 });
+      console.log('Update failed, trying insert...');
+      
+      // If update fails, try to insert a new record
+      const { data: insertData, error: insertError } = await supabase
+        .from('presentation_usage')
+        .insert({
+          club_id: clubId,
+          user_id: userId,
+          month_year: currentMonthYear,
+          usage_count: newCount,
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (insertError) {
+        console.error('Both update and insert failed:', insertError);
+        return NextResponse.json({ error: 'Failed to update usage data' }, { status: 500 });
+      }
+      
+      console.log('✅ Successfully inserted new usage record:', insertData);
+      updateData = insertData;
+    } else {
+      console.log('✅ Successfully updated existing usage record:', updateResult);
+      updateData = updateResult;
     }
 
+    console.log('✅ Successfully updated usage in database:', updateData);
+    
+    // Verify the update by reading it back
+    const { data: verifyData, error: verifyError } = await supabase
+      .from('presentation_usage')
+      .select('usage_count, updated_at')
+      .eq('club_id', clubId)
+      .eq('month_year', currentMonthYear)
+      .single();
+    
+    if (verifyError) {
+      console.error('❌ Error verifying update:', verifyError);
+    } else {
+      console.log('🔍 Verification read from database:', verifyData);
+    }
+    
     return NextResponse.json({ 
       success: true, 
       usageCount: updateData.usage_count,

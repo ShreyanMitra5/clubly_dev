@@ -1,6 +1,19 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { Groq } from 'groq-sdk';
 import { checkUsageLimits, recordUsage } from '../../../../../utils/groqUsageManager';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseServer = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+function getCurrentMonthYear(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
+}
 
 // US Academic Calendar (Typical Dates)
 const ACADEMIC_CALENDAR = {
@@ -75,8 +88,51 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ clu
       meetingDays,
       meetingTime,
       meetingDuration,
-      clubName
+      clubName,
+      userId
     } = body;
+
+    // Check roadmap usage limit for this club
+    // Use the start date from the request to determine which month to track
+    const startDateObj = new Date(startDate);
+    const currentMonthYear = `${startDateObj.getFullYear()}-${String(startDateObj.getMonth() + 1).padStart(2, '0')}`;
+    const monthlyLimit = 2; // 2 roadmaps per month
+    
+    console.log('[generate-topics] Checking usage for club:', clubId, 'month:', currentMonthYear, 'startDate:', startDate);
+    
+    // Check current usage for this club this month
+    console.log('[generate-topics] About to query roadmap_usage table...');
+    const { data: usageData, error: fetchError } = await supabaseServer
+      .from('roadmap_usage')
+      .select('usage_count')
+      .eq('club_id', clubId)
+      .eq('month_year', currentMonthYear)
+      .single();
+
+    console.log('[generate-topics] Query result:', { usageData, fetchError });
+
+    if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = no rows returned
+      console.error('[generate-topics] Error fetching roadmap usage data:', fetchError);
+      return NextResponse.json({ error: 'Failed to fetch usage data' }, { status: 500 });
+    }
+
+    const currentUsage = usageData?.usage_count || 0;
+    const remainingSlots = Math.max(0, monthlyLimit - currentUsage);
+    const canGenerate = remainingSlots > 0;
+    
+    console.log('[generate-topics] Current roadmap usage:', currentUsage, 'Remaining slots:', remainingSlots, 'Can generate:', canGenerate);
+    console.log('[generate-topics] Will update usage from', currentUsage, 'to', currentUsage + 1);
+
+    if (!canGenerate) {
+      return NextResponse.json({
+        error: 'Monthly roadmap limit reached for this club',
+        details: {
+          currentUsage,
+          monthlyLimit,
+          monthYear: currentMonthYear
+        }
+      }, { status: 429 }); // 429 = Too Many Requests
+    }
 
     // Defensive: Check required fields
     if (!topic || !startDate || !endDate || !frequency || !meetingDays || !meetingTime || !clubName) {
@@ -369,6 +425,48 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ clu
       specialEventsGenerated: specialEvents.length,
       dateRange: `${startDate} to ${endDate}`
     });
+
+    // Update roadmap usage count after successful generation
+    try {
+      const newCount = currentUsage + 1;
+      console.log('[generate-topics] Attempting to update usage to:', newCount);
+      
+      // First try to update existing record
+      const { error: updateError } = await supabaseServer
+        .from('roadmap_usage')
+        .update({ 
+          usage_count: newCount,
+          updated_at: new Date().toISOString()
+        })
+        .eq('club_id', clubId)
+        .eq('month_year', currentMonthYear);
+
+      if (updateError) {
+        console.log('[generate-topics] Update failed, trying to insert new record...');
+        // If update failed, try to insert a new record
+        const { error: insertError } = await supabaseServer
+          .from('roadmap_usage')
+          .insert({
+            club_id: clubId,
+            user_id: userId || 'unknown',
+            month_year: currentMonthYear,
+            usage_count: newCount,
+            updated_at: new Date().toISOString()
+          });
+
+        if (insertError) {
+          console.error('[generate-topics] Error inserting roadmap usage:', insertError);
+          // Don't fail the request if usage update fails
+        } else {
+          console.log('[generate-topics] Roadmap usage inserted successfully:', newCount);
+        }
+      } else {
+        console.log('[generate-topics] Roadmap usage updated successfully:', newCount);
+      }
+    } catch (usageError) {
+      console.error('[generate-topics] Error updating roadmap usage:', usageError);
+      // Don't fail the request if usage update fails
+    }
 
     return NextResponse.json({
       meetings: fullMeetings,

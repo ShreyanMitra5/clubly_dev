@@ -17,6 +17,7 @@ import {
   Target,
   MapPin
 } from 'lucide-react';
+import { RoadmapUsageManager } from '../../../utils/roadmapUsageManager';
 
 export default function SemesterRoadmapPage() {
   const params = useParams();
@@ -27,6 +28,12 @@ export default function SemesterRoadmapPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [usageInfo, setUsageInfo] = useState<{
+    canGenerate: boolean;
+    currentUsage: number;
+    remainingSlots: number;
+    monthYear: string;
+  } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
 
@@ -50,21 +57,72 @@ export default function SemesterRoadmapPage() {
       }, 500);
     };
     checkRoadmap();
+    
+    // Check roadmap usage for this club
+    if (user) {
+      checkRoadmapUsage();
+    }
   }, [clubName, user]);
 
+  // Function to check roadmap usage
+  const checkRoadmapUsage = async () => {
+    try {
+      // Use clubName as clubId for now - you may need to adjust this based on your data structure
+      const usage = await RoadmapUsageManager.checkUsageLimit(clubName);
+      setUsageInfo(usage);
+    } catch (error) {
+      console.error('Error checking roadmap usage:', error);
+      setUsageInfo(null);
+    }
+  };
+
   const generateRoadmap = async () => {
+    // Check if club has reached monthly limit
+    if (usageInfo && !usageInfo.canGenerate) {
+      alert(`Monthly roadmap limit reached for ${clubName}. You've used ${usageInfo.currentUsage}/${RoadmapUsageManager.getMonthlyLimit()} roadmaps this month.`);
+      return;
+    }
+
     setLoading(true);
     try {
       // Simulate roadmap generation
       await new Promise(resolve => setTimeout(resolve, 2000));
       setHasRoadmap(true);
       setShowSetupModal(false);
-      } catch (error) {
-      console.error('Error generating roadmap:', error);
-      } finally {
-        setLoading(false);
+      
+      // Update usage after successful generation
+      if (user) {
+        await updateRoadmapUsage();
       }
-    };
+    } catch (error) {
+      console.error('Error generating roadmap:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to update roadmap usage
+  const updateRoadmapUsage = async () => {
+    try {
+      const response = await fetch('/api/roadmaps/check-usage', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          clubId: clubName, // Using clubName as clubId for now
+          userId: user?.id 
+        }),
+      });
+
+      if (response.ok) {
+        // Refresh usage info
+        await checkRoadmapUsage();
+      } else {
+        console.error('Failed to update roadmap usage');
+      }
+    } catch (error) {
+      console.error('Error updating roadmap usage:', error);
+    }
+  };
 
   // Mock stats
   const totalMeetings = 24;
@@ -136,6 +194,71 @@ export default function SemesterRoadmapPage() {
               </p>
             </motion.div>
 
+            {/* Roadmap Usage Tracker */}
+            {usageInfo && (
+              <motion.div 
+                className="bg-gradient-to-r from-blue-50 to-blue-100/50 border border-blue-200/50 rounded-2xl p-6 mb-8"
+                initial={{ opacity: 0, x: 20 }}
+                animate={inView ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+              >
+                <div className="flex items-start space-x-4">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3" />
+                    </svg>
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-lg font-light text-gray-900">
+                        Monthly Roadmap Usage
+                      </h3>
+                      <div className="text-right">
+                        <div className="text-2xl font-bold text-blue-600">
+                          {usageInfo.currentUsage}/2
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {usageInfo.remainingSlots > 0 ? `${usageInfo.remainingSlots} remaining` : 'Limit reached'}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Progress Bar */}
+                    <div className="w-full bg-gray-200 rounded-full h-3 mb-3">
+                      <div 
+                        className={`h-3 rounded-full transition-all duration-500 ${
+                          usageInfo.remainingSlots === 0 
+                            ? 'bg-red-500' 
+                            : usageInfo.remainingSlots <= 1 
+                              ? 'bg-orange-500' 
+                              : 'bg-blue-500'
+                        }`}
+                        style={{ 
+                          width: `${Math.min((usageInfo.currentUsage / 2) * 100, 100)}%` 
+                        }}
+                      ></div>
+                    </div>
+                    
+                    {/* Status Message */}
+                    <div className={`text-sm font-medium ${
+                      usageInfo.remainingSlots === 0 
+                        ? 'text-red-600' 
+                        : usageInfo.remainingSlots <= 1 
+                          ? 'text-orange-600' 
+                          : 'text-blue-600'
+                    }`}>
+                      {usageInfo.remainingSlots === 0 
+                        ? '🚫 Monthly limit reached - no more roadmaps this month'
+                        : usageInfo.remainingSlots <= 1 
+                          ? '⚠️ Almost at monthly limit - only 1 roadmap remaining'
+                          : `✅ ${usageInfo.remainingSlots} roadmaps remaining this month`
+                      }
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
             <motion.div
               className="bg-white/70 backdrop-blur-xl border border-gray-200/50 rounded-3xl p-8 shadow-xl"
               initial={{ opacity: 0, y: 30 }}
@@ -206,7 +329,7 @@ export default function SemesterRoadmapPage() {
 
                 <motion.button
                   type="submit"
-                  disabled={loading || !setupForm.topic || !setupForm.goals}
+                  disabled={loading || !setupForm.topic || !setupForm.goals || (usageInfo && !usageInfo.canGenerate)}
                   className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-2xl font-light text-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3"
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
@@ -219,6 +342,13 @@ export default function SemesterRoadmapPage() {
                         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                       />
                       <span>Generating Roadmap...</span>
+                    </>
+                  ) : usageInfo && !usageInfo.canGenerate ? (
+                    <>
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <span>Monthly Limit Reached</span>
                     </>
                   ) : (
                     <>
@@ -294,15 +424,96 @@ export default function SemesterRoadmapPage() {
               <span>Weekly meetings</span>
               <motion.button
                 onClick={() => setShowSetupModal(true)}
-                className="ml-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-2 rounded-xl font-light text-sm hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg"
-                whileHover={{ scale: 1.05, y: -1 }}
-                whileTap={{ scale: 0.95 }}
+                disabled={usageInfo && !usageInfo.canGenerate}
+                className={`ml-4 px-6 py-2 rounded-xl font-light text-sm transition-all duration-300 shadow-lg ${
+                  usageInfo && !usageInfo.canGenerate
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700'
+                }`}
+                whileHover={usageInfo && !usageInfo.canGenerate ? {} : { scale: 1.05, y: -1 }}
+                whileTap={usageInfo && !usageInfo.canGenerate ? {} : { scale: 0.95 }}
               >
-                <Settings className="w-4 h-4 inline mr-2" />
-                Setup
+                {usageInfo && !usageInfo.canGenerate ? (
+                  <>
+                    <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Limit Reached
+                  </>
+                ) : (
+                  <>
+                    <Settings className="w-4 h-4 inline mr-2" />
+                    Setup
+                  </>
+                )}
               </motion.button>
             </motion.div>
           </motion.div>
+
+          {/* Roadmap Usage Tracker */}
+          {usageInfo && (
+            <motion.div 
+              className="bg-gradient-to-r from-blue-50 to-blue-100/50 border border-blue-200/50 rounded-2xl p-6 mb-6"
+              initial={{ opacity: 0, x: 20 }}
+              animate={inView ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+            >
+              <div className="flex items-start space-x-4">
+                <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-lg font-light text-gray-900">
+                      Monthly Roadmap Usage
+                    </h3>
+                    <div className="text-right">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {usageInfo.currentUsage}/2
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {usageInfo.remainingSlots > 0 ? `${usageInfo.remainingSlots} remaining` : 'Limit reached'}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Progress Bar */}
+                  <div className="w-full bg-gray-200 rounded-full h-3 mb-3">
+                    <div 
+                      className={`h-3 rounded-full transition-all duration-500 ${
+                        usageInfo.remainingSlots === 0 
+                          ? 'bg-red-500' 
+                          : usageInfo.remainingSlots <= 1 
+                            ? 'bg-orange-500' 
+                            : 'bg-blue-500'
+                      }`}
+                      style={{ 
+                        width: `${Math.min((usageInfo.currentUsage / 2) * 100, 100)}%` 
+                      }}
+                    ></div>
+                  </div>
+                  
+                  {/* Status Message */}
+                  <div className={`text-sm font-medium ${
+                    usageInfo.remainingSlots === 0 
+                      ? 'text-red-600' 
+                      : usageInfo.remainingSlots <= 1 
+                        ? 'text-orange-600' 
+                        : 'text-blue-600'
+                  }`}>
+                    {usageInfo.remainingSlots === 0 
+                      ? '🚫 Monthly limit reached - no more roadmaps this month'
+                      : usageInfo.remainingSlots <= 1 
+                        ? '⚠️ Almost at monthly limit - only 1 roadmap remaining'
+                        : `✅ ${usageInfo.remainingSlots} roadmaps remaining this month`
+                    }
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
           {/* Progress Stats */}
           <motion.div 
