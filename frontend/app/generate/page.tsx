@@ -7,6 +7,7 @@ import Image from 'next/image';
 import { useUser } from '@clerk/nextjs';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { ProductionClubManager, ProductionClubData } from '../utils/productionClubManager';
+import { PresentationUsageManager } from '../utils/presentationUsageManager';
 
 const InputField = ({ 
   label, 
@@ -121,12 +122,25 @@ function GeneratePageContent() {
   const [sending, setSending] = useState(false);
   const [emailSuccess, setEmailSuccess] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [usageInfo, setUsageInfo] = useState<{
+    canGenerate: boolean;
+    currentUsage: number;
+    remainingSlots: number;
+    monthYear: string;
+  } | null>(null);
 
   useEffect(() => {
     if (user) {
       loadUserClubs();
     }
   }, [user]);
+
+  // Check usage when component mounts and user is loaded
+  useEffect(() => {
+    if (user && selectedClub) {
+      checkClubUsage(selectedClub.clubId);
+    }
+  }, [user, selectedClub]);
 
   // Get clubId from URL and set selected club
   useEffect(() => {
@@ -136,6 +150,8 @@ function GeneratePageContent() {
       if (club) {
         setSelectedClub(club);
         setFormData(prev => ({ ...prev, clubId: club.clubId }));
+        // Check usage for the URL-selected club
+        checkClubUsage(club.clubId);
       }
     }
   }, [searchParams, userClubs]);
@@ -153,6 +169,8 @@ function GeneratePageContent() {
     if (userClubs.length > 0 && !selectedClub) {
       setSelectedClub(userClubs[0]);
       setFormData(prev => ({ ...prev, clubId: userClubs[0].clubId }));
+      // Check usage for the auto-selected club
+      checkClubUsage(userClubs[0].clubId);
     }
   }, [userClubs, selectedClub]);
 
@@ -171,6 +189,8 @@ function GeneratePageContent() {
         if (club) {
           setSelectedClub(club);
           setFormData(prev => ({ ...prev, clubId }));
+          // Check usage for the URL-selected club
+          checkClubUsage(club.clubId);
         }
       }
     } catch (error) {
@@ -187,6 +207,21 @@ function GeneratePageContent() {
     if (name === 'clubId') {
       const club = userClubs.find(c => c.clubId === value);
       setSelectedClub(club || null);
+      // Check usage when club changes
+      if (club) {
+        checkClubUsage(club.clubId);
+      }
+    }
+  };
+
+  // Check club usage
+  const checkClubUsage = async (clubId: string) => {
+    try {
+      const usage = await PresentationUsageManager.checkUsageLimit(clubId);
+      setUsageInfo(usage);
+    } catch (error) {
+      console.error('Error checking club usage:', error);
+      setUsageInfo(null);
     }
   };
 
@@ -199,6 +234,13 @@ function GeneratePageContent() {
 
     if (!selectedClub) {
       setError('Please select a club first');
+      setIsLoading(false);
+      return;
+    }
+
+    // Check if club has reached monthly limit
+    if (usageInfo && !usageInfo.canGenerate) {
+      setError(`Monthly presentation limit reached for ${selectedClub.clubName}. You've used ${usageInfo.currentUsage}/${PresentationUsageManager.getMonthlyLimit()} presentations this month.`);
       setIsLoading(false);
       return;
     }
@@ -248,7 +290,12 @@ function GeneratePageContent() {
         });
       }
     } catch (err: any) {
-      setError(err.message);
+      // Check if it's a usage limit error
+      if (err.message && err.message.includes('Monthly presentation limit reached')) {
+        setError(`Monthly presentation limit reached for ${selectedClub.clubName}. You've used ${usageInfo?.currentUsage || 0}/${PresentationUsageManager.getMonthlyLimit()} presentations this month.`);
+      } else {
+        setError(err.message);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -311,6 +358,64 @@ function GeneratePageContent() {
                 <div className="bg-yellow-50 border border-yellow-400 text-yellow-900 rounded-lg p-4 max-w-xl mx-auto">
                   <strong>Note:</strong> The onboarding information you provided for this club (description, mission, goals, your role, and audience) will be used to generate this presentation. You can update this information anytime in the club's <Link href={`/clubs/${encodeURIComponent(selectedClub.clubName)}/settings`} className="underline">Settings</Link> page.
                 </div>
+                
+                {/* Usage Information */}
+                {usageInfo && (
+                  <div className={`mt-4 p-4 rounded-lg border max-w-xl mx-auto ${
+                    usageInfo.canGenerate 
+                      ? usageInfo.remainingSlots <= 1 
+                        ? 'bg-orange-50 border-orange-400 text-orange-900' 
+                        : 'bg-blue-50 border-blue-400 text-blue-900'
+                      : 'bg-red-50 border-red-400 text-red-900'
+                  }`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        {usageInfo.canGenerate ? (
+                          usageInfo.remainingSlots <= 1 ? (
+                            <AlertTriangle className="w-5 h-5 mr-2" />
+                          ) : (
+                            <CheckCircle className="w-5 h-5 mr-2" />
+                          )
+                        ) : (
+                          <AlertCircle className="w-5 h-5 mr-2" />
+                        )}
+                        <span className="font-semibold">
+                          {usageInfo.canGenerate 
+                            ? usageInfo.remainingSlots <= 1 
+                              ? 'Almost at monthly limit' 
+                              : 'Monthly usage'
+                            : 'Monthly limit reached'
+                          }
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-lg">
+                          {usageInfo.currentUsage}/{PresentationUsageManager.getMonthlyLimit()}
+                        </div>
+                        <div className="text-sm">
+                          {usageInfo.canGenerate 
+                            ? `${usageInfo.remainingSlots} remaining this month`
+                            : 'Limit reached for this month'
+                          }
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Progress bar */}
+                    <div className="mt-3 w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className={`h-2 rounded-full transition-all duration-300 ${
+                          usageInfo.canGenerate 
+                            ? usageInfo.remainingSlots <= 1 
+                              ? 'bg-orange-500' 
+                              : 'bg-blue-500'
+                            : 'bg-red-500'
+                        }`}
+                        style={{ width: `${PresentationUsageManager.getUsagePercentage(usageInfo.currentUsage)}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -344,13 +449,18 @@ function GeneratePageContent() {
               <div className="pt-8 border-t border-gray-200">
                 <button
                   type="submit"
-                  disabled={isLoading || !formData.clubId || !formData.description}
+                  disabled={isLoading || !formData.clubId || !formData.description || (usageInfo && !usageInfo.canGenerate)}
                   className="btn-primary w-full text-lg py-4 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center justify-center"
                 >
                   {isLoading ? (
                     <>
                       <div className="loading-spinner mr-3"></div>
                       Generating your presentation...
+                    </>
+                  ) : usageInfo && !usageInfo.canGenerate ? (
+                    <>
+                      Monthly Limit Reached
+                      <AlertCircle className="w-5 h-5 ml-2" />
                     </>
                   ) : (
                     <>

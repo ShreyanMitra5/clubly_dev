@@ -5,6 +5,7 @@ import { useUser } from '@clerk/nextjs';
 import { supabase } from '../../../../utils/supabaseClient';
 import ClubLayout from '../../../components/ClubLayout';
 import EmailModal from '../../../components/EmailModal';
+import { PresentationUsageManager } from '../../../utils/presentationUsageManager';
 
 export default function PresentationHistoryPage() {
   const params = useParams();
@@ -15,6 +16,12 @@ export default function PresentationHistoryPage() {
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [selectedPresentation, setSelectedPresentation] = useState<any>(null);
   const [clubId, setClubId] = useState<string>('');
+  const [usageInfo, setUsageInfo] = useState<{
+    canGenerate: boolean;
+    currentUsage: number;
+    remainingSlots: number;
+    monthYear: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!user || !clubName) return;
@@ -37,6 +44,23 @@ export default function PresentationHistoryPage() {
     };
     
     getClubId();
+    
+    // Check usage when clubId is set
+    if (clubId) {
+      checkClubUsage(clubId);
+    }
+  }, [user, clubName, clubId]);
+
+  // Function to check club usage
+  const checkClubUsage = async (clubId: string) => {
+    try {
+      const usage = await PresentationUsageManager.checkUsageLimit(clubId);
+      setUsageInfo(usage);
+    } catch (error) {
+      console.error('Error checking club usage:', error);
+      setUsageInfo(null);
+    }
+  };
     
     // Fetch presentation history for this user, then filter for this club
     fetch(`/api/presentations/history?userId=${user.id}`)
@@ -65,6 +89,63 @@ export default function PresentationHistoryPage() {
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-pulse-500 mb-2">Past Presentations</h1>
           <p className="text-gray-600">View and manage all presentations for {clubName}</p>
+          
+          {/* Usage Tracker */}
+          {usageInfo && (
+            <div className="mt-6 bg-gradient-to-r from-blue-50 to-blue-100/50 border border-blue-200/50 rounded-2xl p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center">
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Monthly Usage</h3>
+                    <p className="text-sm text-gray-600">Track your presentation generation limits</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <div className="text-3xl font-bold text-blue-600">
+                    {usageInfo.currentUsage}/5
+                  </div>
+                  <div className="text-sm text-gray-500">
+                    {usageInfo.remainingSlots > 0 ? `${usageInfo.remainingSlots} remaining` : 'Limit reached'}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Progress Bar */}
+              <div className="mt-4 w-full bg-gray-200 rounded-full h-3">
+                <div 
+                  className={`h-3 rounded-full transition-all duration-500 ${
+                    usageInfo.remainingSlots === 0 
+                      ? 'bg-red-500' 
+                      : usageInfo.remainingSlots <= 1 
+                        ? 'bg-orange-500' 
+                        : 'bg-blue-500'
+                  }`}
+                  style={{ width: `${Math.min((usageInfo.currentUsage / 5) * 100, 100)}%` }}
+                ></div>
+              </div>
+              
+              {/* Status Message */}
+              <div className={`mt-3 text-sm font-medium ${
+                usageInfo.remainingSlots === 0 
+                  ? 'text-red-600' 
+                  : usageInfo.remainingSlots <= 1 
+                    ? 'text-orange-600' 
+                    : 'text-blue-600'
+              }`}>
+                {usageInfo.remainingSlots === 0 
+                  ? '🚫 Monthly limit reached - no more presentations this month'
+                  : usageInfo.remainingSlots <= 1 
+                    ? '⚠️ Almost at monthly limit - only 1 presentation remaining'
+                    : `✅ ${usageInfo.remainingSlots} presentations remaining this month`
+                }
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Presentation Grid */}
@@ -80,9 +161,42 @@ export default function PresentationHistoryPage() {
             </div>
             <h3 className="text-lg font-semibold text-pulse-500 mb-2">No Presentations Yet</h3>
             <p className="text-gray-500 mb-4">Create your first presentation to get started</p>
+            
+            {/* Usage Status for Create Button */}
+            {usageInfo && (
+              <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="text-center">
+                  <div className="text-sm text-gray-600 mb-2">
+                    Monthly Usage: <span className="font-semibold">{usageInfo.currentUsage}/5</span>
+                  </div>
+                  <div className={`text-xs ${
+                    usageInfo.remainingSlots === 0 
+                      ? 'text-red-600' 
+                      : usageInfo.remainingSlots <= 1 
+                        ? 'text-orange-600' 
+                        : 'text-green-600'
+                  }`}>
+                    {usageInfo.remainingSlots === 0 
+                      ? '🚫 Monthly limit reached'
+                      : usageInfo.remainingSlots <= 1 
+                        ? '⚠️ Only 1 presentation remaining'
+                        : `✅ ${usageInfo.remainingSlots} presentations remaining`
+                    }
+                  </div>
+                </div>
+              </div>
+            )}
+            
             <a href={`/generate?clubId=${clubName}`}>
-              <button className="button-primary bg-pulse-500 hover:bg-pulse-600 text-white px-6 py-3 rounded-full text-base">
-                Create Presentation
+              <button 
+                className={`button-primary px-6 py-3 rounded-full text-base ${
+                  usageInfo && !usageInfo.canGenerate
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-pulse-500 hover:bg-pulse-600'
+                }`}
+                disabled={usageInfo && !usageInfo.canGenerate}
+              >
+                {usageInfo && !usageInfo.canGenerate ? 'Monthly Limit Reached' : 'Create Presentation'}
               </button>
             </a>
           </div>

@@ -30,6 +30,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Club not found' }, { status: 404 });
     }
 
+    // Check presentation usage limit for this club
+    const usageCheck = await checkPresentationUsage(clubId);
+    if (!usageCheck.canGenerate) {
+      return NextResponse.json({ 
+        error: 'Monthly presentation limit reached for this club',
+        details: {
+          currentUsage: usageCheck.currentUsage,
+          monthlyLimit: usageCheck.monthlyLimit,
+          monthYear: usageCheck.monthYear
+        }
+      }, { status: 429 }); // 429 = Too Many Requests
+    }
+
     // Log the prompt and clubData for debugging
     console.log('SlidesGPT prompt:', prompt);
     console.log('SlidesGPT clubData:', clubData);
@@ -63,6 +76,9 @@ export async function POST(request: NextRequest) {
     // Upload to S3
     const bucket = process.env.S3_BUCKET_NAME!;
     const { publicUrl, viewerUrl } = await uploadFileToS3(filePath, bucket, fileName);
+
+    // Update presentation usage count after successful generation
+    await updatePresentationUsage(clubId, clubData.owner_id || clubData.userId);
 
     return NextResponse.json({
       success: true,
@@ -133,4 +149,61 @@ async function callSlidesGPTAPI(prompt: string): Promise<any> {
     console.error('Detailed SlidesGPT API Error:', error);
     throw error;
   }
+}
+
+async function checkPresentationUsage(clubId: string): Promise<{
+  canGenerate: boolean;
+  currentUsage: number;
+  monthlyLimit: number;
+  monthYear: string;
+}> {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/presentations/check-usage`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ clubId }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to check usage: ${response.statusText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error('Error checking presentation usage:', error);
+    // If we can't check usage, allow generation to avoid blocking users
+    return {
+      canGenerate: true,
+      currentUsage: 0,
+      monthlyLimit: 5,
+      monthYear: getCurrentMonthYear(),
+    };
+  }
+}
+
+async function updatePresentationUsage(clubId: string, userId: string): Promise<void> {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/presentations/check-usage`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ clubId, userId }),
+    });
+
+    if (!response.ok) {
+      console.error('Failed to update presentation usage:', response.statusText);
+    }
+  } catch (error) {
+    console.error('Error updating presentation usage:', error);
+  }
+}
+
+function getCurrentMonthYear(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  return `${year}-${month}`;
 } 

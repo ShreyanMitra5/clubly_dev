@@ -4,6 +4,7 @@ import ClubSidebar from './ClubSidebar';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { ProductionClubManager, ProductionClubData } from '../utils/productionClubManager';
+import { PresentationUsageManager } from '../utils/presentationUsageManager';
 import { supabase } from '../../utils/supabaseClient';
 import Image from 'next/image';
 import { v4 as uuidv4 } from 'uuid';
@@ -448,6 +449,12 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
   const [sending, setSending] = useState(false);
   const [emailSuccess, setEmailSuccess] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [usageInfo, setUsageInfo] = useState<{
+    canGenerate: boolean;
+    currentUsage: number;
+    remainingSlots: number;
+    monthYear: string;
+  } | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
 
@@ -498,6 +505,26 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
     }
   }, [userClubs, selectedClub]);
 
+  // Check usage when selected club changes
+  useEffect(() => {
+    if (selectedClub) {
+      checkClubUsage(selectedClub.clubId);
+    }
+  }, [selectedClub]);
+
+  // Function to check club usage
+  const checkClubUsage = async (clubId: string) => {
+    try {
+      console.log('Checking usage for club:', clubId);
+      const usage = await PresentationUsageManager.checkUsageLimit(clubId);
+      console.log('Usage result:', usage);
+      setUsageInfo(usage);
+    } catch (error) {
+      console.error('Error checking club usage:', error);
+      setUsageInfo(null);
+    }
+  };
+
   // Update the loadUserClubs function to ensure we're getting fresh data
   const loadUserClubs = async () => {
     if (!user) return;
@@ -541,6 +568,13 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
 
     if (!selectedClub) {
       setError('Please select a club first');
+      setIsLoading(false);
+      return;
+    }
+
+    // Check if club has reached monthly limit
+    if (usageInfo && !usageInfo.canGenerate) {
+      setError(`Monthly presentation limit reached for ${selectedClub.clubName}. You've used ${usageInfo.currentUsage}/${PresentationUsageManager.getMonthlyLimit()} presentations this month.`);
       setIsLoading(false);
       return;
     }
@@ -595,6 +629,9 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
             }
           })
         });
+        
+        // Update usage after successful generation
+        await checkClubUsage(selectedClub.clubId);
       }
     } catch (err) {
       console.error('Error generating presentation:', err);
@@ -721,6 +758,80 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
               </div>
             </div>
           </motion.div>
+                  
+                  {/* Presentation Usage Tracker */}
+                  {selectedClub && (
+                    <motion.div 
+                      className="bg-gradient-to-r from-blue-50 to-blue-100/50 border border-blue-200/50 rounded-2xl p-6 mb-8"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={inView ? { opacity: 1, x: 0 } : { opacity: 0, x: 20 }}
+                      transition={{ duration: 0.6, delay: 0.9 }}
+                    >
+                      <div className="flex items-start space-x-4">
+                        <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-lg font-light text-gray-900">
+                              Monthly Presentation Usage
+                            </h3>
+                            <div className="text-right">
+                              <div className="text-2xl font-bold text-blue-600">
+                                {usageInfo ? `${usageInfo.currentUsage}/5` : '0/5'}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {usageInfo ? usageInfo.remainingSlots > 0 ? `${usageInfo.remainingSlots} remaining` : 'Limit reached' : 'Loading...'}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {/* Progress Bar */}
+                          <div className="w-full bg-gray-200 rounded-full h-3 mb-3">
+                            <div 
+                              className={`h-3 rounded-full transition-all duration-500 ${
+                                usageInfo 
+                                  ? usageInfo.remainingSlots === 0 
+                                    ? 'bg-red-500' 
+                                    : usageInfo.remainingSlots <= 1 
+                                      ? 'bg-orange-500' 
+                                      : 'bg-blue-500'
+                                  : 'bg-gray-400'
+                              }`}
+                              style={{ 
+                                width: usageInfo 
+                                  ? `${Math.min((usageInfo.currentUsage / 5) * 100, 100)}%` 
+                                  : '0%' 
+                              }}
+                            ></div>
+                          </div>
+                          
+                          {/* Status Message */}
+                          <div className={`text-sm font-medium ${
+                            usageInfo 
+                              ? usageInfo.remainingSlots === 0 
+                                ? 'text-red-600' 
+                                : usageInfo.remainingSlots <= 1 
+                                  ? 'text-orange-600' 
+                                  : 'text-blue-600'
+                              : 'text-gray-500'
+                          }`}>
+                            {usageInfo 
+                              ? usageInfo.remainingSlots === 0 
+                                ? '🚫 Monthly limit reached - no more presentations this month'
+                                : usageInfo.remainingSlots <= 1 
+                                  ? '⚠️ Almost at monthly limit - only 1 presentation remaining'
+                                  : `✅ ${usageInfo.remainingSlots} presentations remaining this month`
+                              : 'Loading usage information...'
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                  
                   {/* Form Section */}
           <motion.form 
             onSubmit={handleSubmit} 
@@ -749,7 +860,7 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
                 <div className="flex items-end">
                   <motion.button
               type="submit"
-              disabled={isLoading || !formData.description.trim()}
+              disabled={isLoading || !formData.description.trim() || (usageInfo && !usageInfo.canGenerate)}
                     className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-2xl font-light text-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3"
                     whileHover={{ scale: 1.02, y: -2 }}
                     whileTap={{ scale: 0.98 }}
@@ -762,6 +873,11 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
                           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                         />
                         <span>Generating...</span>
+                      </>
+                    ) : usageInfo && !usageInfo.canGenerate ? (
+                      <>
+                        <AlertCircle className="w-5 h-5" />
+                        <span>Monthly Limit Reached</span>
                       </>
                     ) : (
                       <>
