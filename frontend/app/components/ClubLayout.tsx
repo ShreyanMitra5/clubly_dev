@@ -19,6 +19,8 @@ import AdvisorRequestForm from './AdvisorRequestForm';
 import ClubDetailsForm from './ClubDetailsForm';
 import StudentMessaging from './StudentMessaging';
 import SuccessModal from './SuccessModal';
+import RoadmapUsageDisplay from './RoadmapUsageDisplay';
+import PresentationUsageDisplay from './PresentationUsageDisplay';
 import { 
   Users, 
   Presentation, 
@@ -448,6 +450,8 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
   const [sending, setSending] = useState(false);
   const [emailSuccess, setEmailSuccess] = useState('');
   const [emailError, setEmailError] = useState('');
+  const [usageData, setUsageData] = useState<any>(null);
+  const [usageLoading, setUsageLoading] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
 
@@ -498,6 +502,13 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
     }
   }, [userClubs, selectedClub]);
 
+  // Load presentation usage when selected club changes
+  useEffect(() => {
+    if (selectedClub?.clubId) {
+      loadPresentationUsage(selectedClub.clubId);
+    }
+  }, [selectedClub?.clubId]);
+
   // Update the loadUserClubs function to ensure we're getting fresh data
   const loadUserClubs = async () => {
     if (!user) return;
@@ -517,6 +528,25 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
       }
     } catch (error) {
       console.error('Error loading user clubs:', error);
+    }
+  };
+
+  const loadPresentationUsage = async (clubId: string) => {
+    if (!clubId) return;
+    
+    setUsageLoading(true);
+    try {
+      const response = await fetch(`/api/clubs/${clubId}/presentation-usage`);
+      if (response.ok) {
+        const result = await response.json();
+        setUsageData(result.data);
+      } else {
+        console.error('Failed to load presentation usage');
+      }
+    } catch (error) {
+      console.error('Error loading presentation usage:', error);
+    } finally {
+      setUsageLoading(false);
     }
   };
 
@@ -545,6 +575,13 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
       return;
     }
 
+    // Check usage limits before generating
+    if (usageData && !usageData.canGenerate) {
+      setError(`You have reached your monthly limit of ${usageData.limit} presentation generations.`);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const result = await ProductionClubManager.generatePresentation(
         selectedClub.clubId,
@@ -553,6 +590,11 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
 
       setGenerationResult(result);
       setShowSuccessModal(true);
+      
+      // Refresh usage data after successful generation
+      if (selectedClub?.clubId) {
+        loadPresentationUsage(selectedClub.clubId);
+      }
       
       // Save to backend history and generate thumbnail
       if (result && user) {
@@ -721,6 +763,26 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
               </div>
             </div>
           </motion.div>
+
+          {/* Usage Display */}
+          {usageData && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+              transition={{ duration: 0.6, delay: 0.9 }}
+              className="mb-8"
+            >
+              <PresentationUsageDisplay
+                usageCount={usageData.usageCount}
+                limit={usageData.limit}
+                remainingGenerations={usageData.remainingGenerations}
+                canGenerate={usageData.canGenerate}
+                currentMonth={usageData.currentMonth}
+                isLoading={usageLoading}
+              />
+            </motion.div>
+          )}
+
                   {/* Form Section */}
           <motion.form 
             onSubmit={handleSubmit} 
@@ -3526,6 +3588,8 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
   const [eventDescription, setEventDescription] = useState('');
   const [eventColor, setEventColor] = useState('bg-purple-500');
   const [currentEvent, setCurrentEvent] = useState<ClubEvent | null>(null);
+  const [usageData, setUsageData] = useState<any>(null);
+  const [usageLoading, setUsageLoading] = useState(true);
   const [formData, setFormData] = useState({
     schoolYearStart: '',
     schoolYearEnd: '',
@@ -3553,10 +3617,25 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
           setShowOnboarding(false);
           setHasRoadmapData(true);
         }
+
+        // Load usage data
+        try {
+          const usageResponse = await fetch(`/api/clubs/${clubInfo.id}/roadmap-usage`);
+          const usageResult = await usageResponse.json();
+          
+          if (usageResult.success) {
+            setUsageData(usageResult.data);
+          }
+        } catch (usageError) {
+          console.error('Error loading usage data:', usageError);
+        } finally {
+          setUsageLoading(false);
+        }
       } catch (error) {
         console.error('Error checking roadmap data:', error);
         setShowOnboarding(true);
         setHasRoadmapData(false);
+        setUsageLoading(false);
       }
     };
     checkRoadmapData();
@@ -3727,6 +3806,13 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
 
   const handleOnboardingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check usage limits before proceeding
+    if (!usageData?.canGenerate) {
+      alert('Cannot generate roadmap: usage limit reached for this month.');
+      return;
+    }
+    
     const res = await fetchGroqMeetings();
     if (!res || !res.length) return;
     let meetings = res;
@@ -3817,10 +3903,26 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
       const json = await res.json();
       if (!res.ok || json.error) {
         console.error('Error saving roadmap:', json.error || json);
+        // Check if it's a usage limit error
+        if (res.status === 429) {
+          alert(json.message || 'You have reached your monthly limit of roadmap generations.');
+        }
       } else {
         setEvents(generatedEvents);
         setShowOnboarding(false);
         setHasRoadmapData(true);
+        
+        // Refresh usage data after successful generation
+        try {
+          const usageResponse = await fetch(`/api/clubs/${clubInfo.id}/roadmap-usage`);
+          const usageResult = await usageResponse.json();
+          
+          if (usageResult.success) {
+            setUsageData(usageResult.data);
+          }
+        } catch (usageError) {
+          console.error('Error refreshing usage data:', usageError);
+        }
       }
     } catch (error) {
       console.error('Error saving generated roadmap:', error);
@@ -3897,9 +3999,29 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
                   <input type="time" value={formData.meetingTime} onChange={e=>setFormData({...formData,meetingTime:e.target.value})} className="w-full p-3 border border-gray-200 rounded-lg" />
                   </div>
                 <div className="text-center pt-4">
-                  <button type="submit" className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-3 rounded-lg font-light hover:from-orange-600 hover:to-orange-700 transition-all">Generate Roadmap</button>
+                  <button 
+                    type="submit" 
+                    disabled={!usageData?.canGenerate}
+                    className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-3 rounded-lg font-light hover:from-orange-600 hover:to-orange-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Generate Roadmap
+                  </button>
                 </div>
               </form>
+            )}
+
+            {/* Usage Display */}
+            {usageData && (
+              <div className="mt-8">
+                <RoadmapUsageDisplay
+                  usageCount={usageData.usageCount}
+                  limit={usageData.limit}
+                  remainingGenerations={usageData.remainingGenerations}
+                  canGenerate={usageData.canGenerate}
+                  currentMonth={usageData.currentMonth}
+                  isLoading={usageLoading}
+                />
+              </div>
             )}
           </div>
         </div>
@@ -3944,7 +4066,21 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
                   </div>
                 </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center space-y-4 lg:space-y-0 lg:space-x-4">
+              {/* Usage Display */}
+              {usageData && (
+                <div className="lg:max-w-xs">
+                  <RoadmapUsageDisplay
+                    usageCount={usageData.usageCount}
+                    limit={usageData.limit}
+                    remainingGenerations={usageData.remainingGenerations}
+                    canGenerate={usageData.canGenerate}
+                    currentMonth={usageData.currentMonth}
+                    isLoading={usageLoading}
+                  />
+                </div>
+              )}
+              
               <motion.button
                 onClick={() => setShowOnboarding(true)}
                 className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-3 rounded-2xl font-light hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg"
@@ -3954,7 +4090,7 @@ function RoadmapPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
                 <Settings className="w-4 h-4 inline mr-2" />
                 Setup
               </motion.button>
-                    </div>
+            </div>
                 </div>
         </motion.div>
 
@@ -6279,7 +6415,7 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
         </svg>
     ), label: 'Club Space' },
     { key: 'Presentations', icon: (
-        <Brain className="w-5 h-5" />
+        <Presentation className="w-5 h-5" />
     ), label: 'Presentations' },
     { key: 'Roadmap', icon: (
         <Calendar className="w-5 h-5" />
@@ -6302,12 +6438,7 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
         </svg>
     ), label: 'Meeting Bookings' },
     { key: 'AI Assistant', icon: (
-        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M12 2a3 3 0 0 0-3 3v1a9 9 0 0 0 18 0V5a3 3 0 0 0-3-3z" />
-          <path d="M8 11v-1a4 4 0 0 1 8 0v1" />
-          <circle cx="12" cy="17" r="3" />
-          <path d="M12 14v.01" />
-        </svg>
+        <img src="/bot.png" alt="AI Assistant" className="w-5 h-5 object-contain filter brightness-0 invert" />
     ), label: 'AI Assistant' },
     { key: 'Tasks', icon: (
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -6358,20 +6489,41 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
         </div>
 
         {/* Logo Section */}
-        <div className="relative z-10 flex items-center px-6 h-20 border-b border-gray-700/30">
+        <div className={cn(
+          "relative z-10 flex items-center h-20 border-b border-gray-700/30 transition-all duration-300",
+          sidebarCompressed ? "px-3 justify-center" : "px-6"
+        )}>
           <motion.div 
-            className="flex items-center gap-4"
+            className={cn(
+              "flex items-center transition-all duration-300",
+              sidebarCompressed ? "gap-0" : "gap-4"
+            )}
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.2 }}
           >
-                         <img src="/new_logo.png" alt="Clubly" className="w-12 h-12" />
-          {!sidebarCompressed && (
-              <div>
+            <div className={cn(
+              "flex-shrink-0 transition-all duration-300",
+              sidebarCompressed ? "w-10 h-10" : "w-12 h-12"
+            )}>
+              <img 
+                src="/new_logo.png" 
+                alt="Clubly" 
+                className="w-full h-full object-contain"
+              />
+            </div>
+            {!sidebarCompressed && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -10 }}
+                transition={{ duration: 0.2 }}
+              >
                 <h1 className="text-xl font-extralight text-white">Clubly</h1>
-                                  <p className="text-xs text-gray-400 font-extralight">Run Things Better</p>
-              </div>
-          )}
+                <p className="text-xs text-gray-400 font-extralight">Run Things Better</p>
+              </motion.div>
+            )}
           </motion.div>
+
         </div>
 
         {/* Navigation */}

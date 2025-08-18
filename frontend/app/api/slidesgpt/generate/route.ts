@@ -5,14 +5,51 @@ import { uploadFileToS3 } from '../../../utils/s3uploader';
 import fetch from 'node-fetch';
 import os from 'os';
 import { ProductionClubManager } from '../../../utils/productionClubManager';
+import { supabaseServer } from '../../../../utils/supabaseServer';
+import { auth } from '@clerk/nextjs/server';
 
 export async function POST(request: NextRequest) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const body = await request.json();
     const { clubId, topic, theme, prompt } = body;
 
     if (!clubId || !topic || !prompt) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Check presentation usage limits
+    try {
+      const now = new Date();
+      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      
+      const { data: existingUsage, error: checkError } = await supabaseServer
+        .from('presentation_usage')
+        .select('id')
+        .eq('club_id', clubId)
+        .eq('month_year', currentMonth);
+
+      if (checkError) {
+        console.warn('Presentation usage tracking unavailable:', checkError.message);
+      } else {
+        const currentUsageCount = existingUsage?.length || 0;
+        const limit = 5;
+
+        if (currentUsageCount >= limit) {
+          return NextResponse.json({ 
+            error: 'Monthly limit reached', 
+            message: `You have reached the limit of ${limit} presentation generations per month.`,
+            usageCount: currentUsageCount,
+            limit 
+          }, { status: 429 });
+        }
+      }
+    } catch (error) {
+      console.warn('Presentation usage tracking check failed:', error);
     }
 
     // Check for required environment variables
@@ -63,6 +100,32 @@ export async function POST(request: NextRequest) {
     // Upload to S3
     const bucket = process.env.S3_BUCKET_NAME!;
     const { publicUrl, viewerUrl } = await uploadFileToS3(filePath, bucket, fileName);
+
+    // Record presentation usage after successful generation
+    try {
+      const now = new Date();
+      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      
+      const { error: usageError } = await supabaseServer
+        .from('presentation_usage')
+        .insert([
+          {
+            club_id: clubId,
+            user_id: userId,
+            month_year: currentMonth,
+            generated_at: now.toISOString(),
+            presentation_topic: topic
+          }
+        ]);
+
+      if (usageError) {
+        console.warn('Could not record presentation usage:', usageError.message);
+      } else {
+        console.log('[slidesgpt] Usage recorded successfully for club:', clubId);
+      }
+    } catch (error) {
+      console.warn('Presentation usage recording failed:', error);
+    }
 
     return NextResponse.json({
       success: true,

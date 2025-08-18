@@ -1,6 +1,8 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { Groq } from 'groq-sdk';
 import { checkUsageLimits, recordUsage } from '../../../../../utils/groqUsageManager';
+import { supabaseServer } from '../../../../../utils/supabaseServer';
+import { auth } from '@clerk/nextjs/server';
 
 // US Academic Calendar (Typical Dates)
 const ACADEMIC_CALENDAR = {
@@ -62,11 +64,46 @@ function generateMeetingDates(
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ clubId: string }> }) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { clubId } = await params;
     const body = await req.json();
     
     console.log('[generate-topics] Starting roadmap generation for club:', clubId);
     console.log('[generate-topics] Request body:', body);
+
+    // Check roadmap usage limits
+    try {
+      const now = new Date();
+      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      
+      const { data: existingUsage, error: checkError } = await supabaseServer
+        .from('roadmap_usage')
+        .select('id')
+        .eq('club_id', clubId)
+        .eq('month_year', currentMonth);
+
+      if (checkError) {
+        console.warn('Usage tracking unavailable:', checkError.message);
+      } else {
+        const currentUsageCount = existingUsage?.length || 0;
+        const limit = 2;
+
+        if (currentUsageCount >= limit) {
+          return NextResponse.json({ 
+            error: 'Monthly limit reached', 
+            message: `You have reached the limit of ${limit} roadmap generations per month.`,
+            usageCount: currentUsageCount,
+            limit 
+          }, { status: 429 });
+        }
+      }
+    } catch (error) {
+      console.warn('Usage tracking check failed:', error);
+    }
     const {
       topic,
       startDate,
@@ -369,6 +406,31 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ clu
       specialEventsGenerated: specialEvents.length,
       dateRange: `${startDate} to ${endDate}`
     });
+
+    // Record usage after successful generation
+    try {
+      const now = new Date();
+      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      
+      const { error: usageError } = await supabaseServer
+        .from('roadmap_usage')
+        .insert([
+          {
+            club_id: clubId,
+            user_id: userId,
+            month_year: currentMonth,
+            generated_at: now.toISOString()
+          }
+        ]);
+
+      if (usageError) {
+        console.warn('Could not record usage:', usageError.message);
+      } else {
+        console.log('[generate-topics] Usage recorded successfully for club:', clubId);
+      }
+    } catch (error) {
+      console.warn('Usage recording failed:', error);
+    }
 
     return NextResponse.json({
       meetings: fullMeetings,

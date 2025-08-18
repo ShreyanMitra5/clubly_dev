@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '../../../../../utils/supabaseServer';
+import { auth } from '@clerk/nextjs/server';
 
 // GET roadmap data for a club
 export async function GET(
@@ -36,13 +37,23 @@ export async function POST(
   { params }: { params: Promise<{ clubId: string }> }
 ) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const { clubId } = await params;
     const body = await request.json();
-    const { config, events } = body;
+    const { config, events, skipUsageCheck } = body;
+    
     console.log('Received roadmap POST payload:', body);
     if (!events || !Array.isArray(events) || events.length === 0) {
       console.warn('No events provided in roadmap POST payload:', body);
     }
+
+    // Skip usage tracking here - it's handled in generate-topics endpoint
+    // This endpoint is mainly for saving/updating roadmap data
+
     const now = new Date().toISOString();
     // Use upsert with conflict target on club_id to update if exists
     const { data, error } = await supabaseServer

@@ -17,6 +17,7 @@ import {
   Target,
   MapPin
 } from 'lucide-react';
+import RoadmapUsageDisplay from '../../../components/RoadmapUsageDisplay';
 
 export default function SemesterRoadmapPage() {
   const params = useParams();
@@ -27,6 +28,9 @@ export default function SemesterRoadmapPage() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [events, setEvents] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [usageData, setUsageData] = useState(null);
+  const [usageLoading, setUsageLoading] = useState(true);
+  const [clubInfo, setClubInfo] = useState(null);
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
 
@@ -40,31 +44,100 @@ export default function SemesterRoadmapPage() {
     goals: ''
   });
 
-  // Mock data for demo - replace with real data loading
+  // Load club info and usage data
   useEffect(() => {
-    // Check if roadmap exists for this club
-    const checkRoadmap = async () => {
-      // Simulate API call
-      setTimeout(() => {
-        setHasRoadmap(true); // Set based on actual data
-      }, 500);
+    const loadClubData = async () => {
+      if (!user) return;
+
+      try {
+        // Get club info first
+        const clubResponse = await fetch(`/api/clubs/user/${user.id}`);
+        const clubData = await clubResponse.json();
+        
+        if (clubData.success && clubData.data?.length > 0) {
+          // Find club by name
+          const club = clubData.data.find((c: any) => 
+            decodeURIComponent(c.name) === clubName
+          );
+          
+          if (club) {
+            setClubInfo(club);
+            
+            // Load usage data
+            const usageResponse = await fetch(`/api/clubs/${club.id}/roadmap-usage`);
+            const usageResult = await usageResponse.json();
+            
+            if (usageResult.success) {
+              setUsageData(usageResult.data);
+            }
+            
+            // Check if roadmap exists for this club
+            const roadmapResponse = await fetch(`/api/clubs/${club.id}/roadmap`);
+            const roadmapResult = await roadmapResponse.json();
+            setHasRoadmap(roadmapResult.success && roadmapResult.data);
+          }
+        }
+      } catch (error) {
+        console.error('Error loading club data:', error);
+      } finally {
+        setUsageLoading(false);
+      }
     };
-    checkRoadmap();
+
+    loadClubData();
   }, [clubName, user]);
 
   const generateRoadmap = async () => {
+    if (!clubInfo || !usageData?.canGenerate) {
+      alert('Cannot generate roadmap: usage limit reached for this month.');
+      return;
+    }
+
     setLoading(true);
     try {
-      // Simulate roadmap generation
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setHasRoadmap(true);
-      setShowSetupModal(false);
-      } catch (error) {
-      console.error('Error generating roadmap:', error);
-      } finally {
-        setLoading(false);
+      // Call the actual roadmap generation API with the setup form data
+      const response = await fetch(`/api/clubs/${clubInfo.id}/generate-topics`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          topic: setupForm.topic,
+          startDate: setupForm.schoolYearStart,
+          endDate: setupForm.schoolYearEnd,
+          frequency: setupForm.meetingFrequency,
+          meetingDays: setupForm.meetingDays,
+          meetingTime: setupForm.meetingTime,
+          meetingDuration: '60',
+          clubName: clubName
+        })
+      });
+
+      if (response.ok) {
+        setHasRoadmap(true);
+        setShowSetupModal(false);
+        
+        // Refresh usage data
+        const usageResponse = await fetch(`/api/clubs/${clubInfo.id}/roadmap-usage`);
+        const usageResult = await usageResponse.json();
+        if (usageResult.success) {
+          setUsageData(usageResult.data);
+        }
+      } else {
+        const errorData = await response.json();
+        if (response.status === 429) {
+          alert(errorData.message || 'You have reached your monthly limit of roadmap generations.');
+        } else {
+          alert('Error generating roadmap. Please try again.');
+        }
       }
-    };
+    } catch (error) {
+      console.error('Error generating roadmap:', error);
+      alert('Error generating roadmap. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Mock stats
   const totalMeetings = 24;
@@ -206,7 +279,7 @@ export default function SemesterRoadmapPage() {
 
                 <motion.button
                   type="submit"
-                  disabled={loading || !setupForm.topic || !setupForm.goals}
+                  disabled={loading || !setupForm.topic || !setupForm.goals || !usageData?.canGenerate}
                   className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white px-8 py-4 rounded-2xl font-light text-lg hover:from-orange-600 hover:to-orange-700 transition-all duration-300 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3"
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
@@ -229,8 +302,27 @@ export default function SemesterRoadmapPage() {
                 </motion.button>
               </form>
             </motion.div>
-                      </div>
-                </div>
+
+            {/* Usage Display */}
+            {usageData && (
+              <motion.div
+                className="mt-8"
+                initial={{ opacity: 0, y: 30 }}
+                animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+                transition={{ duration: 0.8, delay: 0.6 }}
+              >
+                <RoadmapUsageDisplay
+                  usageCount={usageData.usageCount}
+                  limit={usageData.limit}
+                  remainingGenerations={usageData.remainingGenerations}
+                  canGenerate={usageData.canGenerate}
+                  currentMonth={usageData.currentMonth}
+                  isLoading={usageLoading}
+                />
+              </motion.div>
+            )}
+          </div>
+        </div>
       </ClubLayout>
     );
   }
@@ -304,13 +396,34 @@ export default function SemesterRoadmapPage() {
             </motion.div>
           </motion.div>
 
-          {/* Progress Stats */}
-          <motion.div 
-            className="grid grid-cols-1 md:grid-cols-4 gap-6"
-            initial={{ opacity: 0, y: 30 }}
-            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-          >
+          {/* Usage Display and Progress Stats */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Usage Display */}
+            {usageData && (
+              <motion.div
+                className="lg:col-span-1"
+                initial={{ opacity: 0, y: 30 }}
+                animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+                transition={{ duration: 0.8, delay: 0.5 }}
+              >
+                <RoadmapUsageDisplay
+                  usageCount={usageData.usageCount}
+                  limit={usageData.limit}
+                  remainingGenerations={usageData.remainingGenerations}
+                  canGenerate={usageData.canGenerate}
+                  currentMonth={usageData.currentMonth}
+                  isLoading={usageLoading}
+                />
+              </motion.div>
+            )}
+
+            {/* Progress Stats */}
+            <motion.div 
+              className="lg:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-6"
+              initial={{ opacity: 0, y: 30 }}
+              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+            >
             {[
               { value: totalMeetings, label: "Total Meetings", color: "from-gray-500 to-gray-600", icon: Calendar },
               { value: completedMeetings, label: "Completed", color: "from-green-500 to-green-600", icon: CheckSquare },
@@ -349,7 +462,8 @@ export default function SemesterRoadmapPage() {
                 )}
               </motion.div>
             ))}
-          </motion.div>
+            </motion.div>
+          </div>
 
           {/* Calendar Navigation */}
           <motion.div 
