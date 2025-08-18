@@ -35,12 +35,13 @@ export default function LandingPricing() {
         { text: "Club Space Dashboard", included: true },
         { text: "Roadmap Planning (2x/month)", included: true, limited: true },
         { text: "AI Club Advisor (60 messages/month)", included: true, limited: true },
+        { text: "AI Presentations (5x/month)", included: true, limited: true },
+        { text: "Meeting Notes & Summaries (1x/month)", included: true, limited: true },
         { text: "Quick Tasks", included: true },
         { text: "Send Emails", included: true },
-        { text: "Past Presentations History", included: false },
-        { text: "Past Summaries History", included: false },
-        { text: "AI Presentations", included: false },
-        { text: "Meeting Notes & Summaries", included: false },
+        { text: "Past Presentations History", included: true },
+        { text: "Past Summaries History", included: true },
+        { text: "Teacher Advisor System", included: true },
         { text: "Priority Support", included: false },
       ],
       popular: false,
@@ -52,15 +53,15 @@ export default function LandingPricing() {
     },
     {
       name: "Pro",
-      price: "$9.99",
-      period: "/month",
+      price: "Coming Soon",
+      period: "",
       description: "For serious club leaders who want to scale",
       features: [
         { text: "Everything in Free", included: true },
         { text: "Unlimited AI Presentations", included: true },
-        { text: "Meeting Notes & Summaries (50/month)", included: true, limited: true },
+        { text: "Unlimited Meeting Notes & Summaries", included: true },
         { text: "Unlimited Roadmap Planning", included: true },
-        { text: "Enhanced AI Club Advisor (200 messages/month)", included: true, limited: true },
+        { text: "Enhanced AI Club Advisor (Unlimited)", included: true },
         { text: "Priority Support", included: true },
         { text: "Advanced Analytics", included: true },
         { text: "Custom Branding", included: true },
@@ -71,7 +72,8 @@ export default function LandingPricing() {
       bgColor: "bg-orange-50",
       borderColor: "border-orange-200",
       buttonColor: "bg-orange-500 hover:bg-orange-600",
-      icon: Zap
+      icon: Zap,
+      comingSoon: true
     }
   ];
 
@@ -130,11 +132,15 @@ export default function LandingPricing() {
                 {/* Popular Badge */}
                 {tier.popular && (
                   <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                    <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-6 py-2 rounded-full text-sm font-medium">
-                    Most Popular
+                    <div className={`px-6 py-2 rounded-full text-sm font-medium ${
+                      tier.comingSoon 
+                        ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white'
+                        : 'bg-gradient-to-r from-orange-500 to-orange-600 text-white'
+                    }`}>
+                      {tier.comingSoon ? 'Coming Soon' : 'Most Popular'}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
                 {/* Header */}
                 <div className="text-center mb-8">
@@ -168,13 +174,18 @@ export default function LandingPricing() {
                 </div>
 
                 {/* CTA Button */}
-                                 <button
-                   className={`w-full py-3 px-6 rounded-xl text-white font-light transition-all duration-300 ${tier.buttonColor}`}
-                 >
-                   <div className="flex items-center justify-center space-x-2">
-                     <span>Get Started</span>
-                     <ArrowRight className="w-4 h-4" />
-              </div>
+                <button
+                  className={`w-full py-3 px-6 rounded-xl font-light transition-all duration-300 ${
+                    tier.comingSoon 
+                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                      : `${tier.buttonColor} text-white`
+                  }`}
+                  disabled={tier.comingSoon}
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    <span>{tier.comingSoon ? 'Coming Soon' : 'Get Started'}</span>
+                    {!tier.comingSoon && <ArrowRight className="w-4 h-4" />}
+                  </div>
                  </button>
             </motion.div>
             );

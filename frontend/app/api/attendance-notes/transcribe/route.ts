@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
+import { supabaseServer } from '../../../../utils/supabaseServer';
+import { auth } from '@clerk/nextjs/server';
 
 export const runtime = 'nodejs';
 
@@ -63,13 +65,52 @@ async function pollTranscription(transcriptId: string, timeoutMs = 1800000) { //
 
 export async function POST(req: NextRequest) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     if (!ASSEMBLYAI_API_KEY) {
       return NextResponse.json({ error: 'AssemblyAI API key not set in environment variables.' }, { status: 500 });
     }
     const formData = await req.formData();
     const file = formData.get('audio');
+    const clubId = formData.get('clubId') as string;
+    
     if (!file || typeof file === 'string') {
       return NextResponse.json({ error: 'No audio file provided' }, { status: 400 });
+    }
+
+    // Check meeting notes usage limits if clubId is provided
+    if (clubId) {
+      try {
+        const now = new Date();
+        const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        
+        const { data: existingUsage, error: checkError } = await supabaseServer
+          .from('meeting_notes_usage')
+          .select('id')
+          .eq('club_id', clubId)
+          .eq('month_year', currentMonth);
+
+        if (checkError) {
+          console.warn('Meeting notes usage tracking unavailable:', checkError.message);
+        } else {
+          const currentUsageCount = existingUsage?.length || 0;
+          const limit = 1;
+
+          if (currentUsageCount >= limit) {
+            return NextResponse.json({ 
+              error: 'Monthly limit reached', 
+              message: `You have reached the limit of ${limit} meeting note generation per month.`,
+              usageCount: currentUsageCount,
+              limit 
+            }, { status: 429 });
+          }
+        }
+      } catch (error) {
+        console.warn('Meeting notes usage tracking check failed:', error);
+      }
     }
     // Read file buffer
     const arrayBuffer = await file.arrayBuffer();
@@ -107,6 +148,40 @@ export async function POST(req: NextRequest) {
     const transcriptId = await startTranscription(uploadUrl);
     // Poll for result (get both transcript and summary)
     const { transcript, summary } = await pollTranscription(transcriptId);
+
+    // Record usage after successful transcription if clubId is provided
+    if (clubId) {
+      try {
+        const now = new Date();
+        const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        
+        // Calculate approximate duration based on file size (rough estimate)
+        const fileSizeKB = buffer.length / 1024;
+        const estimatedDurationMinutes = Math.min(30, Math.max(1, Math.round(fileSizeKB / 100))); // Rough estimate
+        
+        const { error: usageError } = await supabaseServer
+          .from('meeting_notes_usage')
+          .insert([
+            {
+              club_id: clubId,
+              user_id: userId,
+              month_year: currentMonth,
+              generated_at: now.toISOString(),
+              meeting_duration_minutes: estimatedDurationMinutes,
+              meeting_title: 'Meeting Notes'
+            }
+          ]);
+
+        if (usageError) {
+          console.warn('Could not record meeting notes usage:', usageError.message);
+        } else {
+          console.log('[transcribe] Usage recorded successfully for club:', clubId);
+        }
+      } catch (error) {
+        console.warn('Meeting notes usage recording failed:', error);
+      }
+    }
+
     return NextResponse.json({ transcript, summary });
   } catch (error: any) {
     console.error('Transcription error:', error);

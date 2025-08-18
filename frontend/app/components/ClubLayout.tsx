@@ -22,6 +22,7 @@ import SuccessModal from './SuccessModal';
 import RoadmapUsageDisplay from './RoadmapUsageDisplay';
 import PresentationUsageDisplay from './PresentationUsageDisplay';
 import AIAssistantUsageDisplay from './AIAssistantUsageDisplay';
+import MeetingNotesUsageDisplay from './MeetingNotesUsageDisplay';
 import { 
   Users, 
   Presentation, 
@@ -2492,7 +2493,10 @@ function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: {
                   <>
                     <button
                       className="w-full text-left px-4 py-3 rounded-xl"
-                      onClick={() => setCurrentChatId(chat.id)}
+                      onClick={() => {
+                        setCurrentChatId(chat.id);
+                        loadChatMessages(chat.id);
+                      }}
                     >
                       <div className="font-light text-gray-900 text-sm mb-1 truncate">
                         {chat.title}
@@ -2651,7 +2655,7 @@ function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: {
                     whileHover={{ scale: 1.05 }}
                   >
                     <div className="w-12 h-12 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center border-2 border-white shadow-md">
-                      <Brain className="w-6 h-6 text-gray-600" />
+                      <img src="/bot.png" alt="AI Assistant" className="w-6 h-6 object-contain opacity-60" />
                   </div>
                     <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-white"></div>
                   </motion.div>
@@ -2681,7 +2685,7 @@ function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: {
             >
               <div className="flex items-start max-w-[85%]">
                 <div className="w-12 h-12 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center border-2 border-white shadow-md mr-4">
-                  <Brain className="w-6 h-6 text-gray-600" />
+                  <img src="/bot.png" alt="AI Assistant" className="w-6 h-6 object-contain opacity-60" />
                 </div>
                 <div className="bg-white/80 backdrop-blur-xl border border-gray-200/50 px-6 py-4 rounded-3xl rounded-bl-lg shadow-lg">
                   <div className="flex items-center space-x-2">
@@ -4436,12 +4440,18 @@ function AttendancePanel({ clubName, clubInfo }: { clubName: string; clubInfo: a
   const [emailSubject, setEmailSubject] = useState<string>('');
   const [isGeneratingSubject, setIsGeneratingSubject] = useState(false);
   const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [usageData, setUsageData] = useState<any>(null);
+  const [usageLoading, setUsageLoading] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [maxDurationReached, setMaxDurationReached] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const animationRef = useRef<number | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const volumeRef = useRef(0);
   const lastUpdateRef = useRef(Date.now());
+  const recordingStartTimeRef = useRef<number>(0);
+  const durationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const ref = useRef<HTMLDivElement>(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
 
@@ -4464,13 +4474,48 @@ function AttendancePanel({ clubName, clubInfo }: { clubName: string; clubInfo: a
     return () => clearTimeout(timer);
   }, [isCountingDown, countdown]);
 
+  // Load meeting notes usage data
+  useEffect(() => {
+    if (clubInfo?.id) {
+      loadMeetingNotesUsage();
+    }
+  }, [clubInfo?.id]);
+
+  const loadMeetingNotesUsage = async () => {
+    if (!clubInfo?.id) return;
+    
+    setUsageLoading(true);
+    try {
+      const response = await fetch(`/api/clubs/${clubInfo.id}/meeting-notes-usage`);
+      if (response.ok) {
+        const result = await response.json();
+        setUsageData(result.data);
+      } else {
+        console.error('Failed to load meeting notes usage');
+      }
+    } catch (error) {
+      console.error('Error loading meeting notes usage:', error);
+    } finally {
+      setUsageLoading(false);
+    }
+  };
+
   // Start recording and volume visualization
   const startRecording = async () => {
     try {
+      // Check usage limits before starting recording
+      if (usageData && !usageData.canGenerate) {
+        setError(`You have reached your monthly limit of ${usageData.limit} meeting note generation.`);
+        return;
+      }
+
       setTranscript(null);
       setSummary(null);
       setError(null);
       setIsPaused(false);
+      setRecordingDuration(0);
+      setMaxDurationReached(false);
+      recordingStartTimeRef.current = Date.now();
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setMediaStream(stream);
       const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -4504,6 +4549,19 @@ function AttendancePanel({ clubName, clubInfo }: { clubName: string; clubInfo: a
         setAudioBlob(blob);
       };
       mediaRecorder.start();
+      setIsRecording(true);
+
+      // Start 30-minute duration timer
+      durationTimerRef.current = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - recordingStartTimeRef.current) / 1000);
+        setRecordingDuration(elapsed);
+        
+        // Auto-stop at 30 minutes (1800 seconds)
+        if (elapsed >= 1800) {
+          setMaxDurationReached(true);
+          stopRecording();
+        }
+      }, 1000);
 
       const animate = () => {
         if (analyserRef.current) {
@@ -4531,6 +4589,11 @@ function AttendancePanel({ clubName, clubInfo }: { clubName: string; clubInfo: a
     }
   };
 
+  // Stop recording function (for both user and auto-stop)
+  const stopRecording = () => {
+    handleStop();
+  };
+
   // Pause/Resume logic
   const handlePauseResume = () => {
     if (!isRecording) return;
@@ -4550,6 +4613,10 @@ function AttendancePanel({ clubName, clubInfo }: { clubName: string; clubInfo: a
     if (animationRef.current) cancelAnimationFrame(animationRef.current);
     if (audioContext) audioContext.close();
     if (mediaStream) mediaStream.getTracks().forEach(track => track.stop());
+    if (durationTimerRef.current) {
+      clearInterval(durationTimerRef.current);
+      durationTimerRef.current = null;
+    }
     setAudioContext(null);
     setMediaStream(null);
     setVolume(0);
@@ -4581,6 +4648,9 @@ function AttendancePanel({ clubName, clubInfo }: { clubName: string; clubInfo: a
         try {
           const formData = new FormData();
           formData.append('audio', audioBlob, 'audio.webm');
+          if (clubInfo?.id) {
+            formData.append('clubId', clubInfo.id);
+          }
           const res = await fetch('/api/attendance-notes/transcribe', {
             method: 'POST',
             body: formData,
@@ -4591,6 +4661,9 @@ function AttendancePanel({ clubName, clubInfo }: { clubName: string; clubInfo: a
           }
           const data = await res.json();
           setTranscript(data.transcript);
+          
+          // Refresh usage data after successful transcription
+          loadMeetingNotesUsage();
         } catch (err: any) {
           setError(err.message || 'Transcription failed');
         } finally {
@@ -4862,6 +4935,24 @@ This summary was generated automatically by Clubly AI.
           </motion.p>
         </motion.div>
 
+        {/* Usage Display */}
+        {usageData && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ duration: 0.6, delay: 0.6 }}
+          >
+            <MeetingNotesUsageDisplay
+              usageCount={usageData.usageCount}
+              limit={usageData.limit}
+              remainingGenerations={usageData.remainingGenerations}
+              canGenerate={usageData.canGenerate}
+              currentMonth={usageData.currentMonth}
+              isLoading={usageLoading}
+            />
+          </motion.div>
+        )}
+
         {/* Main Recording Interface */}
         <motion.div 
           className="bg-white/40 backdrop-blur-3xl border border-white/20 rounded-3xl p-8 shadow-2xl"
@@ -5019,6 +5110,50 @@ This summary was generated automatically by Clubly AI.
                   </>
                 )}
               </motion.div>
+              
+              {/* Recording Duration Display */}
+              {isRecording && (
+                <motion.div
+                  className="mt-6 text-center"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                >
+                  <div className={`inline-flex items-center space-x-2 px-4 py-2 rounded-full ${
+                    recordingDuration >= 1500 // 25 minutes
+                      ? 'bg-red-50 border border-red-200'
+                      : recordingDuration >= 1200 // 20 minutes
+                        ? 'bg-yellow-50 border border-yellow-200'
+                        : 'bg-green-50 border border-green-200'
+                  }`}>
+                    <Clock className={`w-4 h-4 ${
+                      recordingDuration >= 1500
+                        ? 'text-red-600'
+                        : recordingDuration >= 1200
+                          ? 'text-yellow-600'
+                          : 'text-green-600'
+                    }`} />
+                    <span className={`font-mono text-sm font-medium ${
+                      recordingDuration >= 1500
+                        ? 'text-red-700'
+                        : recordingDuration >= 1200
+                          ? 'text-yellow-700'
+                          : 'text-green-700'
+                    }`}>
+                      {Math.floor(recordingDuration / 60)}:{(recordingDuration % 60).toString().padStart(2, '0')} / 30:00
+                    </span>
+                  </div>
+                  {maxDurationReached && (
+                    <motion.p
+                      className="text-red-600 text-sm font-medium mt-2"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                    >
+                      Maximum recording time reached (30 minutes)
+                    </motion.p>
+                  )}
+                </motion.div>
+              )}
               </div>
           )}
 
