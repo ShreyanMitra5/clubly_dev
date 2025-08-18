@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { supabaseServer } from '../../../../utils/supabaseServer';
+import { auth } from '@clerk/nextjs/server';
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
@@ -6,12 +8,49 @@ const MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
 
 export async function POST(request: NextRequest) {
   try {
+    const { userId } = await auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     if (!GROQ_API_KEY) {
       return NextResponse.json({ error: 'Groq API key not set in environment variables.' }, { status: 500 });
     }
-    const { message, clubName } = await request.json();
+    const { message, clubName, clubId } = await request.json();
     if (!message || !clubName) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });
+    }
+
+    // Check AI assistant usage limits if clubId is provided
+    if (clubId) {
+      try {
+        const now = new Date();
+        const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        
+        const { data: existingUsage, error: checkError } = await supabaseServer
+          .from('ai_assistant_usage')
+          .select('id')
+          .eq('club_id', clubId)
+          .eq('month_year', currentMonth);
+
+        if (checkError) {
+          console.warn('AI assistant usage tracking unavailable:', checkError.message);
+        } else {
+          const currentUsageCount = existingUsage?.length || 0;
+          const limit = 60;
+
+          if (currentUsageCount >= limit) {
+            return NextResponse.json({ 
+              error: 'Monthly limit reached', 
+              message: `You have reached the limit of ${limit} AI assistant messages per month.`,
+              usageCount: currentUsageCount,
+              limit 
+            }, { status: 429 });
+          }
+        }
+      } catch (error) {
+        console.warn('AI assistant usage tracking check failed:', error);
+      }
     }
     // Restrict to only club-related questions
     const clubKeywords = [clubName.toLowerCase(), 'club', 'meeting', 'event', 'advisor', 'officer', 'member', 'activity', 'presentation', 'roadmap', 'attendance', 'notes', 'topic', 'workshop', 'session', 'plan', 'schedule', 'leadership', 'project', 'goal', 'mission', 'fundraiser', 'volunteer', 'competition', 'team', 'group'];
@@ -50,6 +89,35 @@ export async function POST(request: NextRequest) {
     if (!response || response.trim() === '') {
       return NextResponse.json({ error: 'AI response was empty. Please try again.' }, { status: 500 });
     }
+
+    // Record usage after successful response if clubId is provided
+    if (clubId) {
+      try {
+        const now = new Date();
+        const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        
+        const { error: usageError } = await supabaseServer
+          .from('ai_assistant_usage')
+          .insert([
+            {
+              club_id: clubId,
+              user_id: userId,
+              month_year: currentMonth,
+              message_sent_at: now.toISOString(),
+              message_content: message.substring(0, 500) // Store first 500 chars
+            }
+          ]);
+
+        if (usageError) {
+          console.warn('Could not record AI assistant usage:', usageError.message);
+        } else {
+          console.log('[advisor] Usage recorded successfully for club:', clubId);
+        }
+      } catch (error) {
+        console.warn('AI assistant usage recording failed:', error);
+      }
+    }
+
     return NextResponse.json({ response });
   } catch (error: any) {
     console.error('Groq advisor error:', error);

@@ -21,6 +21,7 @@ import StudentMessaging from './StudentMessaging';
 import SuccessModal from './SuccessModal';
 import RoadmapUsageDisplay from './RoadmapUsageDisplay';
 import PresentationUsageDisplay from './PresentationUsageDisplay';
+import AIAssistantUsageDisplay from './AIAssistantUsageDisplay';
 import { 
   Users, 
   Presentation, 
@@ -2013,6 +2014,8 @@ function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: {
   const [editingChatId, setEditingChatId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState<string>('');
   const [showDropdownId, setShowDropdownId] = useState<string | null>(null);
+  const [usageData, setUsageData] = useState<any>(null);
+  const [usageLoading, setUsageLoading] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -2031,8 +2034,28 @@ function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: {
   useEffect(() => {
     if (user?.id && clubInfo?.id) {
       loadChatHistories();
+      loadAIAssistantUsage();
     }
   }, [user?.id, clubInfo?.id]);
+
+  const loadAIAssistantUsage = async () => {
+    if (!clubInfo?.id) return;
+    
+    setUsageLoading(true);
+    try {
+      const response = await fetch(`/api/clubs/${clubInfo.id}/ai-assistant-usage`);
+      if (response.ok) {
+        const result = await response.json();
+        setUsageData(result.data);
+      } else {
+        console.error('Failed to load AI assistant usage');
+      }
+    } catch (error) {
+      console.error('Error loading AI assistant usage:', error);
+    } finally {
+      setUsageLoading(false);
+    }
+  };
 
   const loadChatMessages = async (chatId: string) => {
     try {
@@ -2241,6 +2264,12 @@ function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: {
     e.preventDefault();
     if (!inputValue.trim() || isLoading) return;
 
+    // Check usage limits before sending message
+    if (usageData && !usageData.canSendMessage) {
+      alert(`You have reached your monthly limit of ${usageData.limit} AI assistant messages.`);
+      return;
+    }
+
     // Create new chat if none selected
     let chatId = currentChatId;
     if (!chatId) {
@@ -2320,6 +2349,7 @@ function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: {
         body: JSON.stringify({
           message: messageToSend,
           clubName: clubName,
+          clubId: clubInfo?.id || clubInfo?.clubId || clubInfo?.club_id,
           chatHistory: messages.map(m => ({ role: m.isUser ? 'user' : 'assistant', content: m.content }))
         }),
       });
@@ -2343,6 +2373,9 @@ function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: {
       if (chatId) {
         await saveChatMessage(chatId, aiMessage.content, false);
       }
+
+      // Refresh usage data after successful message
+      loadAIAssistantUsage();
     } catch (error) {
       console.error('Error:', error);
       const errorMessage: Message = {
@@ -2391,7 +2424,7 @@ function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: {
             transition={{ duration: 0.6 }}
           >
             <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl flex items-center justify-center">
-              <Brain className="w-5 h-5 text-white" />
+              <img src="/bot.png" alt="AI Assistant" className="w-5 h-5 object-contain filter brightness-0 invert" />
       </div>
             <div>
               <h3 className="font-light text-gray-900 text-lg">AI Advisor</h3>
@@ -2405,6 +2438,8 @@ function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: {
             <p className="text-sm text-gray-600 font-extralight">Your conversations</p>
           </div>
         </div>
+
+
 
         {/* Sidebar Content */}
         <div className="flex-1 overflow-y-auto">
@@ -2539,13 +2574,29 @@ function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: {
                 Strategic guidance powered by artificial intelligence
               </p>
             </div>
-            <div className="flex items-center space-x-2">
-              <motion.div
-                className="w-3 h-3 bg-green-500 rounded-full"
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              />
-              <span className="text-sm text-gray-600 font-extralight">Online</span>
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <motion.div
+                  className="w-3 h-3 bg-green-500 rounded-full"
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+                <span className="text-sm text-gray-600 font-extralight">Online</span>
+              </div>
+              
+              {/* Compact Usage Indicator */}
+              {usageData && (
+                <div className={`flex items-center space-x-2 px-3 py-1 rounded-full text-xs font-light ${
+                  !usageData.canSendMessage 
+                    ? 'bg-red-50 text-red-700 border border-red-200'
+                    : usageData.remainingMessages <= 10
+                      ? 'bg-yellow-50 text-yellow-700 border border-yellow-200'
+                      : 'bg-purple-50 text-purple-700 border border-purple-200'
+                }`}>
+                  <MessageSquare className="w-3 h-3" />
+                  <span>{usageData.usageCount}/{usageData.limit}</span>
+                </div>
+              )}
             </div>
           </div>
         </motion.div>
@@ -2697,6 +2748,18 @@ function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: {
           </form>
         </motion.div>
       </div>
+      
+      {/* Usage Limit Modal */}
+      {usageData && (
+        <AIAssistantUsageDisplay
+          usageCount={usageData.usageCount}
+          limit={usageData.limit}
+          remainingMessages={usageData.remainingMessages}
+          canSendMessage={usageData.canSendMessage}
+          currentMonth={usageData.currentMonth}
+          isLoading={usageLoading}
+        />
+      )}
     </div>
   );
 }
