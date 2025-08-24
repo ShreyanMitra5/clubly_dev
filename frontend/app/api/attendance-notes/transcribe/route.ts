@@ -81,37 +81,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No audio file provided' }, { status: 400 });
     }
 
-    // Check meeting notes usage limits if clubId is provided
-    if (clubId) {
-      try {
-        const now = new Date();
-        const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-        
-        const { data: existingUsage, error: checkError } = await supabaseServer
-          .from('meeting_notes_usage')
-          .select('id')
-          .eq('club_id', clubId)
-          .eq('month_year', currentMonth);
-
-        if (checkError) {
-          console.warn('Meeting notes usage tracking unavailable:', checkError.message);
-        } else {
-          const currentUsageCount = existingUsage?.length || 0;
-          const limit = 1;
-
-          if (currentUsageCount >= limit) {
-            return NextResponse.json({ 
-              error: 'Monthly limit reached', 
-              message: `You have reached the limit of ${limit} meeting note generation per month.`,
-              usageCount: currentUsageCount,
-              limit 
-            }, { status: 429 });
-          }
-        }
-      } catch (error) {
-        console.warn('Meeting notes usage tracking check failed:', error);
-      }
-    }
+    // Note: Monthly limits have been removed - users can now record unlimited 30-minute meetings
+    // Usage tracking is still maintained for analytics purposes
     // Read file buffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
@@ -149,7 +120,7 @@ export async function POST(req: NextRequest) {
     // Poll for result (get both transcript and summary)
     const { transcript, summary } = await pollTranscription(transcriptId);
 
-    // Record usage after successful transcription if clubId is provided
+    // Record usage after successful transcription if clubId is provided (for analytics only)
     if (clubId) {
       try {
         const now = new Date();

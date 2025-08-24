@@ -20,7 +20,7 @@ CREATE INDEX IF NOT EXISTS idx_meeting_notes_usage_club_month ON meeting_notes_u
 ALTER TABLE meeting_notes_usage DISABLE ROW LEVEL SECURITY;
 
 -- Add helpful comments
-COMMENT ON TABLE meeting_notes_usage IS 'Tracks meeting notes generation usage per club per month (limit: 1 per month, max 30 minutes)';
+COMMENT ON TABLE meeting_notes_usage IS 'Tracks meeting notes generation usage per club per month (unlimited per month, max 30 minutes per session)';
 COMMENT ON COLUMN meeting_notes_usage.month_year IS 'Month in YYYY-MM format for efficient monthly usage tracking';
 COMMENT ON COLUMN meeting_notes_usage.meeting_duration_minutes IS 'Duration of the recorded meeting in minutes';
 COMMENT ON COLUMN meeting_notes_usage.meeting_title IS 'Title/topic of the meeting notes generated';

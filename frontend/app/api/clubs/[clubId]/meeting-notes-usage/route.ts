@@ -49,9 +49,9 @@ export async function GET(
     }
 
     const usageCount = usageData?.length || 0;
-    const limit = 1;
-    const remainingGenerations = Math.max(0, limit - usageCount);
-    const canGenerate = remainingGenerations > 0;
+    const limit = -1; // -1 indicates unlimited
+    const remainingGenerations = -1; // -1 indicates unlimited
+    const canGenerate = true; // Always allow generation
 
     return NextResponse.json({ 
       success: true, 
@@ -102,16 +102,10 @@ export async function POST(
     }
 
     const currentUsageCount = existingUsage?.length || 0;
-    const limit = 1;
+    const limit = -1; // -1 indicates unlimited
 
-    if (currentUsageCount >= limit) {
-      return NextResponse.json({ 
-        error: 'Monthly limit reached', 
-        message: `You have reached the limit of ${limit} meeting note generation per month.`,
-        usageCount: currentUsageCount,
-        limit 
-      }, { status: 429 });
-    }
+    // No monthly limits - users can generate unlimited meeting notes
+    // Usage tracking is maintained for analytics purposes only
 
     // Record the new usage
     const { data, error } = await supabaseServer
@@ -135,7 +129,7 @@ export async function POST(
     }
 
     const newUsageCount = currentUsageCount + 1;
-    const remainingGenerations = Math.max(0, limit - newUsageCount);
+    const remainingGenerations = -1; // -1 indicates unlimited
 
     return NextResponse.json({ 
       success: true, 
@@ -144,7 +138,7 @@ export async function POST(
         usageCount: newUsageCount,
         limit,
         remainingGenerations,
-        canGenerate: remainingGenerations > 0
+        canGenerate: true // Always allow generation
       }
     });
   } catch (error) {

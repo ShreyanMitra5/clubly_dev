@@ -27,6 +27,8 @@ export default function ClubAttendanceNotesPage() {
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [maxDurationReached, setMaxDurationReached] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const animationRef = useRef<number | null>(null);
@@ -34,6 +36,8 @@ export default function ClubAttendanceNotesPage() {
   const router = useRouter();
   const volumeRef = useRef(0);
   const lastUpdateRef = useRef(Date.now());
+  const recordingStartTimeRef = useRef<number>(0);
+  const durationTimerRef = useRef<NodeJS.Timeout | null>(null);
   const params = useParams();
   const clubName = decodeURIComponent(params.clubName as string);
   const [clubInfo, setClubInfo] = useState<any>(null);
@@ -134,6 +138,23 @@ export default function ClubAttendanceNotesPage() {
       };
       animate();
       setIsRecording(true);
+      
+      // Start 30-minute timer
+      recordingStartTimeRef.current = Date.now();
+      setRecordingDuration(0);
+      setMaxDurationReached(false);
+      
+      // Update duration every second
+      durationTimerRef.current = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - recordingStartTimeRef.current) / 1000);
+        setRecordingDuration(elapsed);
+        
+        // Auto-stop at 30 minutes (1800 seconds)
+        if (elapsed >= 1800) {
+          setMaxDurationReached(true);
+          handleStop();
+        }
+      }, 1000);
     } catch (err) {
       setError('Microphone access denied or error occurred.');
       setIsRecording(false);
@@ -162,6 +183,13 @@ export default function ClubAttendanceNotesPage() {
     setAudioContext(null);
     setMediaStream(null);
     setVolume(0);
+    
+    // Clean up duration timer
+    if (durationTimerRef.current) {
+      clearInterval(durationTimerRef.current);
+      durationTimerRef.current = null;
+    }
+    
     // Stop MediaRecorder
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
       mediaRecorderRef.current.stop();
@@ -321,6 +349,15 @@ export default function ClubAttendanceNotesPage() {
     }
   }, [isTranscribing, isSummarizing, summary, router, clubName]);
 
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (durationTimerRef.current) {
+        clearInterval(durationTimerRef.current);
+      }
+    };
+  }, []);
+
   return (
     <ClubLayout>
       <div className="p-8">
@@ -354,7 +391,7 @@ export default function ClubAttendanceNotesPage() {
                     height: h,
                     width: 38,
                     borderRadius: 20,
-                    background: '#111',
+                    background: recordingDuration >= 1740 ? '#f59e0b' : '#111',
                     transition: 'height 0.18s cubic-bezier(0.4,0.2,0.2,1)',
                     display: 'flex',
                     alignItems: 'center',
@@ -367,6 +404,34 @@ export default function ClubAttendanceNotesPage() {
             <div className="mt-2 text-lg text-black text-center select-none font-medium tracking-tight">
               {isRecording ? (isPaused ? 'Paused' : 'Recording...') : 'Click mic to record'}
             </div>
+            {isRecording && (
+              <div className="mt-4 text-center">
+                <div className="text-2xl font-bold text-gray-800">
+                  {Math.floor(recordingDuration / 60)}:{(recordingDuration % 60).toString().padStart(2, '0')}
+                </div>
+                <div className="text-sm text-gray-600 mt-1">
+                  {maxDurationReached ? 'Maximum duration reached (30:00)' : 'Recording time'}
+                </div>
+                {recordingDuration >= 1740 && recordingDuration < 1800 && (
+                  <div className="mt-2 text-orange-600 font-medium text-sm">
+                    ⚠️ Recording will auto-stop in {1800 - recordingDuration} seconds
+                  </div>
+                )}
+                {isRecording && (
+                  <div className="mt-3 w-48 mx-auto">
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div 
+                        className="bg-gradient-to-r from-green-500 to-orange-500 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${Math.min(100, (recordingDuration / 1800) * 100)}%` }}
+                      />
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1 text-center">
+                      {Math.round((recordingDuration / 1800) * 100)}% of 30-minute limit
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           {/* Floating controls */}
           {!(isTranscribing || isSummarizing) && (
