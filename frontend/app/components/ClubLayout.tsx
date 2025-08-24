@@ -4505,7 +4505,7 @@ function AttendancePanel({ clubName, clubInfo }: { clubName: string; clubInfo: a
     try {
       // Check usage limits before starting recording
       if (usageData && !usageData.canGenerate) {
-        setError(`You have reached your monthly limit of ${usageData.limit} meeting note generation.`);
+        setError(`You have reached your monthly limit of ${usageData.limit} minutes for meeting notes.`);
         return;
       }
 
@@ -4944,8 +4944,9 @@ This summary was generated automatically by Clubly AI.
           >
             <MeetingNotesUsageDisplay
               usageCount={usageData.usageCount}
+              totalMinutesUsed={usageData.totalMinutesUsed}
               limit={usageData.limit}
-              remainingGenerations={usageData.remainingGenerations}
+              remainingMinutes={usageData.remainingMinutes}
               canGenerate={usageData.canGenerate}
               currentMonth={usageData.currentMonth}
               isLoading={usageLoading}

@@ -19,7 +19,7 @@ export async function GET(
     const now = new Date();
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     
-    // Get usage count for current month
+    // Get usage data for current month
     const { data: usageData, error: usageError } = await supabaseServer
       .from('meeting_notes_usage')
       .select('*')
@@ -31,16 +31,18 @@ export async function GET(
       console.error('Error fetching meeting notes usage:', usageError);
       // If table doesn't exist or other error, return default values
       const usageCount = 0;
-      const limit = 1;
-      const remainingGenerations = limit;
+      const totalMinutesUsed = 0;
+      const limit = 30; // 30 minutes per month
+      const remainingMinutes = limit;
       const canGenerate = true;
 
       return NextResponse.json({ 
         success: true, 
         data: {
           usageCount,
+          totalMinutesUsed,
           limit,
-          remainingGenerations,
+          remainingMinutes,
           canGenerate,
           currentMonth,
           usageHistory: []
@@ -48,17 +50,23 @@ export async function GET(
       });
     }
 
+    // Calculate total minutes used from all recordings (only 2+ min recordings count)
+    const totalMinutesUsed = usageData
+      ?.filter(usage => (usage.meeting_duration_minutes || 0) >= 2)
+      ?.reduce((total, usage) => total + (usage.meeting_duration_minutes || 0), 0) || 0;
+    
     const usageCount = usageData?.length || 0;
-    const limit = 1;
-    const remainingGenerations = Math.max(0, limit - usageCount);
-    const canGenerate = remainingGenerations > 0;
+    const limit = 30; // 30 minutes per month
+    const remainingMinutes = Math.max(0, limit - totalMinutesUsed);
+    const canGenerate = remainingMinutes >= 2; // Need at least 2 minutes to generate
 
     return NextResponse.json({ 
       success: true, 
       data: {
         usageCount,
+        totalMinutesUsed,
         limit,
-        remainingGenerations,
+        remainingMinutes,
         canGenerate,
         currentMonth,
         usageHistory: usageData || []
@@ -89,10 +97,10 @@ export async function POST(
     const now = new Date();
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     
-    // Check current usage count
+    // Check current usage and calculate total minutes used
     const { data: existingUsage, error: checkError } = await supabaseServer
       .from('meeting_notes_usage')
-      .select('id')
+      .select('*')
       .eq('club_id', clubId)
       .eq('month_year', currentMonth);
 
@@ -101,14 +109,21 @@ export async function POST(
       return NextResponse.json({ error: 'Failed to check usage limit' }, { status: 500 });
     }
 
-    const currentUsageCount = existingUsage?.length || 0;
-    const limit = 1;
-
-    if (currentUsageCount >= limit) {
+    // Calculate total minutes used from existing recordings (only 2+ min recordings count)
+    const totalMinutesUsed = existingUsage
+      ?.filter(usage => (usage.meeting_duration_minutes || 0) >= 2)
+      ?.reduce((total, usage) => total + (usage.meeting_duration_minutes || 0), 0) || 0;
+    
+    const limit = 30; // 30 minutes per month
+    const requestedMinutes = durationMinutes || 0;
+    
+    // Check if this recording would exceed the monthly limit
+    if (requestedMinutes >= 2 && (totalMinutesUsed + requestedMinutes) > limit) {
       return NextResponse.json({ 
-        error: 'Monthly limit reached', 
-        message: `You have reached the limit of ${limit} meeting note generation per month.`,
-        usageCount: currentUsageCount,
+        error: 'Monthly limit exceeded', 
+        message: `This recording (${requestedMinutes} minutes) would exceed your monthly limit of ${limit} minutes. You have ${limit - totalMinutesUsed} minutes remaining.`,
+        totalMinutesUsed,
+        requestedMinutes,
         limit 
       }, { status: 429 });
     }
@@ -134,17 +149,18 @@ export async function POST(
       return NextResponse.json({ error: 'Failed to record usage' }, { status: 500 });
     }
 
-    const newUsageCount = currentUsageCount + 1;
-    const remainingGenerations = Math.max(0, limit - newUsageCount);
+    // Calculate new totals
+    const newTotalMinutesUsed = totalMinutesUsed + (requestedMinutes >= 2 ? requestedMinutes : 0);
+    const remainingMinutes = Math.max(0, limit - newTotalMinutesUsed);
 
     return NextResponse.json({ 
       success: true, 
       data: {
         usageRecord: data,
-        usageCount: newUsageCount,
+        totalMinutesUsed: newTotalMinutesUsed,
         limit,
-        remainingGenerations,
-        canGenerate: remainingGenerations > 0
+        remainingMinutes,
+        canGenerate: remainingMinutes >= 2
       }
     });
   } catch (error) {

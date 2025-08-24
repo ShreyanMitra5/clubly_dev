@@ -82,6 +82,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check meeting notes usage limits if clubId is provided
+    // Note: We don't block recording here - usage is only counted after transcription for recordings >= 2 minutes
     if (clubId) {
       try {
         const now = new Date();
@@ -99,14 +100,11 @@ export async function POST(req: NextRequest) {
           const currentUsageCount = existingUsage?.length || 0;
           const limit = 1;
 
-          if (currentUsageCount >= limit) {
-            return NextResponse.json({ 
-              error: 'Monthly limit reached', 
-              message: `You have reached the limit of ${limit} meeting note generation per month.`,
-              usageCount: currentUsageCount,
-              limit 
-            }, { status: 429 });
-          }
+          // Log current usage for debugging
+          console.log('[transcribe] Current monthly usage for club:', clubId, 'Usage:', currentUsageCount, '/', limit);
+          
+          // Note: We don't block recording here - users can always record
+          // Usage is only counted after transcription for recordings >= 2 minutes
         }
       } catch (error) {
         console.warn('Meeting notes usage tracking check failed:', error);
@@ -150,32 +148,68 @@ export async function POST(req: NextRequest) {
     const { transcript, summary } = await pollTranscription(transcriptId);
 
     // Record usage after successful transcription if clubId is provided
+    // Only count recordings that are at least 2 minutes long as monthly usage
     if (clubId) {
       try {
         const now = new Date();
         const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
         
-        // Calculate approximate duration based on file size (rough estimate)
-        const fileSizeKB = buffer.length / 1024;
-        const estimatedDurationMinutes = Math.min(30, Math.max(1, Math.round(fileSizeKB / 100))); // Rough estimate
+        // Get the actual transcription duration from AssemblyAI response
+        // AssemblyAI provides audio_duration in seconds, convert to minutes
+        let actualDurationMinutes = 0;
         
-        const { error: usageError } = await supabaseServer
-          .from('meeting_notes_usage')
-          .insert([
-            {
-              club_id: clubId,
-              user_id: userId,
-              month_year: currentMonth,
-              generated_at: now.toISOString(),
-              meeting_duration_minutes: estimatedDurationMinutes,
-              meeting_title: 'Meeting Notes'
-            }
-          ]);
-
-        if (usageError) {
-          console.warn('Could not record meeting notes usage:', usageError.message);
+        // Try to get duration from the transcript response
+        if (transcript && typeof transcript === 'object' && 'audio_duration' in transcript) {
+          actualDurationMinutes = Math.round((transcript.audio_duration || 0) / 60);
         } else {
-          console.log('[transcribe] Usage recorded successfully for club:', clubId);
+          // Fallback: estimate duration from file size (more accurate than before)
+          // For typical audio formats: ~1MB per minute for good quality
+          const fileSizeMB = buffer.length / (1024 * 1024);
+          actualDurationMinutes = Math.round(fileSizeMB * 1.2); // Slightly conservative estimate
+        }
+        
+        // Only count as monthly usage if recording is at least 2 minutes long
+        if (actualDurationMinutes >= 2) {
+          // Check if this would exceed the monthly limit
+          const { data: existingUsage, error: checkError } = await supabaseServer
+            .from('meeting_notes_usage')
+            .select('*')
+            .eq('club_id', clubId)
+            .eq('month_year', currentMonth);
+
+          if (!checkError) {
+            const totalMinutesUsed = existingUsage
+              ?.filter(usage => (usage.meeting_duration_minutes || 0) >= 2)
+              ?.reduce((total, usage) => total + (usage.meeting_duration_minutes || 0), 0) || 0;
+            
+            const limit = 30; // 30 minutes per month
+            
+            if ((totalMinutesUsed + actualDurationMinutes) > limit) {
+              console.log('[transcribe] Monthly limit would be exceeded:', totalMinutesUsed, '+', actualDurationMinutes, '>', limit);
+              // Don't block the transcription, but log the limit exceeded
+            } else {
+              const { error: usageError } = await supabaseServer
+                .from('meeting_notes_usage')
+                .insert([
+                  {
+                    club_id: clubId,
+                    user_id: userId,
+                    month_year: currentMonth,
+                    generated_at: now.toISOString(),
+                    meeting_duration_minutes: actualDurationMinutes,
+                    meeting_title: 'Meeting Notes'
+                  }
+                ]);
+
+              if (usageError) {
+                console.warn('Could not record meeting notes usage:', usageError.message);
+              } else {
+                console.log('[transcribe] Monthly usage recorded successfully for club:', clubId, 'Duration:', actualDurationMinutes, 'minutes');
+              }
+            }
+          }
+        } else {
+          console.log('[transcribe] Short recording (', actualDurationMinutes, 'minutes) - not counted as monthly usage for club:', clubId);
         }
       } catch (error) {
         console.warn('Meeting notes usage recording failed:', error);

@@ -14,8 +14,9 @@ import {
 
 interface MeetingNotesUsageDisplayProps {
   usageCount: number;
+  totalMinutesUsed: number;
   limit: number;
-  remainingGenerations: number;
+  remainingMinutes: number;
   canGenerate: boolean;
   currentMonth: string;
   isLoading?: boolean;
@@ -23,15 +24,16 @@ interface MeetingNotesUsageDisplayProps {
 
 export default function MeetingNotesUsageDisplay({
   usageCount,
+  totalMinutesUsed,
   limit,
-  remainingGenerations,
+  remainingMinutes,
   canGenerate,
   currentMonth,
   isLoading = false
 }: MeetingNotesUsageDisplayProps) {
   const [showModal, setShowModal] = useState(false);
-  const usagePercentage = (usageCount / limit) * 100;
-  const isAtLimit = usageCount >= limit;
+  const usagePercentage = (totalMinutesUsed / limit) * 100;
+  const isAtLimit = totalMinutesUsed >= limit;
   
   // Show modal when reaching limit
   useEffect(() => {
@@ -130,8 +132,8 @@ export default function MeetingNotesUsageDisplay({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1, duration: 0.5 }}
         >
-          <div className="text-2xl font-light text-gray-900 mb-1">{usageCount}</div>
-          <div className="text-sm text-gray-600 font-extralight">Used</div>
+          <div className="text-2xl font-light text-gray-900 mb-1">{totalMinutesUsed}</div>
+          <div className="text-sm text-gray-600 font-extralight">Minutes Used</div>
         </motion.div>
         
         <motion.div
@@ -140,8 +142,8 @@ export default function MeetingNotesUsageDisplay({
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.5 }}
         >
-          <div className="text-2xl font-light text-gray-900 mb-1">{remainingGenerations}</div>
-          <div className="text-sm text-gray-600 font-extralight">Remaining</div>
+          <div className="text-2xl font-light text-gray-900 mb-1">{remainingMinutes}</div>
+          <div className="text-sm text-gray-600 font-extralight">Minutes Left</div>
         </motion.div>
         
         <motion.div
@@ -199,7 +201,7 @@ export default function MeetingNotesUsageDisplay({
               </h3>
               
               <p className="text-red-700 font-light text-sm mb-2">
-                You've reached your monthly limit of {limit} meeting note generation.
+                You've reached your monthly limit of {limit} minutes for meeting notes.
               </p>
               
               <p className="text-red-600 font-extralight text-xs mb-6">
@@ -231,10 +233,10 @@ export default function MeetingNotesUsageDisplay({
             <Sparkles className="w-5 h-5 text-green-600 flex-shrink-0" />
             <div>
               <p className="text-green-700 font-light text-sm">
-                You have {remainingGenerations} meeting note generation available this month.
+                You have {remainingMinutes} minutes available this month.
               </p>
               <p className="text-green-600 font-extralight text-xs mt-1">
-                Record up to 30 minutes per meeting!
+                Record up to 30 minutes per meeting! (2+ min recordings count toward monthly limit)
               </p>
             </div>
           </div>
@@ -255,7 +257,7 @@ export default function MeetingNotesUsageDisplay({
           </div>
           <div className="flex items-center space-x-2">
             <Clock className="w-4 h-4" />
-            <span>30 min max</span>
+            <span>2+ min count</span>
           </div>
         </div>
       </motion.div>
