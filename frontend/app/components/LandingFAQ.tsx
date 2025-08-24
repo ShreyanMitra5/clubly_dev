@@ -34,10 +34,10 @@ export default function LandingFAQ() {
       question: "Is my club data secure?",
       answer: "Absolutely. We use enterprise-grade security and encryption. Your club data is private and we never share it with third parties. We're built for students, by students, with privacy in mind."
     },
-    {
-      question: "Can I cancel my Pro subscription anytime?",
-      answer: "Yes, you can cancel anytime with no penalties. You'll keep access to Pro features until the end of your billing period, then automatically return to the free tier."
-    },
+    // {
+    //   question: "Can I cancel my Pro subscription anytime?",
+    //   answer: "Yes, you can cancel anytime with no penalties. You'll keep access to Pro features until the end of your billing period, then automatically return to the free tier."
+    // },
     {
       question: "How do you handle meeting recordings?",
       answer: "We process audio recordings to create summaries and notes, then delete the original files. Only the AI-generated content is stored, ensuring privacy while providing valuable insights."

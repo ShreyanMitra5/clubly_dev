@@ -51,30 +51,30 @@ export default function LandingPricing() {
       buttonColor: "bg-gray-900 hover:bg-gray-800",
       icon: Users
     },
-    {
-      name: "Pro",
-      price: "Coming Soon",
-      period: "",
-      description: "For serious club leaders who want to scale",
-      features: [
-        { text: "Everything in Free", included: true },
-        { text: "Unlimited AI Presentations", included: true },
-        { text: "Unlimited Meeting Notes & Summaries", included: true },
-        { text: "Unlimited Roadmap Planning", included: true },
-        { text: "Enhanced AI Club Advisor (Unlimited)", included: true },
-        { text: "Priority Support", included: true },
-        { text: "Advanced Analytics", included: true },
-        { text: "Custom Branding", included: true },
-        { text: "Export Data", included: true },
-      ],
-      popular: true,
-      color: "from-orange-500 to-orange-600",
-      bgColor: "bg-orange-50",
-      borderColor: "border-orange-200",
-      buttonColor: "bg-orange-500 hover:bg-orange-600",
-      icon: Zap,
-      comingSoon: true
-    }
+    // {
+    //   name: "Pro",
+    //   price: "Coming Soon",
+    //   period: "",
+    //   description: "For serious club leaders who want to scale",
+    //   features: [
+    //     { text: "Everything in Free", included: true },
+    //     { text: "Unlimited AI Presentations", included: true },
+    //     { text: "Unlimited Meeting Notes & Summaries", included: true },
+    //     { text: "Unlimited Roadmap Planning", included: true },
+    //     { text: "Enhanced AI Club Advisor (Unlimited)", included: true },
+    //     { text: "Priority Support", included: true },
+    //     { text: "Advanced Analytics", included: true },
+    //     { text: "Custom Branding", included: true },
+    //     { text: "Export Data", included: true },
+    //   ],
+    //   popular: true,
+    //   color: "from-orange-500 to-orange-600",
+    //   bgColor: "bg-orange-50",
+    //   borderColor: "border-orange-200",
+    //   buttonColor: "bg-orange-500 hover:bg-orange-600",
+    //   icon: Zap,
+    //   comingSoon: true
+    // }
   ];
 
 
@@ -193,7 +193,7 @@ export default function LandingPricing() {
         </div>
 
         {/* Why Paid Section */}
-        <motion.div
+        {/* <motion.div
           className="mb-20"
           initial={{ opacity: 0, y: 40 }}
           animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
@@ -210,7 +210,6 @@ export default function LandingPricing() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              {/* AI Processing */}
               <div className="text-center space-y-4">
                 <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <Cpu className="w-8 h-8 text-white" />
@@ -221,7 +220,6 @@ export default function LandingPricing() {
                 </p>
               </div>
 
-              {/* Premium Features */}
               <div className="text-center space-y-4">
                 <div className="w-16 h-16 bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <Sparkles className="w-8 h-8 text-white" />
@@ -232,7 +230,6 @@ export default function LandingPricing() {
                 </p>
               </div>
 
-              {/* Quality Service */}
               <div className="text-center space-y-4">
                 <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <Shield className="w-8 h-8 text-white" />
@@ -244,7 +241,7 @@ export default function LandingPricing() {
               </div>
             </div>
           </div>
-        </motion.div>
+        </motion.div> */}
 
 
               </div>

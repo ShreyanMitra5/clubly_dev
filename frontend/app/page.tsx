@@ -10,7 +10,7 @@ import LandingHero from './components/LandingHero';
 import LandingHumanoidSection from './components/LandingHumanoidSection';
 import LandingSpecsSection from './components/LandingSpecsSection';
 import LandingFeatures from './components/LandingFeatures';
-import LandingPricing from './components/LandingPricing';
+// import LandingPricing from './components/LandingPricing';
 import LandingFAQ from './components/LandingFAQ';
 
 import LandingFooter from './components/LandingFooter';
@@ -124,7 +124,7 @@ export default function HomePage() {
         </div>
         <LandingAnalytics />
         <div id="pricing">
-          <LandingPricing />
+          {/* <LandingPricing /> */}
         </div>
         <div id="support">
           <LandingFAQ />

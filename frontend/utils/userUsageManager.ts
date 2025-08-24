@@ -83,7 +83,7 @@ export async function canUseFeature(
   if (usage.usage[feature].count >= limits.monthly) {
     return {
       allowed: false,
-      reason: `Monthly limit exceeded for ${feature}. Upgrade to Pro for more.`,
+      reason: `Monthly limit exceeded for ${feature}.`,
       remaining: 0
     };
   }

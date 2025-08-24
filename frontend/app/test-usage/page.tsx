@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { apiWithUpgrade } from '../utils/apiWithUpgrade';
 import { useUpgradeModal } from '../hooks/useUpgradeModal';
-import UpgradeModal from '../components/UpgradeModal';
+// import UpgradeModal from '../components/UpgradeModal';
 
 export default function TestUsagePage() {
   const { user } = useUser();
@@ -119,13 +119,13 @@ export default function TestUsagePage() {
       </div>
 
       {/* Upgrade Modal */}
-      <UpgradeModal
-        isOpen={upgradeModal.isOpen}
-        onClose={upgradeModal.hideUpgradeModal}
-        featureName={upgradeModal.featureName}
-        currentUsage={upgradeModal.currentUsage}
-        limit={upgradeModal.limit}
-      />
+              {/* <UpgradeModal
+          isOpen={upgradeModal.isOpen}
+          onClose={upgradeModal.hideUpgradeModal}
+          featureName={upgradeModal.featureName}
+          currentUsage={upgradeModal.currentUsage}
+          limit={upgradeModal.limit}
+        /> */}
     </div>
   );
 } 

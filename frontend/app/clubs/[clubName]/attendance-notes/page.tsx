@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { useParams } from 'next/navigation';
 import ClubLayout from '../../../components/ClubLayout';
-import UpgradeModal from '../../../components/UpgradeModal';
+// import UpgradeModal from '../../../components/UpgradeModal';
 import { useUpgradeModal } from '../../../hooks/useUpgradeModal';
 import { apiWithUpgrade } from '../../../utils/apiWithUpgrade';
 

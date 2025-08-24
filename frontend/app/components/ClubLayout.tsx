@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { cn } from '../lib/utils';
 import { UserButton } from '@clerk/nextjs';
 import { motion, useInView, AnimatePresence } from 'framer-motion';
-import UpgradeModal from './UpgradeModal';
+// import UpgradeModal from './UpgradeModal';
 import { useUpgradeModal } from '../hooks/useUpgradeModal';
 import { apiWithUpgrade } from '../utils/apiWithUpgrade';
 import AdvisorRequestForm from './AdvisorRequestForm';
@@ -6855,13 +6855,13 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
       )}
 
       {/* Upgrade Modal */}
-      <UpgradeModal
-        isOpen={upgradeModal.isOpen}
-        onClose={upgradeModal.hideUpgradeModal}
-        featureName={upgradeModal.featureName}
-        currentUsage={upgradeModal.currentUsage}
-        limit={upgradeModal.limit}
-      />
+              {/* <UpgradeModal
+          isOpen={upgradeModal.isOpen}
+          onClose={upgradeModal.hideUpgradeModal}
+          featureName={upgradeModal.featureName}
+          currentUsage={upgradeModal.currentUsage}
+          limit={upgradeModal.limit}
+        /> */}
     </div>
   );
 }
