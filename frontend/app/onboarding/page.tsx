@@ -132,82 +132,175 @@ export default function OnboardingPage() {
     }
   };
 
-  const handleSubmit = async () => {
-    console.log('handleSubmit called');
-    setIsSubmitting(true);
-    if (!user) {
-      setError('User not found. Please sign in again.');
-      console.error('User object is missing:', user);
-      setIsSubmitting(false);
-      console.log('Early return: user not found');
-      return;
+  const testSupabaseConnection = async () => {
+    try {
+      console.log('Testing Supabase connection...');
+      
+      // First test basic connection
+      const { data, error } = await supabase.from('users').select('count').limit(1);
+      
+      if (error) {
+        console.error('Supabase connection test failed:', error);
+        
+        // Check if it's a table not found error
+        if (error.message?.includes('relation') || error.message?.includes('table') || error.message?.includes('does not exist')) {
+          console.error('Users table does not exist. Database schema may be incomplete.');
+          return { connected: false, tableExists: false, error: error.message };
+        }
+        
+        return { connected: false, tableExists: false, error: error.message };
+      }
+      
+      console.log('Supabase connection test successful:', data);
+      return { connected: true, tableExists: true, error: null };
+    } catch (error) {
+      console.error('Supabase connection test error:', error);
+      return { connected: false, tableExists: false, error: error instanceof Error ? error.message : 'Unknown error' };
     }
-    const { id, emailAddresses, fullName } = user;
-    console.log('User object:', user);
-    if (!id || !emailAddresses || !fullName) {
-      setError('User information is incomplete. Please sign out and sign in again.');
-      console.error('User info incomplete:', { id, emailAddresses, fullName });
+  };
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    
+    if (!user || !name || clubs.length === 0) {
       setIsSubmitting(false);
       console.log('Early return: user info incomplete');
       return;
     }
+    
+    // Test Supabase connection first
+    const connectionTest = await testSupabaseConnection();
+    if (!connectionTest.connected) {
+      setError(`Unable to connect to database. ${connectionTest.error || 'Please check your connection and try again.'}`);
+      setIsSubmitting(false);
+      return;
+    }
+    
+    if (!connectionTest.tableExists) {
+      setError('Database setup incomplete. The users table is missing. Please contact support or run the database setup script.');
+      setIsSubmitting(false);
+      return;
+    }
+    
+    const { id, emailAddresses, fullName } = user;
     const email = emailAddresses?.[0]?.emailAddress || '';
     setError('');
-    // 1. Upsert user
-    const now = new Date().toISOString();
-    const { data: userData, error: userError } = await supabase.from('users').upsert([{ id, email, name: fullName, created_at: now, updated_at: now }]);
-    if (userError) {
-      console.error('Supabase user upsert error:', JSON.stringify(userError, null, 2));
-      if (userError.message) console.error('Supabase user upsert error message:', userError.message);
-      if (userError.details) console.error('Supabase user upsert error details:', userError.details);
-      if (userError.hint) console.error('Supabase user upsert error hint:', userError.hint);
-      console.log('Early return: user upsert error');
-    }
-    // 2. For each club, insert into clubs and memberships
-    for (let i = 0; i < clubs.length; i++) {
-      const clubName = clubs[i];
-      const clubDetails = clubData[i];
-      const role = clubRoles[i] || '';
-      const audience = clubAudiences[i] || '';
-      const clubId = String(uuidv4());
-      // Insert club
-      const { data: clubInsert, error: clubError } = await supabase
-        .from('clubs')
-        .insert([{
-          id: clubId,
-          name: clubName,
-          description: clubDetails.description,
-          mission: clubDetails.mission,
-          goals: clubDetails.goals,
-          audience,
-          owner_id: id,
-          created_at: now,
-          updated_at: now
-        }])
-        .select()
-        .single();
-      if (clubError) {
-        console.error('Supabase club insert error:', JSON.stringify(clubError, null, 2));
-        if (clubError.message) console.error('Supabase club insert error message:', clubError.message);
-        if (clubError.details) console.error('Supabase club insert error details:', clubError.details);
-        if (clubError.hint) console.error('Supabase club insert error hint:', clubError.hint);
-        console.log('Early return: club insert error');
+    
+    // Debug Supabase connection
+    console.log('Supabase client:', supabase);
+    console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
+    console.log('User ID:', id);
+    console.log('Email:', email);
+    console.log('Full Name:', fullName);
+    
+    try {
+      // 1. Upsert user
+      const now = new Date().toISOString();
+      console.log('Attempting to upsert user with data:', { id, email, name: fullName, created_at: now, updated_at: now });
+      
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .upsert([{ 
+          id, 
+          email, 
+          name: fullName, 
+          created_at: now, 
+          updated_at: now 
+        }]);
+        
+      if (userError) {
+        console.error('Supabase user upsert error:', userError);
+        console.error('Supabase user upsert error details:', {
+          message: userError.message,
+          details: userError.details,
+          hint: userError.hint,
+          code: userError.code
+        });
+        
+        // Check if it's a connection issue
+        if (userError.message?.includes('fetch') || userError.message?.includes('network')) {
+          setError('Connection to database failed. Please check your internet connection and try again.');
+        } else if (userError.message?.includes('relation') || userError.message?.includes('table')) {
+          setError('Database table not found. Please contact support.');
+        } else {
+          setError(`Database error: ${userError.message || 'Unknown error occurred'}`);
+        }
+        
+        setIsSubmitting(false);
+        return;
       }
-      // Insert membership
-      const membershipPayload = { id: String(uuidv4()), user_id: String(id), club_id: String(clubId), role, created_at: now };
-      console.log('Inserting membership:', membershipPayload);
-      const { error: membershipError } = await supabase.from('memberships').insert([
-        membershipPayload
-      ]);
-      if (membershipError) {
-        console.error('Supabase membership insert error:', JSON.stringify(membershipError, null, 2));
-        if (membershipError.message) console.error('Supabase membership insert error message:', membershipError.message);
-        if (membershipError.details) console.error('Supabase membership insert error details:', membershipError.details);
-        if (membershipError.hint) console.error('Supabase membership insert error hint:', membershipError.hint);
-        console.log('Early return: membership insert error');
+      
+      console.log('User upsert successful:', userData);
+      
+      // 2. For each club, insert into clubs and memberships
+      for (let i = 0; i < clubs.length; i++) {
+        const clubName = clubs[i];
+        const clubDetails = clubData[i];
+        const role = clubRoles[i] || '';
+        const audience = clubAudiences[i] || '';
+        const clubId = String(uuidv4());
+        
+        console.log(`Creating club ${i + 1}/${clubs.length}:`, clubName);
+        
+        // Insert club
+        const { data: clubInsert, error: clubError } = await supabase
+          .from('clubs')
+          .insert([{
+            id: clubId,
+            name: clubName,
+            description: clubDetails.description,
+            mission: clubDetails.mission,
+            goals: clubDetails.goals,
+            audience,
+            owner_id: id,
+            created_at: now,
+            updated_at: now
+          }])
+          .select()
+          .single();
+          
+        if (clubError) {
+          console.error('Supabase club insert error:', clubError);
+          setError(`Failed to create club "${clubName}": ${clubError.message || 'Unknown error'}`);
+          setIsSubmitting(false);
+          return;
+        }
+        
+        console.log(`Club "${clubName}" created successfully:`, clubInsert);
+        
+        // Insert membership
+        const membershipPayload = { 
+          id: String(uuidv4()), 
+          user_id: String(id), 
+          club_id: String(clubId), 
+          role, 
+          created_at: now 
+        };
+        
+        console.log('Inserting membership:', membershipPayload);
+        
+        const { error: membershipError } = await supabase
+          .from('memberships')
+          .insert([membershipPayload]);
+          
+        if (membershipError) {
+          console.error('Supabase membership insert error:', membershipError);
+          setError(`Failed to create membership for club "${clubName}": ${membershipError.message || 'Unknown error'}`);
+          setIsSubmitting(false);
+          return;
+        }
+        
+        console.log(`Membership for club "${clubName}" created successfully`);
       }
+      
+      console.log('All operations completed successfully, redirecting to dashboard');
+      router.push('/dashboard');
+      
+    } catch (error) {
+      console.error('Unexpected error during onboarding:', error);
+      setError(`An unexpected error occurred: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      setIsSubmitting(false);
     }
-    router.push('/dashboard');
   };
 
   const renderStep1 = () => (
@@ -305,11 +398,25 @@ export default function OnboardingPage() {
 
       {error && (
         <motion.div 
-          className="p-4 bg-red-50/80 border border-red-200/50 rounded-2xl text-red-600 font-light"
+          className="p-6 bg-red-50/80 border border-red-200/50 rounded-2xl text-red-600 font-light"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          {error}
+          <div className="space-y-3">
+            <div className="font-medium text-red-700">
+              {error.includes('Database setup incomplete') ? '🚨 Database Setup Issue' : '⚠️ Error Occurred'}
+            </div>
+            <div>{error}</div>
+            {error.includes('Database setup incomplete') && (
+              <div className="text-sm text-red-500 bg-red-100/50 p-3 rounded-lg">
+                <strong>Quick Fix:</strong> The database is missing required tables. Please run the database setup script or contact support.
+                <br />
+                <code className="bg-red-200/50 px-2 py-1 rounded text-xs mt-2 inline-block">
+                  Run: create_users_table.sql
+                </code>
+              </div>
+            )}
+          </div>
         </motion.div>
       )}
 
@@ -488,11 +595,25 @@ export default function OnboardingPage() {
 
         {error && (
           <motion.div 
-            className="p-4 bg-red-50/80 border border-red-200/50 rounded-2xl text-red-600 font-light"
+            className="p-6 bg-red-50/80 border border-red-200/50 rounded-2xl text-red-600 font-light"
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            {error}
+            <div className="space-y-3">
+              <div className="font-medium text-red-700">
+                {error.includes('Database setup incomplete') ? '🚨 Database Setup Issue' : '⚠️ Error Occurred'}
+              </div>
+              <div>{error}</div>
+              {error.includes('Database setup incomplete') && (
+                <div className="text-sm text-red-500 bg-red-100/50 p-3 rounded-lg">
+                  <strong>Quick Fix:</strong> The database is missing required tables. Please run the database setup script or contact support.
+                  <br />
+                  <code className="bg-red-200/50 px-2 py-1 rounded text-xs mt-2 inline-block">
+                    Run: create_users_table.sql
+                  </code>
+                </div>
+              )}
+            </div>
           </motion.div>
         )}
         
