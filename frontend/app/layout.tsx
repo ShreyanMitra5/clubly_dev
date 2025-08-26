@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { Toaster } from 'sonner';
 import { usePathname } from 'next/navigation';
 import DashboardLink from './components/DashboardLink';
+import { Analytics } from '@vercel/analytics/next';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -278,6 +279,7 @@ export default function RootLayout({
           )}
           {children}
           <Toaster />
+          <Analytics />
           
           <style jsx global>{`
             @keyframes slideDown {
