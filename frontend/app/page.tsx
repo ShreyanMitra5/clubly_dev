@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { SignInButton, SignUpButton, useUser, useAuth, SignIn } from '@clerk/nextjs';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -16,11 +16,12 @@ import LandingFAQ from './components/LandingFAQ';
 import LandingFooter from './components/LandingFooter';
 import ErrorBoundary from './components/ErrorBoundary';
 import LoadingScreen from './components/LoadingScreen';
-import { useRef } from 'react';
+import TermsSignupModal from './components/TermsSignupModal';
 import LandingAnalytics from './components/LandingAnalytics';
 
 export default function HomePage() {
   const [isLoading, setIsLoading] = useState(true);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const router = useRouter();
   const { isSignedIn, user } = useUser();
   const { sessionId } = useAuth();
@@ -28,8 +29,8 @@ export default function HomePage() {
   // Instead of custom modal, we'll use a ref to trigger Clerk's modal
   const signUpButtonRef = useRef<HTMLButtonElement>(null);
   const openSignInModal = () => {
-    // Trigger Clerk's built-in modal
-    signUpButtonRef.current?.click();
+    // Show our custom terms modal instead of Clerk's default
+    setShowTermsModal(true);
   };
 
   useEffect(() => {
@@ -133,6 +134,22 @@ export default function HomePage() {
         <LandingFooter />
       </main>
 
+      {/* Terms Signup Modal */}
+      <TermsSignupModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        onSuccess={() => {
+          setShowTermsModal(false);
+          // Check if this is from teacher signup flow
+          const fromTeacherSignup = sessionStorage.getItem('fromTeacherSignup');
+          if (fromTeacherSignup) {
+            sessionStorage.setItem('fromSignUp', 'true');
+          } else {
+            sessionStorage.setItem('fromSignUp', 'true');
+          }
+        }}
+      />
+
       {/* Hidden Clerk button to trigger modal */}
       <SignUpButton mode="modal">
         <button
@@ -151,7 +168,6 @@ export default function HomePage() {
           Hidden Signup
         </button>
       </SignUpButton>
-
 
     </ErrorBoundary>
   );

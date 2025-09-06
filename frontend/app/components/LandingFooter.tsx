@@ -125,6 +125,22 @@ const LandingFooter = () => {
               Support
               <div className="absolute bottom-0 left-0 w-0 h-px bg-orange-500 transition-all duration-300 group-hover:w-full" />
             </button>
+            
+            <a 
+              href="/privacy-policy" 
+              className="group text-black/60 hover:text-orange-500 font-light transition-all duration-300 relative"
+            >
+              Privacy Policy
+              <div className="absolute bottom-0 left-0 w-0 h-px bg-orange-500 transition-all duration-300 group-hover:w-full" />
+            </a>
+            
+            <a 
+              href="/terms-of-service" 
+              className="group text-black/60 hover:text-orange-500 font-light transition-all duration-300 relative"
+            >
+              Terms of Service
+              <div className="absolute bottom-0 left-0 w-0 h-px bg-orange-500 transition-all duration-300 group-hover:w-full" />
+            </a>
           </motion.div>
 
           {/* Social Media Links */}
@@ -173,6 +189,15 @@ const LandingFooter = () => {
               <br className="sm:hidden" />
               <span className="sm:ml-2">Transforming student clubs with AI.</span>
             </p>
+            <div className="mt-4 flex flex-wrap justify-center gap-4 text-xs text-black/40">
+              <a href="/privacy-policy" className="hover:text-orange-500 transition-colors">
+                Privacy Policy
+              </a>
+              <span>•</span>
+              <a href="/terms-of-service" className="hover:text-orange-500 transition-colors">
+                Terms of Service
+              </a>
+            </div>
           </motion.div>
 
           {/* Decorative Elements */}
