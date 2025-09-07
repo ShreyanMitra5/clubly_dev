@@ -10,6 +10,7 @@ interface EmailModalProps {
   type: 'presentation' | 'summary';
   content: string;
   presentationUrl?: string;
+  presentationS3Key?: string;
   title?: string;
 }
 
@@ -21,6 +22,7 @@ export default function EmailModal({
   type, 
   content, 
   presentationUrl,
+  presentationS3Key,
   title 
 }: EmailModalProps) {
   const { user } = useUser();
@@ -49,6 +51,18 @@ export default function EmailModal({
     setError('');
     
     try {
+      // If we have an S3 key, get a fresh presigned URL for the email
+      let finalPresentationUrl = presentationUrl;
+      if (presentationS3Key) {
+        try {
+          const { getPresentationViewUrl } = await import('../utils/s3ClientHelpers');
+          finalPresentationUrl = await getPresentationViewUrl(presentationS3Key);
+        } catch (error) {
+          console.error('Error getting presigned URL for email:', error);
+          // Fall back to the old URL if presigned URL fails
+        }
+      }
+
       const response = await fetch('/api/emails/generate-content', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -56,7 +70,7 @@ export default function EmailModal({
           type,
           clubName,
           content,
-          presentationUrl
+          presentationUrl: finalPresentationUrl
         })
       });
 

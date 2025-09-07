@@ -600,16 +600,19 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
       
       // Save to backend history and generate thumbnail
       if (result && user) {
-        // Generate thumbnail
+        // Generate thumbnail (disabled for now)
         let thumbnailUrl = null;
+        // TODO: Re-enable thumbnail generation with proper s3Key
+        /*
         try {
           const thumbRes = await fetch('/api/presentations/thumbnail', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              s3Url: result.s3Url,
+              s3Key: result.s3Key,
               userId: user.id,
-              presentationId: result.s3Url.split('/').pop()?.replace('.pptx', '') || Date.now().toString()
+              presentationId: result.s3Url.split('/').pop()?.replace('.pptx', '') || Date.now().toString(),
+              clubId: selectedClub.clubId
             }),
           });
           if (thumbRes.ok) {
@@ -621,6 +624,7 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
         } catch (e) {
           console.error('Error generating thumbnail:', e);
         }
+        */
 
         // Save presentation with thumbnail to history
         await fetch('/api/presentations/history', {
@@ -5546,25 +5550,54 @@ function HistoryPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
                 {/* Actions */}
                 <div className="space-y-2">
                   {/* View Button */}
-                  <a
-                    href={presentation.viewerUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  <button
+                    onClick={async () => {
+                      try {
+                        // If we have an s3Key, use the new presigned URL system
+                        if (presentation.s3Key) {
+                          const { getPresentationViewUrl } = await import('../../utils/s3ClientHelpers');
+                          const viewerUrl = await getPresentationViewUrl(presentation.s3Key);
+                          window.open(viewerUrl, '_blank');
+                        } else {
+                          // Fallback to old viewerUrl for backward compatibility
+                          window.open(presentation.viewerUrl, '_blank');
+                        }
+                      } catch (error) {
+                        console.error('Error opening presentation:', error);
+                        alert('Failed to open presentation. Please try again.');
+                      }
+                    }}
                     className="w-full px-4 py-2.5 bg-orange-500 text-white font-medium rounded-xl hover:bg-orange-600 transition-colors duration-200 flex items-center justify-center gap-2"
                   >
                     <Eye className="w-4 h-4" />
                     View Presentation
-                  </a>
+                  </button>
 
                   {/* Download Button */}
-                  <a
-                    href={presentation.s3Url}
-                    download
+                  <button
+                    onClick={async () => {
+                      try {
+                        // If we have an s3Key, use the new presigned URL system
+                        if (presentation.s3Key) {
+                          const { downloadFileFromS3 } = await import('../../utils/s3ClientHelpers');
+                          await downloadFileFromS3(presentation.s3Key, `${presentation.description || 'presentation'}.pptx`);
+                        } else {
+                          // Fallback to old s3Url for backward compatibility
+                          const link = document.createElement('a');
+                          link.href = presentation.s3Url;
+                          link.download = `${presentation.description || 'presentation'}.pptx`;
+                          link.click();
+                        }
+                      } catch (error) {
+                        console.error('Error downloading presentation:', error);
+                        alert('Failed to download presentation. Please try again.');
+                      }
+                    }}
                     className="w-full px-4 py-2.5 bg-white border border-gray-200 text-gray-700 font-medium rounded-xl hover:bg-gray-50 transition-colors duration-200 flex items-center justify-center gap-2"
                   >
                     <Download className="w-4 h-4" />
-                  Download
-                </a>
+                    Download
+                  </button>
 
                   {/* Email Button */}
                   <button

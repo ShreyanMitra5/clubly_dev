@@ -20,11 +20,15 @@ export async function POST(request: NextRequest) {
     // Upload to S3
     await uploadFileToS3(buffer, s3Key, 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
     
-    // Generate URLs (for backward compatibility)
+    // Generate presigned URL for Office viewer
+    const { generatePresignedDownloadUrl } = await import('../../../utils/s3Client');
+    const { url: presignedUrl } = await generatePresignedDownloadUrl({ key: s3Key });
+    const viewerUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(presignedUrl)}`;
+    
+    // Keep the old publicUrl for backward compatibility (but it won't work with new bucket)
     const bucket = process.env.S3_BUCKET_NAME!;
     const region = process.env.AWS_DEFAULT_REGION || 'us-west-1';
     const publicUrl = `https://${bucket}.s3.${region}.amazonaws.com/${s3Key}`;
-    const viewerUrl = `https://view.officeapps.live.com/op/view.aspx?src=${encodeURIComponent(publicUrl)}`;
     
     return NextResponse.json({ 
       s3Key,

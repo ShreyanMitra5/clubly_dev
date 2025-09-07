@@ -111,10 +111,23 @@ export default function PresentationHistoryPage() {
                 </div>
                 
                 <div className="flex gap-2 mt-auto">
-                  <a
-                    href={item.viewerUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    onClick={async () => {
+                      try {
+                        // If we have an s3Key, use the new presigned URL system
+                        if (item.s3Key) {
+                          const { getPresentationViewUrl } = await import('../../../../app/utils/s3ClientHelpers');
+                          const viewerUrl = await getPresentationViewUrl(item.s3Key);
+                          window.open(viewerUrl, '_blank');
+                        } else {
+                          // Fallback to old viewerUrl for backward compatibility
+                          window.open(item.viewerUrl, '_blank');
+                        }
+                      } catch (error) {
+                        console.error('Error opening presentation:', error);
+                        alert('Failed to open presentation. Please try again.');
+                      }
+                    }}
                     className="button-primary bg-pulse-500 hover:bg-pulse-600 text-white px-3 py-1 rounded-full text-sm shadow flex items-center space-x-1"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -122,19 +135,34 @@ export default function PresentationHistoryPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                     </svg>
                     <span>View Online</span>
-                  </a>
+                  </button>
                   
-                  <a
-                    href={item.s3Url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    onClick={async () => {
+                      try {
+                        // If we have an s3Key, use the new presigned URL system
+                        if (item.s3Key) {
+                          const { downloadFileFromS3 } = await import('../../../../app/utils/s3ClientHelpers');
+                          await downloadFileFromS3(item.s3Key, `${item.description || 'presentation'}.pptx`);
+                        } else {
+                          // Fallback to old s3Url for backward compatibility
+                          const link = document.createElement('a');
+                          link.href = item.s3Url;
+                          link.download = `${item.description || 'presentation'}.pptx`;
+                          link.click();
+                        }
+                      } catch (error) {
+                        console.error('Error downloading presentation:', error);
+                        alert('Failed to download presentation. Please try again.');
+                      }
+                    }}
                     className="button-secondary bg-white border border-pulse-200 text-pulse-500 px-3 py-1 rounded-full text-sm shadow hover:bg-orange-50 flex items-center space-x-1"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                     <span>Download</span>
-                  </a>
+                  </button>
                   
                   <button
                     onClick={() => handleSendEmail(item)}
@@ -160,7 +188,8 @@ export default function PresentationHistoryPage() {
             clubId={clubId}
             type="presentation"
             content={selectedPresentation.description || "Untitled Presentation"}
-            presentationUrl={selectedPresentation.viewerUrl}
+            presentationUrl={selectedPresentation.s3Key ? null : selectedPresentation.viewerUrl}
+            presentationS3Key={selectedPresentation.s3Key}
             title={selectedPresentation.description || "Untitled"}
           />
         )}

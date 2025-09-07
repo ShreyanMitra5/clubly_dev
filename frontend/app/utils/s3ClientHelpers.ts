@@ -199,6 +199,27 @@ export async function downloadFileFromS3(
 }
 
 /**
+ * Get a presigned view URL for a presentation (for Office viewer)
+ */
+export async function getPresentationViewUrl(s3Key: string): Promise<string> {
+  const response = await fetch('/api/presentations/view-url', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ s3Key }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || 'Failed to get view URL');
+  }
+
+  const data = await response.json();
+  return data.viewerUrl;
+}
+
+/**
  * Open a file in a new tab using presigned URL
  */
 export async function openFileInNewTab(key: string): Promise<void> {

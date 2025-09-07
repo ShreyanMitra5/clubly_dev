@@ -212,24 +212,9 @@ function GeneratePageContent() {
       setGenerationResult(result);
       // Save to backend history
       if (result && user) {
-        // Generate thumbnail (non-blocking with timeout); if it fails, continue without it
+        // Generate thumbnail (disabled for now)
         let thumbnailUrl = null as string | null;
-        try {
-          const presentationId = result.s3Url.split('/').pop().replace('.pptx', '');
-          const controller = new AbortController();
-          const to = setTimeout(() => controller.abort(), 15000);
-          const thumbRes = await fetch('/api/presentations/thumbnail', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ s3Url: result.s3Url, userId: user.id, presentationId }),
-            signal: controller.signal,
-          });
-          clearTimeout(to);
-          if (thumbRes.ok) {
-            const thumbData = await thumbRes.json();
-            thumbnailUrl = thumbData.thumbnailUrl || null;
-          }
-        } catch (_) { /* ignore */ }
+        // TODO: Re-enable thumbnail generation with proper s3Key
         await fetch('/api/presentations/history', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
