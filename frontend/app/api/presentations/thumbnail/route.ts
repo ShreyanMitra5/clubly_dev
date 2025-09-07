@@ -1,33 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { S3Client, GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
+import { downloadFileFromS3, uploadFileToS3, generateS3Key } from '../../../utils/s3Client';
 import { tmpdir } from 'os';
 import { join } from 'path';
 import { writeFile, readFile, unlink } from 'fs/promises';
 import { exec } from 'child_process';
 
-const s3 = new S3Client({
-  region: process.env.AWS_DEFAULT_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
-const BUCKET = process.env.S3_BUCKET_NAME!;
-
 export async function POST(request: NextRequest) {
-  const { s3Url, userId, presentationId } = await request.json();
-  if (!s3Url || !userId || !presentationId) {
-    console.error('Missing required fields', { s3Url, userId, presentationId });
+  const { s3Key, userId, presentationId, clubId } = await request.json();
+  if (!s3Key || !userId || !presentationId) {
+    console.error('Missing required fields', { s3Key, userId, presentationId });
     return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
   }
 
   try {
-    // Download pptx from S3
-    const pptxKey = s3Url.split(`.amazonaws.com/`)[1];
-    console.log('Downloading pptx from S3:', pptxKey);
-    const pptxCmd = new GetObjectCommand({ Bucket: BUCKET, Key: pptxKey });
-    const pptxData = await s3.send(pptxCmd);
-    const pptxBuffer = Buffer.from(await pptxData.Body.transformToByteArray());
+    // Download pptx from S3 using the new client
+    console.log('Downloading pptx from S3:', s3Key);
+    const pptxBuffer = await downloadFileFromS3(s3Key);
 
     // Save pptx to temp file
     const tempDir = tmpdir();
@@ -58,14 +46,9 @@ export async function POST(request: NextRequest) {
     }
     console.log('Read generated PNG from', thumbPath);
 
-    // Upload thumbnail to S3
-    const thumbKey = `thumbnails/${userId}/${presentationId}.png`;
-    await s3.send(new PutObjectCommand({
-      Bucket: BUCKET,
-      Key: thumbKey,
-      Body: thumbBuffer,
-      ContentType: 'image/png',
-    }));
+    // Upload thumbnail to S3 using the new client with proper prefixing
+    const thumbKey = generateS3Key('thumbnails', clubId || 'unknown', userId, `${presentationId}.png`);
+    await uploadFileToS3(thumbBuffer, thumbKey, 'image/png');
     console.log('Uploaded thumbnail to S3:', thumbKey);
 
     // Clean up temp files
@@ -73,9 +56,9 @@ export async function POST(request: NextRequest) {
     await unlink(thumbPath);
     console.log('Cleaned up temp files');
 
-    const thumbUrl = `https://${BUCKET}.s3.${process.env.AWS_DEFAULT_REGION}.amazonaws.com/${thumbKey}`;
-    console.log('Returning thumbnailUrl:', thumbUrl);
-    return NextResponse.json({ thumbnailUrl: thumbUrl });
+    // Return the S3 key instead of a public URL
+    console.log('Returning thumbnailKey:', thumbKey);
+    return NextResponse.json({ thumbnailKey, thumbnailUrl: null }); // Frontend will use presigned URLs
   } catch (error) {
     console.error('Thumbnail generation error:', error);
     return NextResponse.json({ error: 'Thumbnail generation failed', details: error?.message || error }, { status: 500 });
