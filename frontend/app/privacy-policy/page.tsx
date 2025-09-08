@@ -253,7 +253,7 @@ export default function PrivacyPolicyPage() {
 
             <div className="mt-12 pt-8 border-t border-gray-200">
               <p className="text-sm text-gray-600">
-                This Privacy Policy is effective as of December 2024 and will remain in effect except with respect to any changes in its provisions in the future.
+                This Privacy Policy is effective as of June 2025 and will remain in effect except with respect to any changes in its provisions in the future.
               </p>
               <p className="text-sm text-gray-600 mt-2">
                 If you have any questions about this Privacy Policy, please contact us at{' '}

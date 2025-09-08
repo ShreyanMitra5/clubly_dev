@@ -69,10 +69,6 @@ export default function LandingFAQ() {
           animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
           transition={{ duration: 0.8 }}
         >
-          <div className="inline-flex items-center space-x-2 bg-orange-500/10 text-orange-600 px-6 py-3 rounded-full text-sm font-light mb-6">
-            <HelpCircle className="w-4 h-4" />
-            <span>FAQ</span>
-          </div>
           
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-light text-black mb-6">
             Common Questions

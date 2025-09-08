@@ -11,13 +11,28 @@ export default function LandingSpecsSection() {
   return (
     <section 
       ref={ref}
-      className="relative py-20 lg:py-24 bg-gradient-to-b from-white to-gray-50/50 overflow-hidden"
+      className="relative py-16 lg:py-20 px-4 lg:px-6 overflow-hidden"
     >
+      {/* Background Container with Rounded Edges and Gap */}
+      <div className="relative mx-auto max-w-6xl">
+        <div className="absolute inset-0 rounded-2xl overflow-hidden">
+          <div 
+            className="absolute inset-0 bg-no-repeat opacity-80"
+            style={{
+              backgroundImage: 'url(/valley.jpg)',
+              backgroundSize: 'cover',
+              backgroundPosition: 'center center',
+            }}
+          />
+          {/* Light overlay to ensure readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-white/85 via-white/75 to-white/80 rounded-2xl" />
+        </div>
+
       {/* Background Elements */}
       <div className="absolute inset-0 pointer-events-none">
         {/* Subtle animated background */}
         <motion.div
-          className="absolute top-0 left-1/4 w-64 h-64 bg-gradient-to-r from-orange-500/5 to-transparent rounded-full blur-3xl"
+          className="absolute top-0 left-1/4 w-64 h-64 bg-gradient-to-r from-orange-500/10 to-transparent rounded-full blur-3xl"
           animate={{ 
             scale: [1, 1.2, 1],
             opacity: [0.3, 0.5, 0.3] 
@@ -25,7 +40,7 @@ export default function LandingSpecsSection() {
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.div
-          className="absolute bottom-0 right-1/4 w-48 h-48 bg-gradient-to-l from-black/5 to-transparent rounded-full blur-3xl"
+          className="absolute bottom-0 right-1/4 w-48 h-48 bg-gradient-to-l from-black/10 to-transparent rounded-full blur-3xl"
           animate={{ 
             scale: [1.2, 1, 1.2],
             opacity: [0.2, 0.4, 0.2] 
@@ -34,7 +49,7 @@ export default function LandingSpecsSection() {
         />
       </div>
 
-      <div className="relative z-10 max-w-5xl mx-auto px-6 lg:px-8">
+        <div className="relative z-10 py-12 lg:py-16 px-6 lg:px-8">
         {/* Main Content */}
         <motion.div
           className="max-w-4xl mx-auto text-center"
@@ -49,11 +64,6 @@ export default function LandingSpecsSection() {
             animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <div className="inline-flex items-center space-x-2 bg-orange-500/10 text-orange-600 px-6 py-3 rounded-full text-sm font-light mb-6">
-              <Sparkles className="w-4 h-4" />
-              <span>Our Mission</span>
-            </div>
-            
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-light text-black mb-6">
               Supporting Student-led Clubs
             </h2>
@@ -61,7 +71,7 @@ export default function LandingSpecsSection() {
 
           {/* Mission Statement with Enhanced Quotes */}
           <motion.div
-            className="relative bg-white/80 backdrop-blur-xl border border-black/5 rounded-3xl p-10 lg:p-16 shadow-lg"
+            className="relative bg-white/90 backdrop-blur-xl border border-black/10 rounded-3xl p-10 lg:p-16 shadow-xl shadow-black/5"
             initial={{ opacity: 0, scale: 0.95 }}
             animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.8, delay: 0.4 }}
@@ -85,6 +95,7 @@ export default function LandingSpecsSection() {
             </div>
           </motion.div>
         </motion.div>
+        </div>
       </div>
     </section>
   );

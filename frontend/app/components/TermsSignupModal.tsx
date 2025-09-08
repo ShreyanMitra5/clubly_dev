@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, CheckCircle, AlertCircle } from 'lucide-react';
+import { X, Check, Shield, FileText } from 'lucide-react';
 import { SignUpButton } from '@clerk/nextjs';
 
 interface TermsSignupModalProps {
@@ -15,6 +15,13 @@ export default function TermsSignupModal({ isOpen, onClose, onSuccess }: TermsSi
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [isSigningUp, setIsSigningUp] = useState(false);
+
+  // Reset loading state when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      setIsSigningUp(false);
+    }
+  }, [isOpen]);
 
   const handleSignup = () => {
     if (!acceptedTerms || !acceptedPrivacy) {
@@ -36,6 +43,11 @@ export default function TermsSignupModal({ isOpen, onClose, onSuccess }: TermsSi
     }
   };
 
+  const handleClose = () => {
+    setIsSigningUp(false);
+    onClose();
+  };
+
   const canProceed = acceptedTerms && acceptedPrivacy;
 
   return (
@@ -47,175 +59,206 @@ export default function TermsSignupModal({ isOpen, onClose, onSuccess }: TermsSi
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={onClose}
+            className="absolute inset-0 bg-black/50"
+            onClick={handleClose}
           />
 
           {/* Modal */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="relative max-w-md w-full mx-4 overflow-hidden"
           >
-            {/* Header */}
-            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900">Join Clubly</h2>
-                  <p className="text-gray-600 mt-1">Create your account to get started</p>
-                </div>
+            {/* Background Container */}
+            <div className="relative bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden">
+              {/* Background Image Overlay */}
+              <div 
+                className="absolute inset-0 opacity-[0.03] bg-cover bg-center bg-no-repeat"
+                style={{
+                  backgroundImage: 'url(/background-section1.png)',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                }}
+              />
+              
+              {/* Subtle gradient overlay for better text readability */}
+              <div className="absolute inset-0 bg-gradient-to-br from-white/95 via-white/90 to-blue-50/80" />
+              
+              {/* Content Container */}
+              <div className="relative z-10">
+                {/* Close Button */}
                 <button
-                  onClick={onClose}
-                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                  onClick={handleClose}
+                  className="absolute top-4 right-4 z-20 p-1 hover:bg-black/10 rounded-full transition-colors backdrop-blur-sm"
                 >
-                  <X className="h-5 w-5 text-gray-500" />
+                  <X className="h-4 w-4 text-gray-600" />
                 </button>
-              </div>
-            </div>
 
-            {/* Content */}
-            <div className="p-6 space-y-6">
-              {/* Terms and Privacy Agreement */}
-              <div className="space-y-6 p-6 bg-gray-50 rounded-lg border-2 border-gray-200">
-                <div className="text-center">
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Required Agreement</h3>
-                  <p className="text-sm text-gray-600">You must accept both agreements to create an account</p>
+                {/* Header */}
+                <div className="px-6 pt-6 pb-4 text-center">
+                  <h2 className="text-xl font-semibold text-black mb-2">Join Clubly</h2>
+                  <p className="text-gray-600 text-sm">Create your account to get started</p>
                 </div>
-                
-                <div className="space-y-4">
-                  {/* Terms of Service */}
-                  <div className="flex items-start space-x-4 p-4 bg-white rounded-lg border border-gray-200">
-                    <button
-                      onClick={() => setAcceptedTerms(!acceptedTerms)}
-                      className={`mt-1 flex-shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${
+
+                {/* Content */}
+                <div className="px-6 pb-6 space-y-4">
+                  {/* Terms Text */}
+                  <div className="text-center">
+                    <p className="text-gray-600 text-sm">You must accept both agreements to create an account</p>
+                  </div>
+                  
+                  {/* Terms Checkbox */}
+                  <label className="flex items-start space-x-3 cursor-pointer">
+                    <div className="relative flex-shrink-0 mt-0.5">
+                      <input
+                        type="checkbox"
+                        checked={acceptedTerms}
+                        onChange={(e) => setAcceptedTerms(e.target.checked)}
+                        className="sr-only"
+                      />
+                      <div className={`w-5 h-5 border-2 rounded flex items-center justify-center transition-colors ${
                         acceptedTerms
-                          ? 'bg-blue-600 border-blue-600 text-white'
-                          : 'border-gray-400 hover:border-blue-500'
-                      }`}
-                    >
-                      {acceptedTerms && <CheckCircle className="h-4 w-4" />}
-                    </button>
+                          ? 'bg-orange-400 border-orange-400'
+                          : 'border-gray-300'
+                      }`}>
+                        {acceptedTerms && <Check className="h-3 w-3 text-white stroke-[3]" />}
+                      </div>
+                    </div>
                     <div className="flex-1">
-                      <label className="text-base text-gray-900 cursor-pointer font-medium">
+                      <span className="text-sm text-black">
                         I agree to the{' '}
                         <a
                           href="/terms-of-service"
                           target="_blank"
-                          className="text-blue-600 hover:text-blue-800 underline"
+                          className="text-blue-600 underline"
                           onClick={(e) => e.stopPropagation()}
                         >
                           Terms of Service
                         </a>
-                      </label>
-                      <p className="text-sm text-gray-600 mt-1">
+                      </span>
+                      <p className="text-xs text-gray-500 mt-1">
                         By checking this box, you agree to our terms including educational use, appropriate conduct, and compliance with school policies.
                       </p>
                     </div>
-                  </div>
+                  </label>
 
-                  {/* Privacy Policy */}
-                  <div className="flex items-start space-x-4 p-4 bg-white rounded-lg border border-gray-200">
-                    <button
-                      onClick={() => setAcceptedPrivacy(!acceptedPrivacy)}
-                      className={`mt-1 flex-shrink-0 w-6 h-6 rounded border-2 flex items-center justify-center transition-colors ${
+                  {/* Privacy Checkbox */}
+                  <label className="flex items-start space-x-3 cursor-pointer">
+                    <div className="relative flex-shrink-0 mt-0.5">
+                      <input
+                        type="checkbox"
+                        checked={acceptedPrivacy}
+                        onChange={(e) => setAcceptedPrivacy(e.target.checked)}
+                        className="sr-only"
+                      />
+                      <div className={`w-5 h-5 border-2 rounded flex items-center justify-center transition-colors ${
                         acceptedPrivacy
-                          ? 'bg-blue-600 border-blue-600 text-white'
-                          : 'border-gray-400 hover:border-blue-500'
-                      }`}
-                    >
-                      {acceptedPrivacy && <CheckCircle className="h-4 w-4" />}
-                    </button>
+                          ? 'bg-orange-400 border-orange-400'
+                          : 'border-gray-300'
+                      }`}>
+                        {acceptedPrivacy && <Check className="h-3 w-3 text-white stroke-[3]" />}
+                      </div>
+                    </div>
                     <div className="flex-1">
-                      <label className="text-base text-gray-900 cursor-pointer font-medium">
+                      <span className="text-sm text-black">
                         I agree to the{' '}
                         <a
                           href="/privacy-policy"
                           target="_blank"
-                          className="text-blue-600 hover:text-blue-800 underline"
+                          className="text-blue-600 underline"
                           onClick={(e) => e.stopPropagation()}
                         >
                           Privacy Policy
                         </a>
-                      </label>
-                      <p className="text-sm text-gray-600 mt-1">
+                      </span>
+                      <p className="text-xs text-gray-500 mt-1">
                         By checking this box, you agree to how we collect, use, and protect your personal information and educational data.
                       </p>
                     </div>
-                  </div>
-                </div>
+                  </label>
 
-                {/* Required Notice */}
-                {!canProceed && (
-                  <div className="text-center p-3 bg-red-50 border border-red-200 rounded-lg">
-                    <p className="text-sm text-red-800 font-medium">
-                      ⚠️ Both agreements must be accepted to continue
+                  {/* Warning */}
+                  {!canProceed && (
+                    <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                      <p className="text-sm text-orange-800 text-center font-medium">
+                        ⚠️ Both agreements must be accepted to continue
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Age Notice */}
+                  <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                    <p className="text-xs text-gray-600 text-center">
+                      You must be at least 13 years old to create an account. If you're under 18, parental consent may be required in your jurisdiction.
                     </p>
                   </div>
-                )}
-              </div>
 
-              {/* Age Confirmation */}
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                <div className="flex items-start space-x-3">
-                  <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-semibold text-blue-900">Age Requirements</h4>
-                    <p className="text-sm text-blue-800 mt-1">
-                      You must be at least 13 years old to create an account. If you're under 18, 
-                      parental consent may be required in your jurisdiction.
+                  {/* Action Buttons */}
+                  <div className="flex gap-3 pt-2">
+                    <motion.button
+                      onClick={handleClose}
+                      whileHover={{ scale: 1.02, y: -1 }}
+                      whileTap={{ scale: 0.98 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                      className="flex-1 px-4 py-3 text-white bg-black hover:bg-gray-800 rounded-xl font-medium transition-all duration-200 text-sm shadow-sm hover:shadow-md"
+                    >
+                      Cancel
+                    </motion.button>
+                    
+                    <SignUpButton mode="modal">
+                      <motion.button
+                        onClick={handleSignup}
+                        disabled={!canProceed || isSigningUp}
+                        whileHover={canProceed ? { scale: 1.02, y: -1 } : {}}
+                        whileTap={canProceed ? { scale: 0.98 } : {}}
+                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                        className={`flex-1 px-6 py-3 rounded-xl font-medium transition-all duration-200 flex items-center justify-center gap-2 text-sm shadow-sm ${
+                          canProceed
+                            ? 'bg-black hover:bg-gray-800 text-white hover:shadow-md'
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }`}
+                      >
+                        {isSigningUp ? (
+                          <>
+                            <motion.div 
+                              className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
+                              animate={{ rotate: 360 }}
+                              transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                            />
+                            Creating Account...
+                          </>
+                        ) : (
+                          <>
+                            <motion.div
+                              initial={{ scale: 1 }}
+                              whileHover={{ scale: 1.1, rotate: 5 }}
+                              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+                            >
+                              <Check className="h-4 w-4" />
+                            </motion.div>
+                            Create Account
+                          </>
+                        )}
+                      </motion.button>
+                    </SignUpButton>
+                  </div>
+
+                  {/* Additional Info */}
+                  <div className="text-center text-xs text-gray-500 pt-2">
+                    <p>
+                      By creating an account, you confirm you have read and agree to our{' '}
+                      <a href="/terms-of-service" className="text-blue-600 hover:underline">
+                        Terms of Service
+                      </a>{' '}
+                      and{' '}
+                      <a href="/privacy-policy" className="text-blue-600 hover:underline">
+                        Privacy Policy
+                      </a>
+                      .
                     </p>
                   </div>
                 </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                <button
-                  onClick={onClose}
-                  className="flex-1 px-4 py-3 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors"
-                >
-                  Cancel
-                </button>
-                
-                <SignUpButton mode="modal">
-                  <button
-                    onClick={handleSignup}
-                    disabled={!canProceed || isSigningUp}
-                    className={`flex-1 px-6 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
-                      canProceed
-                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    }`}
-                  >
-                    {isSigningUp ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Creating Account...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="h-4 w-4" />
-                        Create Account
-                      </>
-                    )}
-                  </button>
-                </SignUpButton>
-              </div>
-
-              {/* Additional Info */}
-              <div className="text-center text-xs text-gray-500 pt-2">
-                <p>
-                  By creating an account, you confirm you have read and agree to our{' '}
-                  <a href="/terms-of-service" className="text-blue-600 hover:underline">
-                    Terms of Service
-                  </a>{' '}
-                  and{' '}
-                  <a href="/privacy-policy" className="text-blue-600 hover:underline">
-                    Privacy Policy
-                  </a>
-                  .
-                </p>
               </div>
             </div>
           </motion.div>

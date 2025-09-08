@@ -2061,7 +2061,7 @@ function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: {
   const loadChatMessages = async (chatId: string) => {
     try {
       const { data, error } = await supabase
-        .from('advisor_messages')
+        .from('ai_assistant_messages')
         .select('*')
         .eq('chat_id', chatId)
         .order('created_at', { ascending: true });
@@ -2092,7 +2092,7 @@ function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: {
       }
       
       const { data, error } = await supabase
-        .from('advisor_chats')
+        .from('ai_assistant_chats')
         .select('*')
         .eq('user_id', user.id)
         .eq('club_id', clubId)
@@ -2134,7 +2134,7 @@ function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: {
       });
 
       const { data, error } = await supabase
-        .from('advisor_chats')
+        .from('ai_assistant_chats')
         .insert({
           user_id: user.id,
           club_id: clubId,
@@ -2146,7 +2146,14 @@ function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: {
       console.log('Supabase response:', { data, error });
 
       if (error) {
-        console.error('Supabase error details:', JSON.stringify(error, null, 2));
+        console.error('Supabase error details:', {
+          error,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+          stringified: JSON.stringify(error, null, 2)
+        });
         throw error;
       }
       
@@ -2173,8 +2180,10 @@ function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: {
 
   const saveChatMessage = async (chatId: string, content: string, isUser: boolean) => {
     try {
-      await supabase
-        .from('advisor_messages')
+      console.log('Saving message:', { chatId, content: content.substring(0, 100), isUser });
+      
+      const { data: messageData, error: messageError } = await supabase
+        .from('ai_assistant_messages')
         .insert({
           chat_id: chatId,
           content,
@@ -2182,13 +2191,42 @@ function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: {
           created_at: new Date().toISOString()
         });
 
+      if (messageError) {
+        console.error('Error inserting message:', {
+          error: messageError,
+          message: messageError.message,
+          details: messageError.details,
+          hint: messageError.hint,
+          code: messageError.code
+        });
+        throw messageError;
+      }
+
+      console.log('Message saved successfully:', messageData);
+
       // Update chat timestamp
-      await supabase
-        .from('advisor_chats')
+      const { error: updateError } = await supabase
+        .from('ai_assistant_chats')
         .update({ updated_at: new Date().toISOString() })
         .eq('id', chatId);
+
+      if (updateError) {
+        console.error('Error updating chat timestamp:', {
+          error: updateError,
+          message: updateError.message,
+          details: updateError.details,
+          hint: updateError.hint,
+          code: updateError.code
+        });
+      }
     } catch (error) {
-      console.error('Error saving chat message:', error);
+      console.error('Error saving chat message:', {
+        error,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
+      });
     }
   };
 
@@ -2219,7 +2257,7 @@ function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: {
   const updateChatTitle = async (chatId: string, title: string) => {
     try {
       await supabase
-        .from('advisor_chats')
+        .from('ai_assistant_chats')
         .update({ title, updated_at: new Date().toISOString() })
         .eq('id', chatId);
       
@@ -2232,7 +2270,7 @@ function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: {
   const deleteChat = async (chatId: string) => {
     try {
       await supabase
-        .from('advisor_chats')
+        .from('ai_assistant_chats')
         .delete()
         .eq('id', chatId);
       
@@ -2284,7 +2322,7 @@ function AIAdvisorPanel({ clubName, clubInfo, onNavigation }: {
         }
 
         const { data, error } = await supabase
-          .from('advisor_chats')
+          .from('ai_assistant_chats')
           .insert({
             user_id: user.id,
             club_id: clubId,

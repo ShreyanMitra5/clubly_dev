@@ -143,32 +143,50 @@ export default function LandingAnalytics() {
   }, [inView]);
 
   return (
-    <section ref={ref} className="relative py-24 lg:py-32 bg-gradient-to-b from-white via-orange-50/20 to-white overflow-hidden">
-      {/* Background Elements */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-20 left-10 w-96 h-96 bg-gradient-to-r from-blue-400/5 via-purple-400/5 to-pink-400/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-20 right-10 w-80 h-80 bg-gradient-to-l from-orange-400/5 via-red-400/5 to-pink-400/5 rounded-full blur-3xl" />
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-r from-orange-400/3 to-purple-400/3 rounded-full blur-3xl" />
+    <section ref={ref} className="relative py-20 lg:py-28 overflow-hidden">
+      {/* Premium Background */}
+      <div className="absolute inset-0">
+        <div className="absolute inset-0 bg-gradient-to-br from-gray-50 via-white to-blue-50/30" />
+        {/* Sophisticated floating orbs */}
+        <motion.div
+          className="absolute top-20 left-1/4 w-80 h-80 bg-gradient-to-r from-blue-500/8 to-purple-500/8 rounded-full blur-3xl"
+          animate={{
+            x: [0, 50, 0],
+            y: [0, 30, 0],
+            scale: [1, 1.1, 1]
+          }}
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute bottom-20 right-1/4 w-96 h-96 bg-gradient-to-l from-orange-500/6 to-pink-500/6 rounded-full blur-3xl"
+          animate={{
+            x: [0, -40, 0],
+            y: [0, -25, 0],
+            scale: [1.1, 1, 1.1]
+          }}
+          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-to-r from-indigo-500/4 to-cyan-500/4 rounded-full blur-3xl"
+          animate={{
+            rotate: 360,
+            scale: [1, 1.05, 1]
+          }}
+          transition={{ 
+            rotate: { duration: 40, repeat: Infinity, ease: "linear" },
+            scale: { duration: 15, repeat: Infinity, ease: "easeInOut" }
+          }}
+        />
       </div>
 
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
-        {/* Header */}
+        {/* Premium Header */}
         <motion.div
-          className="text-center mb-20"
-          initial={{ opacity: 0, y: 30 }}
-          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-          transition={{ duration: 0.8 }}
+          className="text-center mb-24"
+          initial={{ opacity: 0, y: 40 }}
+          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+          transition={{ duration: 1, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
-          <motion.div
-            className="inline-flex items-center px-4 py-2 mb-8 bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-full"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-            transition={{ delay: 0.2, duration: 0.8 }}
-          >
-            <BarChart3 className="w-4 h-4 text-orange-500 mr-2" />
-            <span className="text-sm font-light text-orange-700">Time Saved Analytics</span>
-          </motion.div>
-
           <h2 className="text-4xl md:text-5xl lg:text-6xl font-extralight text-black mb-6 leading-tight">
             Save{' '}
             <span className="text-orange-500 font-light">
@@ -183,14 +201,17 @@ export default function LandingAnalytics() {
           </p>
         </motion.div>
 
-        {/* Comparison Graph Section */}
+        {/* Premium Comparison Section */}
         <motion.div
-          className="mb-20"
-          initial={{ opacity: 0, y: 40 }}
-          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
+          className="mb-24"
+          initial={{ opacity: 0, y: 50 }}
+          animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+          transition={{ duration: 1, delay: 0.3, ease: [0.25, 0.46, 0.45, 0.94] }}
         >
-          <div className="bg-white/60 backdrop-blur-xl border border-black/5 rounded-3xl p-8 lg:p-12 shadow-xl">
+          <div className="relative bg-white/80 backdrop-blur-2xl border border-white/40 rounded-3xl p-10 lg:p-16 shadow-2xl shadow-black/10">
+            {/* Glass morphism overlay */}
+            <div className="absolute inset-0 bg-gradient-to-br from-white/60 via-white/30 to-white/40 rounded-3xl" />
+            <div className="relative z-10">
                          <div className="text-center mb-12">
                <h3 className="text-2xl lg:text-3xl font-extralight text-black mb-4">
                  {timeInvestment} Hours of Work
@@ -282,22 +303,42 @@ export default function LandingAnalytics() {
               </div>
             </div>
 
-            {/* Efficiency Gain */}
-            <div className="mt-8 pt-8 border-t border-gray-200 text-center">
-              <div className="inline-flex items-center space-x-2 bg-gradient-to-r from-green-50 to-blue-50 px-6 py-3 rounded-full">
-                <TrendingUp className="w-5 h-5 text-green-600" />
-                                 <span className="text-lg font-light text-black">
-                   <span className="text-green-600 font-medium">
-                     {Math.round((comparisonData.withClubly.totalOutput / comparisonData.withoutClubly.totalOutput) * 100)}%
-                   </span> more output with Clubly
-                 </span>
-              </div>
+            {/* Premium Efficiency Gain */}
+            <motion.div 
+              className="mt-12 pt-8 border-t border-white/30 text-center"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.8, delay: 1.5 }}
+            >
+              <motion.div 
+                className="inline-flex items-center space-x-3 bg-gradient-to-r from-emerald-500/10 via-green-500/10 to-blue-500/10 backdrop-blur-md px-8 py-4 rounded-2xl border border-white/30 shadow-lg"
+                whileHover={{ scale: 1.02, y: -2 }}
+                transition={{ duration: 0.2 }}
+              >
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                >
+                  <TrendingUp className="w-6 h-6 text-emerald-600" />
+                </motion.div>
+                <span className="text-xl font-rubik font-medium text-black">
+                  <motion.span 
+                    className="text-emerald-600 font-semibold text-2xl"
+                    animate={{ scale: [1, 1.05, 1] }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                  >
+                    {Math.round((comparisonData.withClubly.totalOutput / comparisonData.withoutClubly.totalOutput) * 100)}%
+                  </motion.span>
+                  {' '}more output with clubly
+                </span>
+              </motion.div>
+            </motion.div>
             </div>
           </div>
         </motion.div>
 
-        {/* Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16 max-w-6xl mx-auto">
+        {/* Premium Feature Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-20 max-w-6xl mx-auto">
           {timeData.map((item, index) => {
             const yearlyHours = Math.round((item.timePerUse * item.usesPerMonth * 9) / 60);
             const animatedMinutes = Object.values(animatedValues)[index];
@@ -305,13 +346,24 @@ export default function LandingAnalytics() {
             return (
               <motion.div
                 key={item.feature}
-                className="group relative bg-white/60 backdrop-blur-xl border border-black/5 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-500"
-                initial={{ opacity: 0, y: 40, scale: 0.95 }}
-                animate={inView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 40, scale: 0.95 }}
-                transition={{ duration: 0.6, delay: 0.4 + index * 0.1 }}
-                whileHover={{ y: -4, transition: { duration: 0.2 } }}
+                className="group relative bg-white/70 backdrop-blur-2xl border border-white/50 rounded-3xl p-8 shadow-2xl shadow-black/5 hover:shadow-2xl hover:shadow-black/10 transition-all duration-700"
+                initial={{ opacity: 0, y: 60, scale: 0.9 }}
+                animate={inView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 60, scale: 0.9 }}
+                transition={{ 
+                  duration: 0.8, 
+                  delay: 0.4 + index * 0.15,
+                  ease: [0.25, 0.46, 0.45, 0.94]
+                }}
+                whileHover={{ 
+                  y: -8, 
+                  scale: 1.02,
+                  transition: { duration: 0.3, ease: "easeOut" } 
+                }}
               >
-                {/* Icon */}
+                {/* Glass morphism overlay */}
+                <div className="absolute inset-0 bg-gradient-to-br from-white/40 via-white/20 to-white/30 rounded-3xl" />
+                <div className="relative z-10">
+                {/* Clean Icon */}
                 <div className={`w-12 h-12 ${item.bgColor} rounded-xl flex items-center justify-center mb-4 ${item.iconColor} shadow-sm`}>
                   <item.icon className="w-6 h-6" />
                 </div>
@@ -340,6 +392,7 @@ export default function LandingAnalytics() {
                     animate={inView ? { width: `${(yearlyHours / 50) * 100}%` } : { width: "0%" }}
                     transition={{ duration: 1.5, delay: 0.8 + index * 0.1 }}
                   />
+                </div>
                 </div>
               </motion.div>
             );
