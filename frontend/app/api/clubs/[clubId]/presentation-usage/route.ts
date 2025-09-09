@@ -31,9 +31,9 @@ export async function GET(
       console.error('Error fetching presentation usage:', usageError);
       // If table doesn't exist or other error, return default values
       const usageCount = 0;
-      const limit = 5;
-      const remainingGenerations = limit;
-      const canGenerate = true;
+      const limit = Infinity; // Unlimited presentations
+      const remainingGenerations = Infinity; // Unlimited
+      const canGenerate = true; // Always allow generation
 
       return NextResponse.json({ 
         success: true, 
@@ -49,9 +49,9 @@ export async function GET(
     }
 
     const usageCount = usageData?.length || 0;
-    const limit = 5;
-    const remainingGenerations = Math.max(0, limit - usageCount);
-    const canGenerate = remainingGenerations > 0;
+    const limit = Infinity; // Unlimited presentations
+    const remainingGenerations = Infinity; // Unlimited
+    const canGenerate = true; // Always allow generation
 
     return NextResponse.json({ 
       success: true, 
@@ -102,16 +102,8 @@ export async function POST(
     }
 
     const currentUsageCount = existingUsage?.length || 0;
-    const limit = 5;
-
-    if (currentUsageCount >= limit) {
-      return NextResponse.json({ 
-        error: 'Monthly limit reached', 
-        message: `You have reached the limit of ${limit} presentation generations per month.`,
-        usageCount: currentUsageCount,
-        limit 
-      }, { status: 429 });
-    }
+    const limit = Infinity; // Unlimited presentations
+    // Remove limit check - always allow generation
 
     // Record the new usage
     const { data, error } = await supabaseServer
@@ -134,7 +126,7 @@ export async function POST(
     }
 
     const newUsageCount = currentUsageCount + 1;
-    const remainingGenerations = Math.max(0, limit - newUsageCount);
+    const remainingGenerations = Infinity; // Unlimited
 
     return NextResponse.json({ 
       success: true, 

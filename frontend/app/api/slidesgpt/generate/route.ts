@@ -22,7 +22,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Check presentation usage limits
+    // Presentation usage limits removed - unlimited presentations now allowed
+    // Still track usage for analytics but don't enforce limits
     try {
       const now = new Date();
       const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -37,16 +38,7 @@ export async function POST(request: NextRequest) {
         console.warn('Presentation usage tracking unavailable:', checkError.message);
       } else {
         const currentUsageCount = existingUsage?.length || 0;
-        const limit = 5;
-
-        if (currentUsageCount >= limit) {
-          return NextResponse.json({ 
-            error: 'Monthly limit reached', 
-            message: `You have reached the limit of ${limit} presentation generations per month.`,
-            usageCount: currentUsageCount,
-            limit 
-          }, { status: 429 });
-        }
+        console.log(`Presentation usage for club ${clubId}: ${currentUsageCount} this month (unlimited)`);
       }
     } catch (error) {
       console.warn('Presentation usage tracking check failed:', error);
