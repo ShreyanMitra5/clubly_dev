@@ -15,11 +15,13 @@ import {
   Rocket
 } from 'lucide-react';
 import Link from 'next/link';
+import TermsSignupModal from '../components/TermsSignupModal';
 
 export default function StudentsPage() {
   const { isSignedIn, user } = useUser();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   useEffect(() => {
     if (isSignedIn && user) {
@@ -53,11 +55,7 @@ export default function StudentsPage() {
   }, [isSignedIn, user, router]);
 
   const handleStudentSignup = () => {
-    setIsLoading(true);
-    // Set flag for student signup
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('fromSignUp', 'true');
-    }
+    setShowTermsModal(true);
   };
 
   return (
@@ -211,6 +209,18 @@ export default function StudentsPage() {
           </motion.div>
         </motion.div>
       </div>
+
+      {/* Terms Signup Modal */}
+      <TermsSignupModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        onSuccess={() => {
+          setShowTermsModal(false);
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('fromSignUp', 'true');
+          }
+        }}
+      />
     </div>
   );
 } 

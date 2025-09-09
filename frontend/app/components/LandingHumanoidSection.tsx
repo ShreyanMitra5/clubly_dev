@@ -130,14 +130,6 @@ const LandingHumanoidSection = ({ openSignInModal }: { openSignInModal?: () => v
         <div className="section-container h-full flex flex-col relative z-10">
           <div className="mb-2 md:mb-3">
             <div className="flex items-center gap-4 mb-2 md:mb-2 pt-8 sm:pt-6 md:pt-4">
-              <motion.div
-                className="inline-flex items-center px-6 py-3 bg-white/60 backdrop-blur-xl border border-black/10 rounded-full shadow-lg"
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-              >
-                <span className="text-sm font-extralight text-black/80">AI-powered Student Success</span>
-              </motion.div>
             </div>
             
             <motion.h2 

@@ -35,7 +35,16 @@ export default function NotFound() {
       
       <footer className="py-6 border-t border-gray-200">
         <div className="container-width text-center text-sm text-gray-500">
-          © {new Date().getFullYear()} Clubly. All rights reserved.
+          <p className="mb-2">© {new Date().getFullYear()} Clubly. All rights reserved.</p>
+          <div className="flex justify-center gap-4 text-xs">
+            <a href="/privacy-policy" className="hover:text-orange-500 transition-colors">
+              Privacy Policy
+            </a>
+            <span>•</span>
+            <a href="/terms-of-service" className="hover:text-orange-500 transition-colors">
+              Terms of Service
+            </a>
+          </div>
         </div>
       </footer>
     </div>

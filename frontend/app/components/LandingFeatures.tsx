@@ -222,15 +222,6 @@ const LandingFeatures = ({ openSignInModal }: { openSignInModal?: () => void }) 
           className="text-center mb-20"
         >
           {/* Badge */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-            transition={{ delay: 0.2, duration: 0.8 }}
-            className="inline-flex items-center px-6 py-3 mb-8 bg-white/60 backdrop-blur-xl border border-black/10 rounded-full shadow-lg"
-          >
-            <Sparkles className="w-4 h-4 text-orange-500 mr-2" />
-            <span className="text-sm font-light text-black/80">Revolutionary Features</span>
-          </motion.div>
 
           {/* Title */}
           <motion.h2

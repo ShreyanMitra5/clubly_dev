@@ -1,8 +1,11 @@
 'use client';
 
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { motion, useInView } from 'framer-motion';
 import Image from 'next/image';
+import { SignInButton } from '@clerk/nextjs';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { 
   ArrowRight, 
   Play,
@@ -30,174 +33,311 @@ export default function LandingHero({
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: "-100px" });
 
+  // GSAP ScrollTrigger effects
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      gsap.registerPlugin(ScrollTrigger);
+      
+      const heroSection = ref.current;
+      if (!heroSection) return;
+
+      // Smooth navbar fade in/out
+      const navbar = document.querySelector('header');
+      if (navbar) {
+        gsap.set(navbar, { opacity: 0, pointerEvents: 'none' });
+        
+        gsap.to(navbar, {
+          opacity: 1,
+          pointerEvents: 'auto',
+          duration: 0.6,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: heroSection,
+            start: "bottom 80%",
+            end: "bottom 60%",
+            toggleActions: "none play reverse reverse",
+          }
+        });
+      }
+
+      // Enhanced stacked cards effect on scroll
+      const dashboard = heroSection.querySelector('.dashboard-container');
+      if (dashboard) {
+        gsap.to(dashboard, {
+          scale: 0.7,
+          y: -200,
+          rotationX: 25,
+          rotationY: 5,
+          transformOrigin: "center bottom",
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: heroSection,
+            start: "top top",
+            end: "bottom top",
+            scrub: 1.5,
+          }
+        });
+      }
+
+      // Enhanced hero text parallax with stagger
+      const heroText = heroSection.querySelector('.hero-text');
+      if (heroText) {
+        gsap.to(heroText, {
+          y: -250,
+          opacity: 0.1,
+          scale: 0.8,
+          rotationX: 10,
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: heroSection,
+            start: "top top",
+            end: "bottom top",
+            scrub: 2,
+          }
+        });
+      }
+
+      // Enhanced background parallax with blur
+      const skyBackground = heroSection.querySelector('.sky-background');
+      if (skyBackground) {
+        gsap.to(skyBackground, {
+          y: -300,
+          scale: 1.2,
+          filter: "blur(2px)",
+          ease: "power3.out",
+          scrollTrigger: {
+            trigger: heroSection,
+            start: "top top",
+            end: "bottom top",
+            scrub: 1.5,
+          }
+        });
+      }
+
+      // Add fade overlay on scroll
+      const fadeOverlay = heroSection.querySelector('.fade-overlay');
+      if (fadeOverlay) {
+        gsap.to(fadeOverlay, {
+          opacity: 0.8,
+          ease: "power2.out",
+          scrollTrigger: {
+            trigger: heroSection,
+            start: "top top",
+            end: "bottom top",
+            scrub: 1,
+          }
+        });
+      }
+    }
+
+    return () => {
+      if (typeof window !== 'undefined') {
+        ScrollTrigger.getAll().forEach(trigger => trigger.kill());
+      }
+    };
+  }, []);
+
+  // No typewriter effect; static text
+
 
 
   return (
-    <section ref={ref} className="relative min-h-screen bg-white overflow-hidden">
-      {/* Header background */}
-      <div className="absolute inset-0 opacity-90">
-        <Image
-          src="/Header-background.webp"
-          alt="Header background"
-          fill
-          className="object-cover"
-          priority
-        />
-      </div>
-      {/* Subtle background elements */}
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-50/30 via-white to-orange-50/20" />
-      
+    <section ref={ref} className="relative min-h-screen bg-white overflow-hidden py-4 px-4">
+      {/* Container with rounded edges and spacing - WriteAway Style */}
+      <div className="relative h-full w-full mx-auto">
+        <div className="relative h-full min-h-[calc(100vh-1.5rem)] rounded-3xl overflow-hidden">
+          {/* Sky Background Image */}
+          <div className="absolute inset-0 sky-background">
+            <Image
+              src="/sky.jpg"
+              alt="Sky gradient background"
+              fill
+              className="object-cover"
+              priority
+            />
+          </div>
 
-      
-      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
-        <div className="pt-32 pb-20 grid lg:grid-cols-2 gap-16 items-center min-h-screen">
-          
-          {/* Left Content */}
-          <motion.div 
-            className="space-y-8 max-w-xl"
-            initial={{ opacity: 0, x: -50 }}
-            animate={inView ? { opacity: 1, x: 0 } : { opacity: 0, x: -50 }}
-            transition={{ duration: 0.8 }}
-          >
-            {/* Small label */}
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="inline-block"
-            >
-              <span className="text-sm font-light text-black tracking-wide uppercase">
-              You’re Not Alone
-              </span>
-            </motion.div>
+          {/* Scroll fade overlay */}
+          <div
+            className="pointer-events-none absolute inset-0 fade-overlay"
+            style={{
+              background: "rgba(0,0,0,0)",
+              opacity: 0
+            }}
+          />
 
-            {/* Main Headline */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-              className="space-y-4"
-            >
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-extralight leading-tight text-black">
-                <motion.span 
-                  className="block"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                  transition={{ duration: 0.6, delay: 0.5 }}
+          {/* Bottom fade to white (30% height) */}
+          <div
+            className="pointer-events-none absolute bottom-0 left-0 right-0 h-[35%]"
+            style={{
+              background:
+                "linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 40%, rgba(255,255,255,0.85) 70%, rgba(255,255,255,1) 100%)",
+            }}
+          />
+
+          {/* Hero navbar on background */}
+          <div className="absolute top-6 left-0 right-0 flex items-center justify-between px-6 md:px-10 z-20">
+            <div className="flex items-center gap-4 ml-8">
+              <Image src="/new_logo.png" alt="Clubly" width={44} height={44} className="rounded-xl shadow-lg" />
+              <span className="font-poppins font-bold text-black drop-shadow-sm text-2xl">Clubly</span>
+            </div>
+            <div className="flex items-center gap-4 mr-[50px]">
+              <SignInButton mode="modal">
+                <button 
+                  className="px-6 py-3 text-sm font-rubik font-medium rounded-full transition-all duration-300 backdrop-blur-lg shadow-lg"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.25)',
+                    border: '2px solid rgba(255, 255, 255, 0.4)',
+                    color: 'rgba(0, 0, 0, 0.9)',
+                    boxShadow: '0 4px 15px rgba(255, 255, 255, 0.1), 0 0 20px rgba(255, 255, 255, 0.05)'
+                  }}
+                  onMouseEnter={(e) => {
+                    const target = e.target as HTMLButtonElement;
+                    target.style.background = 'rgba(255, 255, 255, 0.35)';
+                    target.style.borderColor = 'rgba(255, 255, 255, 0.6)';
+                    target.style.color = 'rgba(0, 0, 0, 1)';
+                    target.style.transform = 'translateY(-2px) scale(1.02)';
+                    target.style.boxShadow = '0 8px 25px rgba(255, 255, 255, 0.15), 0 0 30px rgba(255, 255, 255, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    const target = e.target as HTMLButtonElement;
+                    target.style.background = 'rgba(255, 255, 255, 0.25)';
+                    target.style.borderColor = 'rgba(255, 255, 255, 0.4)';
+                    target.style.color = 'rgba(0, 0, 0, 0.9)';
+                    target.style.transform = 'translateY(0) scale(1)';
+                    target.style.boxShadow = '0 4px 15px rgba(255, 255, 255, 0.1), 0 0 20px rgba(255, 255, 255, 0.05)';
+                  }}
                 >
-                  Run Your{" "}
-                  <span className="text-orange-500 font-light">Club,</span>
-                </motion.span>
-                <motion.span 
-                  className="block"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-                  transition={{ duration: 0.6, delay: 0.7 }}
-                >
-                  Without the Chaos
-                </motion.span>
-              </h1>
-            </motion.div>
-
-            {/* Subtitle */}
-            <motion.p 
-              className="text-xl font-extralight text-gray-700 leading-relaxed"
-              initial={{ opacity: 0, y: 20 }}
-              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ duration: 0.8, delay: 1.1 }}
-            >
-              Clubly helps you lead with less stress by handling the busywork for you.
-              Simple tools, made for students who do it all.
-            </motion.p>
-
-            {/* CTA Buttons */}
-            <motion.div 
-              className="flex flex-col sm:flex-row gap-4 pt-4"
-              initial={{ opacity: 0, y: 20 }}
-              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ duration: 0.8, delay: 1.3 }}
-            >
-              <motion.button 
-                className="bg-black text-white px-8 py-4 rounded-lg font-light text-lg hover:bg-gray-900 transition-all duration-300 shadow-sm"
-                whileHover={{ scale: 1.02, y: -1 }}
-                whileTap={{ scale: 0.98 }}
+                  Sign In
+                </button>
+              </SignInButton>
+              <button 
+                className="px-6 py-3 text-sm font-rubik font-semibold rounded-full transition-all duration-300 backdrop-blur-lg shadow-lg"
+                style={{
+                  background: 'rgba(0, 0, 0, 0.2)',
+                  border: '2px solid rgba(0, 0, 0, 0.3)',
+                  color: 'rgba(0, 0, 0, 1)',
+                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1), 0 0 20px rgba(0, 0, 0, 0.05)'
+                }}
+                onMouseEnter={(e) => {
+                  const target = e.target as HTMLButtonElement;
+                  target.style.background = 'rgba(0, 0, 0, 0.3)';
+                  target.style.borderColor = 'rgba(0, 0, 0, 0.5)';
+                  target.style.color = 'rgba(255, 255, 255, 1)';
+                  target.style.transform = 'translateY(-2px) scale(1.02)';
+                  target.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.2), 0 0 30px rgba(0, 0, 0, 0.1)';
+                }}
+                onMouseLeave={(e) => {
+                  const target = e.target as HTMLButtonElement;
+                  target.style.background = 'rgba(0, 0, 0, 0.2)';
+                  target.style.borderColor = 'rgba(0, 0, 0, 0.3)';
+                  target.style.color = 'rgba(0, 0, 0, 1)';
+                  target.style.transform = 'translateY(0) scale(1)';
+                  target.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1), 0 0 20px rgba(0, 0, 0, 0.05)';
+                }}
                 onClick={openSignInModal}
               >
                 Get Started
-              </motion.button>
-              
-              <motion.button 
-                className="border border-gray-300 text-black px-8 py-4 rounded-lg font-light text-lg hover:bg-gray-50 transition-all duration-300"
-                whileHover={{ scale: 1.02, y: -1 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => window.open('mailto:clublyteam@gmail.com?subject=Demo Request&body=Hi, I would like to schedule a demo of Clubly.', '_blank')}
-              >
-                View demo
-              </motion.button>
-            </motion.div>
+              </button>
+            </div>
+          </div>
 
-            {/* Teacher Access Button */}
-            <motion.div
-              className="pt-2"
-              initial={{ opacity: 0, y: 20 }}
-              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ duration: 0.8, delay: 1.4 }}
-            >
-              <motion.button 
-                className="text-gray-600 hover:text-gray-800 text-sm font-light underline transition-colors duration-300"
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => {
-                  if (typeof window !== 'undefined') {
-                    window.location.href = '/teacher-signup';
-                  }
-                }}
-              >
-                Are you a teacher? Click here for teacher access
-              </motion.button>
-            </motion.div>
-
-            {/* Trust indicators */}
-            <motion.div
-              className="pt-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ duration: 0.8, delay: 1.5 }}
-            >
-              <div className="flex items-center space-x-2 text-gray-600 text-sm font-light">
-                <Star className="w-4 h-4 text-orange-500 fill-orange-500" />
-                <span>Built by students. For students.
-                </span>
-              </div>
-            </motion.div>
-          </motion.div>
-
-          {/* Right Content - Dashboard Image */}
-          <motion.div 
-            className="relative"
-            initial={{ opacity: 0, x: 50 }}
-            animate={inView ? { opacity: 1, x: 0 } : { opacity: 0, x: 50 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-          >
-            <div className="relative">
+          {/* Dashboard image sitting below text, fading more */}
+          <div className="absolute inset-x-0 flex justify-center bottom-[-200px] md:bottom-[-280px] lg:bottom-[-250px]">
+            <div className="relative w-[92%] max-w-[1200px] dashboard-container">
               <Image
-                src="/comp_dash.png"
-                alt="Clubly Dashboard"
-                width={600}
-                height={400}
-                className="w-full h-auto object-contain"
+                src="/dashboard.png"
+                alt="Clubly dashboard preview"
+                width={1600}
+                height={900}
+                className="w-full h-auto rounded-2xl shadow-2xl"
                 priority
               />
-              {/* Crown decoration on desktop monitor */}
-              <div className="absolute top-3 -right-4 z-30">
-                <i className="fa-solid fa-crown text-7xl" style={{ color: '#ff9924', transform: 'rotate(40deg)' }}></i>
-              </div>
+              {/* Much stronger fade for the dashboard bottom */}
+              <div
+                className="absolute bottom-0 left-0 right-0 h-[90%] rounded-b-2xl"
+                style={{
+                  background:
+                    "linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 10%, rgba(255,255,255,0.6) 30%, rgba(255,255,255,0.85) 50%, rgba(255,255,255,0.95) 70%, rgba(255,255,255,1) 100%)",
+                }}
+              />
             </div>
+          </div>
+          
+          
+          {/* Content positioned towards the top */}
+          <div className="absolute inset-x-0 z-10 flex justify-center px-6 lg:px-8 top-[120px] md:top-[140px] lg:top-[160px]">
+            <div className="text-center max-w-4xl mx-auto hero-text">
+          
+          {/* Main Content - Centered */}
+          <motion.div 
+            className="space-y-6"
+            initial={{ opacity: 0, y: 30 }}
+            animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ duration: 0.8 }}
+          >
+            {/* Main Headline - Simplified and Always Visible */}
+            <motion.div className="space-y-1 relative z-10">
+              {/* First Line - Slides up */}
+              <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className="text-5xl md:text-6xl lg:text-7xl leading-tight"
+              >
+                <span className="font-rubik font-semibold tracking-tight text-black" 
+                      style={{ 
+                        textShadow: '0 4px 12px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2)' 
+                      }}>
+                  run your club,
+                </span>
+              </motion.div>
+              
+              {/* Second Line - Fades in with scale, delayed */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.8, ease: "easeOut", delay: 0.3 }}
+                className="text-5xl md:text-6xl lg:text-7xl leading-tight"
+              >
+                <span className="font-satisfy italic text-gray-800" 
+                      style={{ 
+                        textShadow: '0 6px 16px rgba(0,0,0,0.4), 0 3px 6px rgba(0,0,0,0.3)' 
+                      }}>
+                  without the{" "}
+                  <motion.span
+                    className="relative inline-block"
+                    initial={{ opacity: 0, scale: 0.8, rotate: -2 }}
+                    animate={{ 
+                      opacity: 1, 
+                      scale: 1.05, 
+                      rotate: 0
+                    }}
+                    transition={{ 
+                      duration: 1.0, 
+                      ease: [0.25, 0.46, 0.45, 0.94], 
+                      delay: 0.8
+                    }}
+                    whileHover={{
+                      scale: 1.1,
+                      rotate: [0, -1, 1, 0],
+                      transition: { duration: 0.6, ease: "easeInOut" }
+                    }}
+                    style={{ 
+                      color: '#dc2626',
+                      textShadow: '0 6px 16px rgba(239,68,68,0.4), 0 3px 6px rgba(239,68,68,0.3)'
+                    }}
+                  >
+                    chaos
+                  </motion.span>
+                </span>
+              </motion.div>
+            </motion.div>
           </motion.div>
+            </div>
+          </div>
         </div>
       </div>
-
-
     </section>
   );
 } 

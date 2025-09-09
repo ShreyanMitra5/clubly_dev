@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { motion, useInView } from 'framer-motion';
 import Image from 'next/image';
 import { SignUpButton, useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
+import TermsSignupModal from '../components/TermsSignupModal';
 import { 
   GraduationCap, 
   Users, 
@@ -25,12 +26,11 @@ export default function TeacherSignupPage() {
   const inView = useInView(ref, { once: true, margin: "-100px" });
   const router = useRouter();
   const { isSignedIn, user } = useUser();
+  const [showTermsModal, setShowTermsModal] = useState(false);
 
   // Handle teacher signup
   const handleTeacherSignup = () => {
-    if (typeof window !== 'undefined') {
-      sessionStorage.setItem('fromTeacherSignup', 'true');
-    }
+    setShowTermsModal(true);
   };
 
   // Redirect if already signed in
@@ -396,6 +396,18 @@ export default function TeacherSignupPage() {
           </motion.div>
         </div>
       </section>
+
+      {/* Terms Signup Modal */}
+      <TermsSignupModal
+        isOpen={showTermsModal}
+        onClose={() => setShowTermsModal(false)}
+        onSuccess={() => {
+          setShowTermsModal(false);
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('fromTeacherSignup', 'true');
+          }
+        }}
+      />
     </div>
   );
 }

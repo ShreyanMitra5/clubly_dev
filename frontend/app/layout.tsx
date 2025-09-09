@@ -2,17 +2,50 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { ClerkProvider, UserButton, SignedIn, SignedOut, SignInButton, SignUpButton, SignOutButton } from '@clerk/nextjs';
-import { Inter } from 'next/font/google';
+import { Inter, Dancing_Script, Montserrat, Poppins, Satisfy, Rubik } from 'next/font/google';
 import '../styles/globals.css';
 import Link from 'next/link';
 import { Toaster } from 'sonner';
 import { usePathname } from 'next/navigation';
 import DashboardLink from './components/DashboardLink';
+import { Analytics } from '@vercel/analytics/next';
+import { SpeedInsights } from '@vercel/speed-insights/next';
+import TermsSignupModal from './components/TermsSignupModal';
 
 const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
   weight: ['100', '200', '300', '400', '500', '600', '700'],
+});
+
+const dancingScript = Dancing_Script({
+  subsets: ['latin'],
+  variable: '--font-dancing-script',
+  weight: ['400', '500', '600', '700'],
+});
+
+const montserrat = Montserrat({
+  subsets: ['latin'],
+  variable: '--font-montserrat',
+  weight: ['400', '500', '600', '700', '800', '900'],
+});
+
+const poppins = Poppins({
+  subsets: ['latin'],
+  variable: '--font-poppins',
+  weight: ['400', '500', '600', '700', '800'],
+});
+
+const satisfy = Satisfy({
+  subsets: ['latin'],
+  variable: '--font-satisfy',
+  weight: ['400'],
+});
+
+const rubik = Rubik({
+  subsets: ['latin'],
+  variable: '--font-rubik',
+  weight: ['300', '400', '500', '600', '700', '800', '900'],
 });
 
 export default function RootLayout({
@@ -22,6 +55,7 @@ export default function RootLayout({
 }>) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
@@ -61,7 +95,7 @@ export default function RootLayout({
           <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
           <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
         </head>
-        <body className={`${inter.variable} font-sans antialiased bg-white text-black`}>
+        <body className={`${inter.variable} ${dancingScript.variable} ${montserrat.variable} ${poppins.variable} ${satisfy.variable} ${rubik.variable} font-sans antialiased bg-white text-black`}>
           {/* Only show navbar if not on a club page */}
           {!isClubPage && (
             <header className="fixed top-0 left-0 right-0 z-50 px-4 pt-4">
@@ -152,16 +186,17 @@ export default function RootLayout({
                               <div className="absolute bottom-2 left-6 w-0 h-px bg-orange-500 transition-all duration-500 group-hover:w-8" />
                             </button>
                           </SignInButton>
-                          <SignUpButton mode="modal">
-                            <button 
-                              className="relative overflow-hidden bg-black text-white font-light px-8 py-3.5 rounded-xl hover:bg-black/90 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-black/20 group ml-2"
-                              onClick={() => sessionStorage.setItem('fromSignUp', 'true')}
-                            >
-                              <span className="relative z-10">Get Started</span>
-                              <div className="absolute inset-0 bg-gradient-to-r from-orange-600 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                            </button>
-                          </SignUpButton>
+                          <button 
+                            className="relative overflow-hidden bg-black text-white font-light px-8 py-3.5 rounded-xl hover:bg-black/90 transition-all duration-500 hover:scale-105 hover:shadow-2xl hover:shadow-black/20 group ml-2"
+                            onClick={() => {
+                              sessionStorage.setItem('fromSignUp', 'true');
+                              setShowTermsModal(true);
+                            }}
+                          >
+                            <span className="relative z-10">Get Started</span>
+                            <div className="absolute inset-0 bg-gradient-to-r from-orange-600 to-orange-500 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                          </button>
                         </>
                       )}
                     </SignedOut>
@@ -254,17 +289,16 @@ export default function RootLayout({
                                     Sign In
                                   </button>
                                 </SignInButton>
-                                <SignUpButton mode="modal">
-                                  <button 
-                                    className="block w-full text-left px-6 py-4 bg-black hover:bg-black/90 text-white font-light rounded-xl mx-2 my-2 transition-all duration-300" 
-                                    onClick={() => {
-                                      sessionStorage.setItem('fromSignUp', 'true');
-                                      setMobileMenuOpen(false);
-                                    }}
-                                  >
-                                    Get Started
-                                  </button>
-                                </SignUpButton>
+                                <button 
+                                  className="block w-full text-left px-6 py-4 bg-black hover:bg-black/90 text-white font-light rounded-xl mx-2 my-2 transition-all duration-300" 
+                                  onClick={() => {
+                                    sessionStorage.setItem('fromSignUp', 'true');
+                                    setMobileMenuOpen(false);
+                                    setShowTermsModal(true);
+                                  }}
+                                >
+                                  Get Started
+                                </button>
                               </>
                             )}
                           </SignedOut>
@@ -278,6 +312,23 @@ export default function RootLayout({
           )}
           {children}
           <Toaster />
+          <Analytics />
+          <SpeedInsights />
+
+          {/* Terms Signup Modal */}
+          <TermsSignupModal
+            isOpen={showTermsModal}
+            onClose={() => setShowTermsModal(false)}
+            onSuccess={() => {
+              setShowTermsModal(false);
+              sessionStorage.setItem('fromSignUp', 'true');
+            }}
+          />
+
+          {/* Hidden Clerk button to trigger modal */}
+          <SignUpButton mode="modal">
+            <button className="hidden" data-clerk-signup />
+          </SignUpButton>
           
           <style jsx global>{`
             @keyframes slideDown {

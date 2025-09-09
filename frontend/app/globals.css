@@ -61,6 +61,101 @@
     @apply bg-white text-black border border-gray-200 px-6 py-3 rounded-xl font-medium hover:bg-gray-50 transition-colors;
   }
 
+  /* Hero CTA Button - Uiverse.io inspired */
+  .hero-cta-button {
+    padding: 14px 34px;
+    border-radius: 9999px;
+    cursor: pointer;
+    border: 0;
+    background-color: #ffffff;
+    box-shadow: rgb(0 0 0 / 5%) 0 0 8px;
+    letter-spacing: 0.8px;
+    text-transform: none;
+    font-size: 16px;
+    transition: all 0.5s ease;
+    color: #000;
+    font-family: var(--font-poppins), ui-sans-serif, system-ui;
+    font-weight: 600;
+  }
+
+  .hero-cta-button:hover {
+    letter-spacing: 1.5px;
+    background-color: hsl(261deg 80% 48%);
+    color: #fff;
+    box-shadow: rgb(93 24 220) 0px 7px 29px 0px;
+  }
+
+  .hero-cta-button:active {
+    letter-spacing: 3px;
+    background-color: #ffd400; /* bright yellow on active */
+    color: #000;
+    box-shadow: rgb(255 212 0) 0px 0px 0px 0px;
+    transform: translateY(10px);
+    transition: 100ms;
+  }
+
+  /* Hero Sign In Button - Minimal Sky Style */
+  .hero-signin-button {
+    padding: 8px 20px !important;
+    border-radius: 20px !important;
+    background: rgba(255, 255, 255, 0.15) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    font-family: var(--font-rubik), ui-sans-serif, system-ui !important;
+    font-weight: 400 !important;
+    font-size: 14px !important;
+    text-align: center !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    color: rgba(0, 0, 0, 0.8) !important;
+    backdrop-filter: blur(10px) !important;
+    min-width: 80px !important;
+    display: inline-block !important;
+    box-shadow: none !important;
+  }
+
+  .hero-signin-button:hover {
+    background: rgba(255, 255, 255, 0.25) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    color: rgba(0, 0, 0, 0.9) !important;
+    transform: translateY(-1px) !important;
+  }
+
+  .hero-signin-button:active {
+    transform: translateY(0) !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+  }
+
+  /* Hero Get Started Button - Minimal Sky Style */
+  .hero-getstarted-button {
+    padding: 8px 20px !important;
+    border-radius: 20px !important;
+    background: rgba(0, 0, 0, 0.1) !important;
+    border: 1px solid rgba(0, 0, 0, 0.2) !important;
+    font-family: var(--font-rubik), ui-sans-serif, system-ui !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    text-align: center !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    color: rgba(0, 0, 0, 0.9) !important;
+    backdrop-filter: blur(10px) !important;
+    min-width: 100px !important;
+    display: inline-block !important;
+    box-shadow: none !important;
+  }
+
+  .hero-getstarted-button:hover {
+    background: rgba(0, 0, 0, 0.15) !important;
+    border-color: rgba(0, 0, 0, 0.3) !important;
+    color: rgba(0, 0, 0, 1) !important;
+    transform: translateY(-1px) !important;
+  }
+
+  .hero-getstarted-button:active {
+    transform: translateY(0) !important;
+    background: rgba(0, 0, 0, 0.12) !important;
+  }
+
   .feature-card {
     @apply bg-white rounded-xl border border-gray-200 p-8 hover:border-black transition-colors duration-200;
   }

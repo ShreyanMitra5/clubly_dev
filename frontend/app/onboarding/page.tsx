@@ -162,6 +162,14 @@ export default function OnboardingPage() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
     
+    // Check if user has accepted terms
+    const termsAccepted = typeof window !== 'undefined' ? sessionStorage.getItem('termsAccepted') === 'true' : false;
+    if (!termsAccepted) {
+      setError('Please accept our Terms of Service and Privacy Policy to continue. You can do this by signing up again and checking the agreement boxes.');
+      setIsSubmitting(false);
+      return;
+    }
+    
     if (!user || !name || clubs.length === 0) {
       setIsSubmitting(false);
       console.log('Early return: user info incomplete');
@@ -721,6 +729,21 @@ export default function OnboardingPage() {
             }
           </p>
         </motion.div>
+
+        {/* Terms Acceptance Indicator */}
+        {typeof window !== 'undefined' && sessionStorage.getItem('termsAccepted') === 'true' && (
+          <motion.div 
+            className="mb-8 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-3"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+          >
+            <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0" />
+            <div className="text-sm text-green-800">
+              <span className="font-medium">Terms Accepted:</span> You've agreed to our Terms of Service and Privacy Policy.
+            </div>
+          </motion.div>
+        )}
         
         {currentStep === 1 ? renderStep1() : renderStep2()}
       </motion.div>
