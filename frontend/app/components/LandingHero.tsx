@@ -41,84 +41,91 @@ export default function LandingHero({
       const heroSection = ref.current;
       if (!heroSection) return;
 
-      // Smooth navbar fade in/out
+      const isMobile = window.matchMedia('(max-width: 640px)').matches;
+
+      // Smooth navbar behavior (hidden on mobile while on hero)
       const navbar = document.querySelector('header');
       if (navbar) {
-        gsap.set(navbar, { opacity: 0, pointerEvents: 'none' });
-        
-        gsap.to(navbar, {
-          opacity: 1,
-          pointerEvents: 'auto',
-          duration: 0.6,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: heroSection,
-            start: "bottom 80%",
-            end: "bottom 60%",
-            toggleActions: "none play reverse reverse",
-          }
-        });
+        const isMobile = window.matchMedia('(max-width: 640px)').matches;
+        if (isMobile) {
+          // Hide the global header entirely on mobile while on the landing hero
+          gsap.set(navbar, { display: 'none' });
+        } else {
+          gsap.set(navbar, { opacity: 0, pointerEvents: 'none' });
+          gsap.to(navbar, {
+            opacity: 1,
+            pointerEvents: 'auto',
+            duration: 0.6,
+            ease: "power2.out",
+            scrollTrigger: {
+              trigger: heroSection,
+              start: "bottom 80%",
+              end: "bottom 60%",
+              toggleActions: "none play reverse reverse",
+            }
+          });
+        }
       }
 
-      // Enhanced stacked cards effect on scroll
+      // Enhanced stacked cards effect on scroll (reduced on mobile)
       const dashboard = heroSection.querySelector('.dashboard-container');
       if (dashboard) {
         gsap.to(dashboard, {
-          scale: 0.7,
-          y: -200,
-          rotationX: 25,
-          rotationY: 5,
+          scale: isMobile ? 1 : 0.7,
+          y: isMobile ? -60 : -200,
+          rotationX: isMobile ? 0 : 25,
+          rotationY: isMobile ? 0 : 5,
           transformOrigin: "center bottom",
           ease: "power3.out",
           scrollTrigger: {
             trigger: heroSection,
             start: "top top",
             end: "bottom top",
-            scrub: 1.5,
+            scrub: isMobile ? 0.8 : 1.5,
           }
         });
       }
 
-      // Enhanced hero text parallax with stagger
+      // Enhanced hero text parallax with stagger (lighter on mobile)
       const heroText = heroSection.querySelector('.hero-text');
       if (heroText) {
         gsap.to(heroText, {
-          y: -250,
-          opacity: 0.1,
-          scale: 0.8,
-          rotationX: 10,
+          y: isMobile ? -80 : -250,
+          opacity: isMobile ? 0.95 : 0.1,
+          scale: isMobile ? 1 : 0.8,
+          rotationX: isMobile ? 0 : 10,
           ease: "power3.out",
           scrollTrigger: {
             trigger: heroSection,
             start: "top top",
             end: "bottom top",
-            scrub: 2,
+            scrub: isMobile ? 1 : 2,
           }
         });
       }
 
-      // Enhanced background parallax with blur
+      // Enhanced background parallax with blur (lighter on mobile)
       const skyBackground = heroSection.querySelector('.sky-background');
       if (skyBackground) {
         gsap.to(skyBackground, {
-          y: -300,
-          scale: 1.2,
-          filter: "blur(2px)",
+          y: isMobile ? -120 : -300,
+          scale: isMobile ? 1.05 : 1.2,
+          filter: isMobile ? "blur(0.5px)" : "blur(2px)",
           ease: "power3.out",
           scrollTrigger: {
             trigger: heroSection,
             start: "top top",
             end: "bottom top",
-            scrub: 1.5,
+            scrub: isMobile ? 1 : 1.5,
           }
         });
       }
 
-      // Add fade overlay on scroll
+      // Add fade overlay on scroll (lighter on mobile)
       const fadeOverlay = heroSection.querySelector('.fade-overlay');
       if (fadeOverlay) {
         gsap.to(fadeOverlay, {
-          opacity: 0.8,
+          opacity: isMobile ? 0.5 : 0.8,
           ease: "power2.out",
           scrollTrigger: {
             trigger: heroSection,
@@ -148,14 +155,14 @@ export default function LandingHero({
         <div className="relative h-full min-h-[calc(100vh-1.5rem)] rounded-3xl overflow-hidden">
           {/* Sky Background Image */}
           <div className="absolute inset-0 sky-background">
-            <Image
+        <Image
               src="/sky.jpg"
               alt="Sky gradient background"
-              fill
-              className="object-cover"
-              priority
-            />
-          </div>
+          fill
+          className="object-cover"
+          priority
+        />
+      </div>
 
           {/* Scroll fade overlay */}
           <div
@@ -168,7 +175,7 @@ export default function LandingHero({
 
           {/* Bottom fade to white (30% height) */}
           <div
-            className="pointer-events-none absolute bottom-0 left-0 right-0 h-[35%]"
+            className="pointer-events-none absolute bottom-0 left-0 right-0 h-[22%] sm:h-[35%]"
             style={{
               background:
                 "linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 40%, rgba(255,255,255,0.85) 70%, rgba(255,255,255,1) 100%)",
@@ -176,15 +183,15 @@ export default function LandingHero({
           />
 
           {/* Hero navbar on background */}
-          <div className="absolute top-6 left-0 right-0 flex items-center justify-between px-6 md:px-10 z-20">
-            <div className="flex items-center gap-4 ml-8">
-              <Image src="/new_logo.png" alt="Clubly" width={44} height={44} className="rounded-xl shadow-lg" />
-              <span className="font-poppins font-bold text-black drop-shadow-sm text-2xl">Clubly</span>
+          <div className="absolute top-4 sm:top-6 left-0 right-0 flex items-center justify-between px-4 sm:px-6 md:px-10 z-20">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <Image src="/new_logo.png" alt="Clubly" width={32} height={32} className="sm:w-11 sm:h-11 rounded-xl shadow-lg" />
+              <span className="font-poppins font-bold text-black drop-shadow-sm text-lg sm:text-2xl">Clubly</span>
             </div>
-            <div className="flex items-center gap-4 mr-[50px]">
+            <div className="flex items-center gap-2 sm:gap-4">
               <SignInButton mode="modal">
                 <button 
-                  className="px-6 py-3 text-sm font-rubik font-medium rounded-full transition-all duration-300 backdrop-blur-lg shadow-lg"
+                  className="px-4 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-sm font-rubik font-medium rounded-full transition-all duration-300 backdrop-blur-lg shadow-lg"
                   style={{
                     background: 'rgba(255, 255, 255, 0.25)',
                     border: '2px solid rgba(255, 255, 255, 0.4)',
@@ -208,11 +215,12 @@ export default function LandingHero({
                     target.style.boxShadow = '0 4px 15px rgba(255, 255, 255, 0.1), 0 0 20px rgba(255, 255, 255, 0.05)';
                   }}
                 >
-                  Sign In
+                  <span className="hidden sm:inline">Sign In</span>
+                  <span className="sm:hidden">Sign In</span>
                 </button>
               </SignInButton>
               <button 
-                className="px-6 py-3 text-sm font-rubik font-semibold rounded-full transition-all duration-300 backdrop-blur-lg shadow-lg"
+                className="px-4 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-sm font-rubik font-semibold rounded-full transition-all duration-300 backdrop-blur-lg shadow-lg"
                 style={{
                   background: 'rgba(0, 0, 0, 0.2)',
                   border: '2px solid rgba(0, 0, 0, 0.3)',
@@ -237,25 +245,26 @@ export default function LandingHero({
                 }}
                 onClick={openSignInModal}
               >
-                Get Started
+                <span className="hidden sm:inline">Get Started</span>
+                <span className="sm:hidden">Get Started</span>
               </button>
             </div>
           </div>
 
-          {/* Dashboard image sitting below text, fading more */}
-          <div className="absolute inset-x-0 flex justify-center bottom-[-200px] md:bottom-[-280px] lg:bottom-[-250px]">
-            <div className="relative w-[92%] max-w-[1200px] dashboard-container">
+          {/* Dashboard image sitting below text, fading more (hidden on mobile) */}
+          <div className="absolute inset-x-0 hidden sm:flex justify-center bottom-[-40px] sm:bottom-[-180px] md:bottom-[-260px] lg:bottom-[-240px]">
+            <div className="relative w-[99%] sm:w-[92%] max-w-[1200px] dashboard-container">
               <Image
                 src="/dashboard.png"
                 alt="Clubly dashboard preview"
                 width={1600}
                 height={900}
-                className="w-full h-auto rounded-2xl shadow-2xl"
+                className="w-full h-auto rounded-lg sm:rounded-2xl shadow-2xl"
                 priority
               />
               {/* Much stronger fade for the dashboard bottom */}
               <div
-                className="absolute bottom-0 left-0 right-0 h-[90%] rounded-b-2xl"
+                className="absolute bottom-0 left-0 right-0 h-[80%] sm:h-[90%] rounded-b-lg sm:rounded-b-2xl"
                 style={{
                   background:
                     "linear-gradient(to bottom, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 10%, rgba(255,255,255,0.6) 30%, rgba(255,255,255,0.85) 50%, rgba(255,255,255,0.95) 70%, rgba(255,255,255,1) 100%)",
@@ -266,12 +275,12 @@ export default function LandingHero({
           
           
           {/* Content positioned towards the top */}
-          <div className="absolute inset-x-0 z-10 flex justify-center px-6 lg:px-8 top-[120px] md:top-[140px] lg:top-[160px]">
-            <div className="text-center max-w-4xl mx-auto hero-text">
+          <div className="absolute inset-x-0 z-10 flex justify-center px-4 sm:px-6 lg:px-8 top-[280px] sm:top-[120px] md:top-[140px] lg:top-[160px]">
+            <div className="text-center max-w-5xl mx-auto hero-text w-full">
           
           {/* Main Content - Centered */}
           <motion.div 
-            className="space-y-6"
+            className="space-y-4 sm:space-y-6"
             initial={{ opacity: 0, y: 30 }}
             animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
             transition={{ duration: 0.8 }}
@@ -279,26 +288,26 @@ export default function LandingHero({
             {/* Main Headline - Simplified and Always Visible */}
             <motion.div className="space-y-1 relative z-10">
               {/* First Line - Slides up */}
-              <motion.div
+            <motion.div
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
-                className="text-5xl md:text-6xl lg:text-7xl leading-tight"
+                className="text-[40px] sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl leading-tight"
               >
                 <span className="font-rubik font-semibold tracking-tight text-black" 
                       style={{ 
                         textShadow: '0 4px 12px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2)' 
                       }}>
                   run your club,
-                </span>
-              </motion.div>
-              
+              </span>
+            </motion.div>
+
               {/* Second Line - Fades in with scale, delayed */}
-              <motion.div
+            <motion.div
                 initial={{ opacity: 0, scale: 0.95, y: 20 }}
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 transition={{ duration: 0.8, ease: "easeOut", delay: 0.3 }}
-                className="text-5xl md:text-6xl lg:text-7xl leading-tight"
+                className="text-[38px] sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl leading-tight"
               >
                 <span className="font-satisfy italic text-gray-800" 
                       style={{ 

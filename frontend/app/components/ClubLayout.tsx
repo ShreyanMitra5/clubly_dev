@@ -1317,7 +1317,7 @@ function TasksPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any })
             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg p-8 border border-gray-100 animate-fadeIn">
                   <button
                     onClick={handleCloseForm}
-                className="absolute top-4 right-4 text-gray-400 hover:text-orange-500 transition-colors text-2xl"
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-400 hover:text-orange-500 transition-colors text-xl sm:text-2xl p-1"
                 aria-label="Close"
                   >
                 &times;
@@ -5341,7 +5341,7 @@ This summary was generated automatically by Clubly AI.
 
             {/* Close Button */}
             <motion.button
-              className="absolute top-4 right-4 w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors duration-200"
+              className="absolute top-3 right-3 sm:top-4 sm:right-4 w-8 h-8 sm:w-8 sm:h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition-colors duration-200"
               onClick={() => setShowSummaryModal(false)}
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
@@ -6715,7 +6715,7 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
         "bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900",
         "border-r border-gray-700/50",
         sidebarOpen ? "translate-x-0" : "-translate-x-full",
-        sidebarCompressed ? "w-20" : "w-72",
+        sidebarCompressed ? "w-16 sm:w-20" : "w-80 sm:w-72",
         "lg:translate-x-0 lg:static"
       )}>
         {/* Background Elements */}
@@ -6727,20 +6727,20 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
 
         {/* Logo Section */}
         <div className={cn(
-          "relative z-10 flex items-center h-20 border-b border-gray-700/30 transition-all duration-300",
-          sidebarCompressed ? "px-3 justify-center" : "px-6"
+          "relative z-10 flex items-center h-16 sm:h-20 border-b border-gray-700/30 transition-all duration-300",
+          sidebarCompressed ? "px-2 sm:px-3 justify-center" : "px-4 sm:px-6"
         )}>
           <motion.div 
             className={cn(
               "flex items-center transition-all duration-300",
-              sidebarCompressed ? "gap-0" : "gap-4"
+              sidebarCompressed ? "gap-0" : "gap-3 sm:gap-4"
             )}
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.2 }}
           >
             <div className={cn(
               "flex-shrink-0 transition-all duration-300",
-              sidebarCompressed ? "w-10 h-10" : "w-12 h-12"
+              sidebarCompressed ? "w-8 h-8 sm:w-10 sm:h-10" : "w-10 h-10 sm:w-12 sm:h-12"
             )}>
               <img 
                 src="/new_logo.png" 
@@ -6755,7 +6755,7 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
                 exit={{ opacity: 0, x: -10 }}
                 transition={{ duration: 0.2 }}
               >
-                <h1 className="text-xl font-extralight text-white">Clubly</h1>
+                <h1 className="text-lg sm:text-xl font-extralight text-white">Clubly</h1>
                 <p className="text-xs text-gray-400 font-extralight">Run Things Better</p>
               </motion.div>
             )}
@@ -6764,14 +6764,14 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+        <nav className="flex-1 px-2 sm:px-4 py-4 sm:py-6 space-y-1 sm:space-y-2 overflow-y-auto">
           {featureList.map(({ key, icon, label }) => (
             <motion.button
               key={key}
               onClick={() => handleNavigation({ key, icon, label })}
               className={cn(
-                "w-full flex items-center px-4 py-3 text-sm font-extralight rounded-xl transition-all duration-300 group relative",
-                sidebarCompressed ? "justify-center" : "gap-4",
+                "w-full flex items-center px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-extralight rounded-lg sm:rounded-xl transition-all duration-300 group relative",
+                sidebarCompressed ? "justify-center" : "gap-3 sm:gap-4",
                 activeTab === key
                   ? "bg-white/10 text-white shadow-lg backdrop-blur-sm border border-white/10"
                   : "text-gray-300 hover:bg-white/5 hover:text-white"
@@ -6859,26 +6859,26 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
       {/* Main Content */}
       <div className="flex-1">
         {/* Top Bar */}
-        <header className="sticky top-0 z-30 h-16 bg-white border-b border-gray-200">
-          <div className="h-full px-6 flex items-center">
+        <header className="sticky top-0 z-30 h-14 sm:h-16 bg-white border-b border-gray-200">
+          <div className="h-full px-3 sm:px-6 flex items-center">
               <button
                 onClick={() => setSidebarOpen(!sidebarOpen)}
               className="lg:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-600"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
-            <div className="ml-4">
-              <h1 className="text-xl font-light text-gray-900">{clubName}</h1>
-                <p className="text-sm text-gray-500 font-extralight">Club Space</p>
+            <div className="ml-3 sm:ml-4">
+              <h1 className="text-lg sm:text-xl font-light text-gray-900 truncate">{clubName}</h1>
+                <p className="text-xs sm:text-sm text-gray-500 font-extralight">Club Space</p>
             </div>
           </div>
         </header>
 
         {/* Content Area */}
         <main className="flex-1 overflow-auto bg-gradient-to-br from-gray-50 via-white to-orange-50/10">
-          <div className="p-6 min-h-full">
+          <div className="p-3 sm:p-6 min-h-full">
               {PanelComponent && <PanelComponent clubName={clubName} clubInfo={clubInfo} onNavigation={handleNavigation} />}
           </div>
         </main>
