@@ -90,9 +90,9 @@ export default function TermsSignupModal({ isOpen, onClose, onSuccess }: TermsSi
                 {/* Close Button */}
                 <button
                   onClick={handleClose}
-                  className="absolute top-4 right-4 z-20 p-1 hover:bg-black/10 rounded-full transition-colors backdrop-blur-sm"
+                  className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20 p-2 sm:p-1 hover:bg-black/10 rounded-full transition-colors backdrop-blur-sm"
                 >
-                  <X className="h-4 w-4 text-gray-600" />
+                  <X className="h-5 w-5 sm:h-4 sm:w-4 text-gray-600" />
                 </button>
 
                 {/* Header */}
