@@ -22,35 +22,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Check presentation usage limits
-    try {
-      const now = new Date();
-      const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      
-      const { data: existingUsage, error: checkError } = await supabaseServer
-        .from('presentation_usage')
-        .select('id')
-        .eq('club_id', clubId)
-        .eq('month_year', currentMonth);
-
-      if (checkError) {
-        console.warn('Presentation usage tracking unavailable:', checkError.message);
-      } else {
-        const currentUsageCount = existingUsage?.length || 0;
-        const limit = 5;
-
-        if (currentUsageCount >= limit) {
-          return NextResponse.json({ 
-            error: 'Monthly limit reached', 
-            message: `You have reached the limit of ${limit} presentation generations per month.`,
-            usageCount: currentUsageCount,
-            limit 
-          }, { status: 429 });
-        }
-      }
-    } catch (error) {
-      console.warn('Presentation usage tracking check failed:', error);
-    }
+    // Presentation usage limits disabled - unlimited presentations
 
     // Check for required environment variables
     if (!process.env.SLIDESGPT_API_KEY) {

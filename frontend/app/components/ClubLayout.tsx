@@ -577,12 +577,7 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
       return;
     }
 
-    // Check usage limits before generating
-    if (usageData && !usageData.canGenerate) {
-      setError(`You have reached your monthly limit of ${usageData.limit} presentation generations.`);
-      setIsLoading(false);
-      return;
-    }
+    // Usage limits disabled - unlimited presentations
 
     try {
       const result = await ProductionClubManager.generatePresentation(
@@ -766,24 +761,7 @@ function PresentationsPanel({ clubName, clubInfo }: { clubName: string; clubInfo
             </div>
           </motion.div>
 
-          {/* Usage Display */}
-          {usageData && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-              transition={{ duration: 0.6, delay: 0.9 }}
-              className="mb-8"
-            >
-              <PresentationUsageDisplay
-                usageCount={usageData.usageCount}
-                limit={usageData.limit}
-                remainingGenerations={usageData.remainingGenerations}
-                canGenerate={usageData.canGenerate}
-                currentMonth={usageData.currentMonth}
-                isLoading={usageLoading}
-              />
-            </motion.div>
-          )}
+          {/* Usage Display - Disabled for unlimited presentations */}
 
                   {/* Form Section */}
           <motion.form 
@@ -6645,64 +6623,64 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
           <rect x="14" y="14" width="7" height="7" rx="2" />
           <rect x="3" y="14" width="7" height="7" rx="2" />
         </svg>
-    ), label: 'Dashboard' },
+    ), label: 'Dashboard', locked: false },
     { key: 'ClubSpace', icon: (
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
         </svg>
-    ), label: 'Club Space' },
+    ), label: 'Club Space', locked: false },
     { key: 'Presentations', icon: (
         <Presentation className="w-5 h-5" />
-    ), label: 'Presentations' },
+    ), label: 'Presentations', locked: false },
     { key: 'Roadmap', icon: (
         <Calendar className="w-5 h-5" />
-    ), label: 'Roadmap' },
+    ), label: 'Roadmap', locked: true },
 
     { key: 'Attendance', icon: (
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
         </svg>
-    ), label: 'Meeting Notes' },
+    ), label: 'Meeting Notes', locked: false },
     { key: 'Advisor', icon: (
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
         </svg>
-    ), label: 'Teacher Advisor' },
+    ), label: 'Teacher Advisor', locked: true },
     { key: 'Meeting Bookings', icon: (
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M8 2v4m8-4v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z"/>
           <rect x="8" y="14" width="4" height="4" rx="1"/>
         </svg>
-    ), label: 'Meeting Bookings' },
+    ), label: 'Meeting Bookings', locked: true },
     { key: 'AI Assistant', icon: (
         <img src="/bot.png" alt="AI Assistant" className="w-5 h-5 object-contain filter brightness-0 invert" />
-    ), label: 'AI Assistant' },
+    ), label: 'AI Assistant', locked: false },
     { key: 'Tasks', icon: (
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
         </svg>
-    ), label: 'Quick Tasks' },
+    ), label: 'Quick Tasks', locked: false },
     { key: 'Email', icon: (
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
         </svg>
-    ), label: 'Send Emails' },
+    ), label: 'Send Emails', locked: false },
     { key: 'History', icon: (
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
-    ), label: 'Past Presentations' },
+    ), label: 'Past Presentations', locked: false },
     { key: 'Summaries', icon: (
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-    ), label: 'Past Summaries' },
+    ), label: 'Past Summaries', locked: false },
     { key: 'Settings', icon: (
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
           <path d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
         </svg>
-    ), label: 'Settings' },
+    ), label: 'Settings', locked: false },
   ];
 
   const PanelComponent = panels[activeTab];
@@ -6765,26 +6743,29 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
 
         {/* Navigation */}
         <nav className="flex-1 px-2 sm:px-4 py-4 sm:py-6 space-y-1 sm:space-y-2 overflow-y-auto">
-          {featureList.map(({ key, icon, label }) => (
+          {featureList.map(({ key, icon, label, locked }) => (
             <motion.button
               key={key}
-              onClick={() => handleNavigation({ key, icon, label })}
+              onClick={() => !locked && handleNavigation({ key, icon, label })}
+              disabled={locked}
               className={cn(
                 "w-full flex items-center px-3 sm:px-4 py-2 sm:py-3 text-xs sm:text-sm font-extralight rounded-lg sm:rounded-xl transition-all duration-300 group relative",
                 sidebarCompressed ? "justify-center" : "gap-3 sm:gap-4",
-                activeTab === key
-                  ? "bg-white/10 text-white shadow-lg backdrop-blur-sm border border-white/10"
-                  : "text-gray-300 hover:bg-white/5 hover:text-white"
+                locked 
+                  ? "text-gray-500 cursor-not-allowed opacity-60"
+                  : activeTab === key
+                    ? "bg-white/10 text-white shadow-lg backdrop-blur-sm border border-white/10"
+                    : "text-gray-300 hover:bg-white/5 hover:text-white"
               )}
               title={sidebarCompressed ? label : undefined}
-              whileHover={{ scale: 1.02, x: 2 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={locked ? {} : { scale: 1.02, x: 2 }}
+              whileTap={locked ? {} : { scale: 0.98 }}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.3, delay: featureList.indexOf(featureList.find(f => f.key === key)!) * 0.05 }}
             >
               {/* Active indicator */}
-              {activeTab === key && (
+              {activeTab === key && !locked && (
                 <motion.div
                   className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-orange-500 to-orange-600 rounded-r"
                   layoutId="activeTab"
@@ -6793,17 +6774,28 @@ export default function ClubLayout({ children }: ClubLayoutProps) {
               )}
               
               <div className={cn(
-                "flex-shrink-0 transition-colors duration-300",
-                activeTab === key ? "text-orange-500" : "text-gray-400 group-hover:text-white"
+                "flex-shrink-0 transition-colors duration-300 relative",
+                locked 
+                  ? "text-gray-500" 
+                  : activeTab === key 
+                    ? "text-orange-500" 
+                    : "text-gray-400 group-hover:text-white"
               )}>
                 {icon}
+                {locked && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-gray-600 rounded-full flex items-center justify-center">
+                    <svg className="w-2 h-2 text-white" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM12 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zM15.1 8H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                    </svg>
+                  </div>
+                )}
               </div>
               
               {!sidebarCompressed && (
                 <span className="flex-1 text-left truncate">{label}</span>
               )}
               
-              {!sidebarCompressed && activeTab === key && (
+              {!sidebarCompressed && activeTab === key && !locked && (
                 <motion.div
                   className="w-2 h-2 bg-orange-500 rounded-full"
                   initial={{ scale: 0 }}

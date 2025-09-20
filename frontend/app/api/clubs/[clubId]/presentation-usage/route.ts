@@ -49,9 +49,9 @@ export async function GET(
     }
 
     const usageCount = usageData?.length || 0;
-    const limit = 5;
-    const remainingGenerations = Math.max(0, limit - usageCount);
-    const canGenerate = remainingGenerations > 0;
+    const limit = 999999; // Effectively unlimited
+    const remainingGenerations = 999999; // Effectively unlimited
+    const canGenerate = true; // Always allow generation
 
     return NextResponse.json({ 
       success: true, 
@@ -89,29 +89,9 @@ export async function POST(
     const now = new Date();
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     
-    // Check current usage count
-    const { data: existingUsage, error: checkError } = await supabaseServer
-      .from('presentation_usage')
-      .select('id')
-      .eq('club_id', clubId)
-      .eq('month_year', currentMonth);
-
-    if (checkError) {
-      console.error('Error checking presentation usage:', checkError);
-      return NextResponse.json({ error: 'Failed to check usage limit' }, { status: 500 });
-    }
-
-    const currentUsageCount = existingUsage?.length || 0;
-    const limit = 5;
-
-    if (currentUsageCount >= limit) {
-      return NextResponse.json({ 
-        error: 'Monthly limit reached', 
-        message: `You have reached the limit of ${limit} presentation generations per month.`,
-        usageCount: currentUsageCount,
-        limit 
-      }, { status: 429 });
-    }
+    // Usage limits disabled - unlimited presentations
+    const currentUsageCount = 0; // Always allow generation
+    const limit = 999999; // Effectively unlimited
 
     // Record the new usage
     const { data, error } = await supabaseServer
@@ -134,7 +114,7 @@ export async function POST(
     }
 
     const newUsageCount = currentUsageCount + 1;
-    const remainingGenerations = Math.max(0, limit - newUsageCount);
+    const remainingGenerations = 999999; // Effectively unlimited
 
     return NextResponse.json({ 
       success: true, 
@@ -143,7 +123,7 @@ export async function POST(
         usageCount: newUsageCount,
         limit,
         remainingGenerations,
-        canGenerate: remainingGenerations > 0
+        canGenerate: true // Always allow generation
       }
     });
   } catch (error) {
