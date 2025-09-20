@@ -87,64 +87,29 @@ export default function PresentationHistoryPage() {
             </a>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {history.map((item, idx) => (
-              <div key={idx} className="glass-card bg-white/90 border border-pulse-100 rounded-2xl shadow-lg p-5 flex flex-col">
-                <div className="font-bold text-lg mb-2 truncate text-pulse-500">
-                  {item.description || "Untitled"}
+              <div key={idx} className="bg-white rounded-3xl p-5 shadow-sm border border-pulse-100 hover:shadow-md transition-all duration-200 flex flex-col">
+                <div className="relative aspect-video mb-3 rounded-2xl overflow-hidden bg-pulse-50 border border-pulse-100">
+                  {item.thumbnailUrl ? (
+                    <img src={item.thumbnailUrl} alt="Slide preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center text-pulse-300">No preview</div>
+                  )}
+                  <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
+                    <a href={item.viewerUrl} target="_blank" rel="noopener noreferrer" className="text-white font-medium hover:underline flex items-center gap-2">
+                      <span>View Presentation</span>
+                    </a>
+                  </div>
                 </div>
-                
-                <div className="w-full h-32 bg-pulse-50 rounded mb-2 flex items-center justify-center overflow-hidden">
-                  <img
-                    src={item.thumbnailUrl || "/logo.png"}
-                    alt="Presentation thumbnail"
-                    className="object-contain h-full"
-                  />
-                </div>
-                
-                <div className="text-gray-500 text-xs mb-2">
-                  {item.generatedAt && new Date(item.generatedAt).toLocaleString()}
-                </div>
-                
-                <div className="flex-1 mb-2 text-gray-700 truncate">
-                  {item.description}
-                </div>
-                
-                <div className="flex gap-2 mt-auto">
-                  <a
-                    href={item.viewerUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="button-primary bg-pulse-500 hover:bg-pulse-600 text-white px-3 py-1 rounded-full text-sm shadow flex items-center space-x-1"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
-                    <span>View Online</span>
-                  </a>
-                  
-                  <a
-                    href={item.s3Url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="button-secondary bg-white border border-pulse-200 text-pulse-500 px-3 py-1 rounded-full text-sm shadow hover:bg-orange-50 flex items-center space-x-1"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                    <span>Download</span>
-                  </a>
-                  
-                  <button
-                    onClick={() => handleSendEmail(item)}
-                    className="button-secondary bg-white border border-pulse-200 text-pulse-500 px-3 py-1 rounded-full text-sm shadow hover:bg-orange-50 flex items-center space-x-1"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    <span>Send Email</span>
-                  </button>
+
+                <div className="font-semibold text-base mb-1 truncate text-pulse-500">{item.description || "Untitled"}</div>
+                <div className="text-gray-500 text-xs mb-3">{item.generatedAt && new Date(item.generatedAt).toLocaleString()}</div>
+
+                <div className="mt-auto flex flex-col gap-2">
+                  <a href={item.viewerUrl} target="_blank" rel="noopener noreferrer" className="w-full px-4 py-2.5 bg-pulse-500 text-white font-medium rounded-xl hover:bg-pulse-600 transition-colors duration-200 text-center">View Presentation</a>
+                  <a href={item.s3Url} target="_blank" rel="noopener noreferrer" className="w-full px-4 py-2.5 bg-white border border-pulse-200 text-pulse-600 font-medium rounded-xl hover:bg-orange-50 transition-colors duration-200 text-center">Download</a>
+                  <button onClick={() => handleSendEmail(item)} className="w-full px-4 py-2.5 bg-white border border-pulse-200 text-pulse-600 font-medium rounded-xl hover:bg-orange-50 transition-colors duration-200">Share via Email</button>
                 </div>
               </div>
             ))}

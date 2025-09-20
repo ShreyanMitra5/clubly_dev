@@ -5515,7 +5515,7 @@ function HistoryPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
           <p className="text-gray-600 font-extralight">Create your first presentation to get started!</p>
         </motion.div>
       ) : (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {history.map((presentation, index) => (
             <motion.div
               key={presentation.id || index}
@@ -5525,21 +5525,28 @@ function HistoryPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
               transition={{ duration: 0.5, delay: index * 0.1 }}
             >
               {/* Preview */}
-              <div className="relative aspect-video mb-4 rounded-xl overflow-hidden bg-gray-50">
-                {presentation.viewerUrl ? (
+              <div className="relative aspect-video mb-4 rounded-2xl overflow-hidden bg-gray-50 border border-gray-100">
+                {presentation.thumbnailUrl ? (
+                  <img
+                    src={presentation.thumbnailUrl}
+                    alt="Slide 1 preview"
+                    className="w-full h-full object-cover"
+                    loading={index < 8 ? 'eager' : 'lazy'}
+                  />
+                ) : presentation.viewerUrl ? (
                   <div className="absolute inset-0 flex items-center justify-center">
                     <iframe
                       src={presentation.viewerUrl}
-                      className="w-full h-full"
-                      style={{ 
-                        transform: 'scale(0.75)', // Scale down to show full slide
+                      className="w-full h-full pointer-events-none"
+                      style={{
+                        transform: 'scale(0.8)',
                         transformOrigin: 'center center'
                       }}
                       frameBorder="0"
                       allowFullScreen
-                      loading={index < 6 ? "eager" : "lazy"}
+                      loading={index < 6 ? 'eager' : 'lazy'}
                     />
-            </div>
+                  </div>
                 ) : (
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
                     <div className="w-12 h-12 mb-2 text-gray-200">
@@ -5560,8 +5567,8 @@ function HistoryPanel({ clubName, clubInfo }: { clubName: string; clubInfo: any 
                 <div className="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity duration-200 flex items-center justify-center">
                   <a
                     href={presentation.viewerUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-white font-medium hover:underline flex items-center gap-2"
                   >
                     <Eye className="w-5 h-5" />
