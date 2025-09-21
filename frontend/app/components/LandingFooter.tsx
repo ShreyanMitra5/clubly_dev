@@ -239,13 +239,13 @@ const LandingFooter = () => {
                       </div>
                       
                       <div className="space-y-3">
-                        <a 
-                          href="/teacher-signup" 
-                          className="block text-black font-medium text-sm transition-all duration-200 active:bg-white/30 active:scale-95 px-2 py-1 rounded"
+                        <button 
+                          disabled
+                          className="block text-black font-medium text-sm transition-all duration-200 active:bg-white/30 active:scale-95 px-2 py-1 rounded cursor-not-allowed opacity-50"
                           style={{ textShadow: "0 2px 4px rgba(255,255,255,0.9)" }}
                         >
                           Teacher Access
-                        </a>
+                        </button>
                         
                         <button 
                           onClick={() => scrollToSection('support')}
