@@ -46,7 +46,7 @@ export default function MeetingSummariesPage() {
       .then(res => res.json())
       .then(data => {
         setSummaries((data.history || []).filter((item: any) =>
-          (item.clubId && item.clubId === clubName) || (!item.clubId && item.clubName === clubName)
+          (item.clubId && item.clubId === clubId) || (!item.clubId && item.clubName === clubName)
         ));
         setLoading(false);
       })
@@ -54,7 +54,7 @@ export default function MeetingSummariesPage() {
         console.error('Error fetching meeting summaries:', error);
         setLoading(false);
       });
-  }, [user, clubName]);
+  }, [user, clubName, clubId]);
 
   useEffect(() => {
     if (!loading && summaries.length > 0) {

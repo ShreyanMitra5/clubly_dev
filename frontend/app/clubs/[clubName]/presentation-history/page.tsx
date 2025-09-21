@@ -43,7 +43,7 @@ export default function PresentationHistoryPage() {
       .then(res => res.json())
       .then(data => {
         setHistory((data.history || []).filter((item: any) =>
-          (item.clubId && item.clubId === clubName) || (!item.clubId && item.clubName === clubName)
+          (item.clubId && item.clubId === clubId) || (!item.clubId && item.clubName === clubName)
         ));
         setLoading(false);
       })
@@ -51,7 +51,7 @@ export default function PresentationHistoryPage() {
         console.error('Error fetching presentation history:', error);
         setLoading(false);
       });
-  }, [user, clubName]);
+  }, [user, clubName, clubId]);
 
   const handleSendEmail = (presentation: any) => {
     setSelectedPresentation(presentation);
