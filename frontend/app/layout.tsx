@@ -56,6 +56,7 @@ export default function RootLayout({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [showTermsModal, setShowTermsModal] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
 
@@ -68,6 +69,16 @@ export default function RootLayout({
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768); // md breakpoint
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
   useEffect(() => {
@@ -98,7 +109,9 @@ export default function RootLayout({
         <body className={`${inter.variable} ${dancingScript.variable} ${montserrat.variable} ${poppins.variable} ${satisfy.variable} ${rubik.variable} font-sans antialiased bg-white text-black`}>
           {/* Only show navbar if not on a club page */}
           {!isClubPage && (
-            <header className="fixed top-0 left-0 right-0 z-50 px-4 pt-4">
+            <header className={`fixed top-0 left-0 right-0 z-50 px-4 pt-4 transition-all duration-300 ${
+              isMobile && isScrolled ? 'opacity-0 pointer-events-none' : 'opacity-100'
+            }`}>
               <nav className={`
                 mx-auto max-w-7xl transition-all duration-700 ease-out
                 ${isScrolled 

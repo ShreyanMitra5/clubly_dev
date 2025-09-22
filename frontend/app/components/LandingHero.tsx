@@ -253,7 +253,7 @@ export default function LandingHero({
 
           {/* Dashboard image sitting below text, fading more (hidden on mobile) */}
           <div className="absolute inset-x-0 hidden sm:flex justify-center bottom-[-40px] sm:bottom-[-180px] md:bottom-[-260px] lg:bottom-[-240px]">
-            <div className="relative w-[99%] sm:w-[92%] max-w-[1200px] dashboard-container">
+            <div className="relative w-[95%] sm:w-[80%] max-w-[1100px] dashboard-container">
               <Image
                 src="/dashboard.png"
                 alt="Clubly dashboard preview"
