@@ -111,27 +111,46 @@ export default function RootLayout({
                 <div className="absolute inset-0 bg-gradient-to-r from-orange-50/30 via-transparent to-orange-50/30 opacity-50" />
                 
                 <div className="relative flex justify-between items-center">
-                  {/* Logo - Always links to home */}
+                  {/* Logo - Links to dashboard when signed in, home when signed out */}
                   <div className="flex items-center justify-start">
-                    <Link 
-                      href="/" 
-                      className="flex items-center space-x-4 group"
-                      onClick={() => sessionStorage.setItem('explicitHomeNavigation', 'true')}
-                    >
-                      <div className="relative">
-                        <img 
-                          src="/new_logo.png" 
-                          alt="Clubly" 
-                          width={48} 
-                          height={48} 
-                          className="rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3" 
-                        />
-                        <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-orange-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
-                      </div>
-                      <span className="text-2xl font-extralight text-black group-hover:text-orange-600 transition-all duration-500 tracking-tight">
-                        Clubly
-                      </span>
-                    </Link>
+                    <SignedIn>
+                      <DashboardLink className="flex items-center space-x-4 group">
+                        <div className="relative">
+                          <img 
+                            src="/new_logo.png" 
+                            alt="Clubly" 
+                            width={48} 
+                            height={48} 
+                            className="rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3" 
+                          />
+                          <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-orange-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
+                        </div>
+                        <span className="text-2xl font-extralight text-black group-hover:text-orange-600 transition-all duration-500 tracking-tight">
+                          Clubly
+                        </span>
+                      </DashboardLink>
+                    </SignedIn>
+                    <SignedOut>
+                      <Link 
+                        href="/" 
+                        className="flex items-center space-x-4 group"
+                        onClick={() => sessionStorage.setItem('explicitHomeNavigation', 'true')}
+                      >
+                        <div className="relative">
+                          <img 
+                            src="/new_logo.png" 
+                            alt="Clubly" 
+                            width={48} 
+                            height={48} 
+                            className="rounded-2xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-3" 
+                          />
+                          <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-orange-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500" />
+                        </div>
+                        <span className="text-2xl font-extralight text-black group-hover:text-orange-600 transition-all duration-500 tracking-tight">
+                          Clubly
+                        </span>
+                      </Link>
+                    </SignedOut>
                   </div>
 
                   {/* Desktop Nav */}
