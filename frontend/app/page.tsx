@@ -41,21 +41,14 @@ export default function HomePage() {
 
     async function checkUserStatus() {
       if (isSignedIn && user && sessionId) {
-        // Check if user explicitly navigated to home
+        // Check if user explicitly navigated to home - if so, let them stay
         const isExplicitHomeNavigation = sessionStorage.getItem('explicitHomeNavigation');
         if (isExplicitHomeNavigation) {
           sessionStorage.removeItem('explicitHomeNavigation');
-          return;
+          return; // Stay on landing page
         }
 
-        // Check if user has clubs (memberships)
-        const { data, error } = await supabase
-          .from('memberships')
-          .select('user_id')
-          .eq('user_id', user.id);
-
-        if (!data || data.length === 0) {
-                  // New user - check if they came from sign up
+        // Only redirect if user came from signup flows, not if they're just visiting the landing page
         const fromSignUp = sessionStorage.getItem('fromSignUp');
         const fromTeacherSignup = sessionStorage.getItem('fromTeacherSignup');
         
@@ -88,10 +81,7 @@ export default function HomePage() {
           sessionStorage.removeItem('fromSignUp');
           router.push('/onboarding');
         }
-        } else {
-          // Existing user - redirect to dashboard
-          router.push('/dashboard');
-        }
+        // If no signup flags, let the user stay on the landing page
       }
     }
 

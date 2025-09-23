@@ -3,7 +3,7 @@
 import React, { useRef, useEffect } from 'react';
 import { motion, useInView } from 'framer-motion';
 import Image from 'next/image';
-import { SignInButton } from '@clerk/nextjs';
+import { SignInButton, SignedIn, SignedOut, SignOutButton } from '@clerk/nextjs';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { 
@@ -189,65 +189,58 @@ export default function LandingHero({
               <span className="font-poppins font-bold text-black drop-shadow-sm text-lg sm:text-2xl">Clubly</span>
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
-              <SignInButton mode="modal">
-                <button 
-                  className="px-4 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-sm font-rubik font-medium rounded-full transition-all duration-300 backdrop-blur-lg shadow-lg"
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <motion.button 
+                    className="px-5 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-sm font-rubik font-medium rounded-full backdrop-blur-lg shadow-lg"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.25)',
+                      border: '2px solid rgba(255, 255, 255, 0.4)',
+                      color: 'rgba(0, 0, 0, 0.9)'
+                    }}
+                    whileHover={{ scale: 1.04, y: -2, backgroundColor: 'rgba(255,255,255,0.35)', borderColor: 'rgba(255,255,255,0.6)' }}
+                    whileTap={{ scale: 0.98, y: 0 }}
+                    transition={{ type: 'spring', stiffness: 320, damping: 20 }}
+                  >
+                    <span className="hidden sm:inline">Sign In</span>
+                    <span className="sm:hidden">Sign In</span>
+                  </motion.button>
+                </SignInButton>
+                <motion.button 
+                  className="px-5 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-sm font-rubik font-semibold rounded-full backdrop-blur-lg shadow-lg"
                   style={{
-                    background: 'rgba(255, 255, 255, 0.25)',
-                    border: '2px solid rgba(255, 255, 255, 0.4)',
-                    color: 'rgba(0, 0, 0, 0.9)',
-                    boxShadow: '0 4px 15px rgba(255, 255, 255, 0.1), 0 0 20px rgba(255, 255, 255, 0.05)'
+                    background: 'rgba(0, 0, 0, 0.2)',
+                    border: '2px solid rgba(0, 0, 0, 0.3)',
+                    color: 'rgba(0, 0, 0, 1)'
                   }}
-                  onMouseEnter={(e) => {
-                    const target = e.target as HTMLButtonElement;
-                    target.style.background = 'rgba(255, 255, 255, 0.35)';
-                    target.style.borderColor = 'rgba(255, 255, 255, 0.6)';
-                    target.style.color = 'rgba(0, 0, 0, 1)';
-                    target.style.transform = 'translateY(-2px) scale(1.02)';
-                    target.style.boxShadow = '0 8px 25px rgba(255, 255, 255, 0.15), 0 0 30px rgba(255, 255, 255, 0.1)';
-                  }}
-                  onMouseLeave={(e) => {
-                    const target = e.target as HTMLButtonElement;
-                    target.style.background = 'rgba(255, 255, 255, 0.25)';
-                    target.style.borderColor = 'rgba(255, 255, 255, 0.4)';
-                    target.style.color = 'rgba(0, 0, 0, 0.9)';
-                    target.style.transform = 'translateY(0) scale(1)';
-                    target.style.boxShadow = '0 4px 15px rgba(255, 255, 255, 0.1), 0 0 20px rgba(255, 255, 255, 0.05)';
-                  }}
+                  onClick={openSignInModal}
+                  whileHover={{ scale: 1.04, y: -2, backgroundColor: 'rgba(0,0,0,0.3)', borderColor: 'rgba(0,0,0,0.5)', color: 'rgba(255,255,255,1)' }}
+                  whileTap={{ scale: 0.98, y: 0 }}
+                  transition={{ type: 'spring', stiffness: 320, damping: 20 }}
                 >
-                  <span className="hidden sm:inline">Sign In</span>
-                  <span className="sm:hidden">Sign In</span>
-                </button>
-              </SignInButton>
-              <button 
-                className="px-4 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-sm font-rubik font-semibold rounded-full transition-all duration-300 backdrop-blur-lg shadow-lg"
-                style={{
-                  background: 'rgba(0, 0, 0, 0.2)',
-                  border: '2px solid rgba(0, 0, 0, 0.3)',
-                  color: 'rgba(0, 0, 0, 1)',
-                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1), 0 0 20px rgba(0, 0, 0, 0.05)'
-                }}
-                onMouseEnter={(e) => {
-                  const target = e.target as HTMLButtonElement;
-                  target.style.background = 'rgba(0, 0, 0, 0.3)';
-                  target.style.borderColor = 'rgba(0, 0, 0, 0.5)';
-                  target.style.color = 'rgba(255, 255, 255, 1)';
-                  target.style.transform = 'translateY(-2px) scale(1.02)';
-                  target.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.2), 0 0 30px rgba(0, 0, 0, 0.1)';
-                }}
-                onMouseLeave={(e) => {
-                  const target = e.target as HTMLButtonElement;
-                  target.style.background = 'rgba(0, 0, 0, 0.2)';
-                  target.style.borderColor = 'rgba(0, 0, 0, 0.3)';
-                  target.style.color = 'rgba(0, 0, 0, 1)';
-                  target.style.transform = 'translateY(0) scale(1)';
-                  target.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1), 0 0 20px rgba(0, 0, 0, 0.05)';
-                }}
-                onClick={openSignInModal}
-              >
-                <span className="hidden sm:inline">Get Started</span>
-                <span className="sm:hidden">Get Started</span>
-              </button>
+                  <span className="hidden sm:inline">Get Started</span>
+                  <span className="sm:hidden">Get Started</span>
+                </motion.button>
+              </SignedOut>
+              <SignedIn>
+                <motion.a 
+                  href="/dashboard"
+                  className="px-5 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-sm font-rubik font-medium rounded-full backdrop-blur-lg shadow-lg bg-white/70 border border-white/60 text-black hover:bg-white/90 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-black/20"
+                  whileHover={{ scale: 1.04, y: -2 }}
+                  whileTap={{ scale: 0.98, y: 0 }}
+                >
+                  Dashboard
+                </motion.a>
+                <SignOutButton>
+                  <motion.button 
+                    className="px-5 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-sm font-rubik font-medium rounded-full backdrop-blur-lg shadow-lg bg-black/80 text-white border border-black/60 hover:bg-black focus:outline-none focus:ring-2 focus:ring-black/30"
+                    whileHover={{ scale: 1.04, y: -2 }}
+                    whileTap={{ scale: 0.98, y: 0 }}
+                  >
+                    Sign Out
+                  </motion.button>
+                </SignOutButton>
+              </SignedIn>
             </div>
           </div>
 

@@ -18,8 +18,8 @@ const LoadingScreen = () => {
       })
     }, 30)
 
-    // Show secondary animation after 500ms
-    const secondaryTimer = setTimeout(() => setShowSecondary(true), 500)
+    // Show secondary animation almost immediately
+    const secondaryTimer = setTimeout(() => setShowSecondary(true), 100)
 
     // Auto-clear timer when reaching 100%
     const checkComplete = setInterval(() => {
@@ -89,16 +89,8 @@ const LoadingScreen = () => {
         >
           <motion.div 
             className="relative mr-6"
-            animate={{ 
-              rotate: 360,
-              scale: [1, 1.05, 1]
-            }}
-            transition={{ 
-              rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-              scale: { duration: 3, repeat: Infinity, ease: "easeInOut" }
-            }}
           >
-            <div className="w-24 h-24 bg-white/15 backdrop-blur-md rounded-3xl flex items-center justify-center border border-white/20 shadow-2xl">
+            <div className="w-24 h-24 rounded-3xl flex items-center justify-center">
               <Image 
                 src="/new_logo.png" 
                 alt="Clubly Logo" 
